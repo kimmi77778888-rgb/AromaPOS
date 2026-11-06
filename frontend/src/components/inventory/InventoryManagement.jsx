@@ -44,6 +44,8 @@ import { CATEGORIES } from '../../services/coffeeData';
 import { ProductFormModal } from './ProductFormModal';
 import { IngredientFormModal } from './IngredientFormModal';
 import { StockOperationModal } from './StockOperationModal';
+import { DailyWasteModal } from './DailyWasteModal';
+import { StocktakeAuditModal } from './StocktakeAuditModal';
 import { CambodiaFlag } from '../common/FlagIcons';
 import { exportCambodiaStandardCatalog } from '../../services/cambodiaExcelExport';
 import { soundService } from '../../services/soundService';
@@ -87,6 +89,10 @@ export const InventoryManagement = ({ onOpenAddModal }) => {
   // Raw Ingredient Create & Edit Modal
   const [isIngredientModalOpen, setIsIngredientModalOpen] = useState(false);
   const [editingIngredient, setEditingIngredient] = useState(null);
+
+  // F&B Standard Inventory Flow Modals
+  const [isDailyWasteModalOpen, setIsDailyWasteModalOpen] = useState(false);
+  const [isStocktakeAuditModalOpen, setIsStocktakeAuditModalOpen] = useState(false);
 
   const [movementFilterType, setMovementFilterType] = useState('all');
 
@@ -529,22 +535,33 @@ export const InventoryManagement = ({ onOpenAddModal }) => {
           <button
             type="button"
             onClick={() => handleOpenStockIn(null)}
-            className="px-3.5 py-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 hover:text-emerald-100 font-bold text-xs flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-sm"
+            className="px-3 py-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 hover:text-emerald-100 font-bold text-xs flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-sm"
             title={isKhmer ? 'កត់ត្រានាំចូលស្តុក' : 'Receive Stock In'}
           >
             <ArrowDownToLine className="w-4 h-4 text-emerald-400" />
             <span>{isKhmer ? '📥 នាំចូលស្តុក' : '📥 Stock In'}</span>
           </button>
 
-          {/* Quick Universal Adjustment & Spoilage */}
+          {/* F&B Standard Daily Waste / Dial-In Button */}
           <button
             type="button"
-            onClick={() => handleOpenAdjustment(null)}
-            className="px-3.5 py-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 hover:text-amber-100 font-bold text-xs flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-sm"
-            title={isKhmer ? 'កត់ត្រាការខូចខាត ឬកែតម្រូវស្តុក' : 'Record Waste, Spoilage, or Audit Adjustment'}
+            onClick={() => setIsDailyWasteModalOpen(true)}
+            className="px-3 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-300 hover:text-rose-100 font-bold text-xs flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-sm"
+            title={isKhmer ? 'កត់ត្រាការខូចខាត & កិនសាកល្បងម៉ាស៊ីនកាហ្វេ' : 'Log Daily Barista Dial-In & Spoilage Waste'}
+          >
+            <Trash2 className="w-4 h-4 text-rose-400" />
+            <span>{isKhmer ? '☕ កិនសាកល្បង & ខូច' : '☕ Dial-In & Waste'}</span>
+          </button>
+
+          {/* F&B Standard Physical Stocktake Audit Button */}
+          <button
+            type="button"
+            onClick={() => setIsStocktakeAuditModalOpen(true)}
+            className="px-3 py-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 hover:text-amber-100 font-bold text-xs flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-sm"
+            title={isKhmer ? 'ផ្ទៀងផ្ទាត់ និងរាប់ស្តុកជាក់ស្តែង (Stocktake)' : 'Periodic Physical Stock Count & Variance Audit'}
           >
             <Scale className="w-4 h-4 text-amber-400" />
-            <span>{isKhmer ? '⚖️ កែសម្រួល / ខូច' : '⚖️ Adjust / Waste'}</span>
+            <span>{isKhmer ? '📋 រាប់ស្តុកជាក់ស្តែង' : '📋 Stocktake Audit'}</span>
           </button>
 
           {/* Add Menu Product or Ingredient */}
@@ -1408,6 +1425,18 @@ export const InventoryManagement = ({ onOpenAddModal }) => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         productToEdit={editingProduct}
+      />
+
+      {/* F&B Standard Daily Waste & Dial-In Logger Modal */}
+      <DailyWasteModal
+        isOpen={isDailyWasteModalOpen}
+        onClose={() => setIsDailyWasteModalOpen(false)}
+      />
+
+      {/* F&B Standard Physical Stocktake & Variance Audit Modal */}
+      <StocktakeAuditModal
+        isOpen={isStocktakeAuditModalOpen}
+        onClose={() => setIsStocktakeAuditModalOpen(false)}
       />
     </div>
   );
