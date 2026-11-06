@@ -13,6 +13,7 @@ export const AppProvider = ({ children }) => {
   const [user, setUser] = useState(() => getStoredUser());
   const [isAuthenticated, setIsAuthenticated] = useState(() => Boolean(getStoredUser()));
   const [activeTab, setActiveTab] = useState('pos'); // pos, kds, dashboard, inventory, orders, reports, staff
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // RBAC Role Separation & Permissions
   const userRole = useMemo(() => (user?.role || 'ADMIN').toUpperCase(), [user]);
@@ -29,7 +30,7 @@ export const AppProvider = ({ children }) => {
     const allowedTabsSet = new Set(base.allowedTabs || []);
 
     if (userRole === 'ADMIN') {
-      ['pos', 'dashboard', 'inventory', 'orders', 'reports', 'kds', 'staff'].forEach((t) => allowedTabsSet.add(t));
+      ['pos', 'dashboard', 'inventory', 'orders', 'reports', 'kds', 'staff', 'cambodia-excel'].forEach((t) => allowedTabsSet.add(t));
     } else {
       if (userPermList.includes('canAccessPos')) allowedTabsSet.add('pos');
       if (userPermList.includes('canAccessKds')) allowedTabsSet.add('kds');
@@ -1380,6 +1381,8 @@ export const AppProvider = ({ children }) => {
         recordCashMovement: handleRecordCashMovement,
         activeTab,
         setActiveTab,
+        isMobileMenuOpen,
+        setIsMobileMenuOpen,
         products: evaluatedProducts,
         ingredients,
         loadingData,

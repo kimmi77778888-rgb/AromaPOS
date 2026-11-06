@@ -23,7 +23,8 @@ import {
   Globe,
   Sparkles,
   Store,
-  FileSpreadsheet
+  FileSpreadsheet,
+  X
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { ROLE_PERMISSIONS } from '../services/coffeeData';
@@ -36,6 +37,8 @@ export const Sidebar = () => {
   const { 
     activeTab, 
     setActiveTab, 
+    isMobileMenuOpen,
+    setIsMobileMenuOpen,
     cartTotals, 
     lowStockProducts, 
     lowStockIngredients, 
@@ -177,60 +180,84 @@ export const Sidebar = () => {
   ];
 
   return (
-    <aside 
-      className={`${
-        isCollapsed ? 'w-20' : 'w-64'
-      } bg-stone-950/95 border-r border-stone-800/80 flex flex-col justify-between shrink-0 h-screen sticky top-0 select-none z-30 transition-all duration-300 ease-in-out`}
-    >
-      {/* Top Header & Brand */}
-      <div className="flex flex-col min-h-0">
-        {/* Brand Bar */}
-        {isCollapsed ? (
-          <div className="p-3 border-b border-stone-800/80 flex flex-col items-center gap-2 shrink-0">
-            <div 
-              onClick={() => setIsStoreSettingsOpen(true)}
-              className="cursor-pointer hover:scale-105 transition"
-              title={`${storeInfo?.name || 'Aroma Coffee'} - Click to customize Logo`}
-            >
-              <StoreLogo size="md" />
+    <>
+      {/* Mobile Drawer Overlay Backdrop */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/75 backdrop-blur-xs z-50 lg:hidden animate-fade-in"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      <aside 
+        className={`
+          fixed inset-y-0 left-0 z-50 bg-stone-950/98 border-r border-stone-800/80 flex flex-col justify-between shrink-0 h-screen select-none transition-all duration-300 ease-in-out
+          lg:static lg:h-screen lg:z-30 lg:translate-x-0
+          ${isMobileMenuOpen ? 'translate-x-0 w-72 shadow-2xl' : '-translate-x-full lg:translate-x-0'}
+          ${isCollapsed ? 'lg:w-20' : 'lg:w-64'}
+        `}
+      >
+        {/* Top Header & Brand */}
+        <div className="flex flex-col min-h-0">
+          {/* Brand Bar */}
+          {isCollapsed ? (
+            <div className="p-3 border-b border-stone-800/80 flex flex-col items-center gap-2 shrink-0">
+              <div 
+                onClick={() => setIsStoreSettingsOpen(true)}
+                className="cursor-pointer hover:scale-105 transition"
+                title={`${storeInfo?.name || 'Aroma Coffee'} - Click to customize Logo`}
+              >
+                <StoreLogo size="md" />
+              </div>
+              <button
+                onClick={toggleCollapse}
+                className="w-8 h-8 rounded-lg bg-stone-900 hover:bg-stone-800 border border-stone-800 text-stone-400 hover:text-amber-400 flex items-center justify-center transition cursor-pointer"
+                title="Expand sidebar"
+              >
+                <PanelLeftOpen className="w-4 h-4" />
+              </button>
             </div>
-            <button
-              onClick={toggleCollapse}
-              className="w-8 h-8 rounded-lg bg-stone-900 hover:bg-stone-800 border border-stone-800 text-stone-400 hover:text-amber-400 flex items-center justify-center transition cursor-pointer"
-              title="Expand sidebar"
-            >
-              <PanelLeftOpen className="w-4 h-4" />
-            </button>
-          </div>
-        ) : (
-          <div className="p-4 border-b border-stone-800/80 flex items-center justify-between shrink-0">
-            <div 
-              onClick={() => setIsStoreSettingsOpen(true)}
-              className="flex items-center gap-3 overflow-hidden cursor-pointer group"
-              title="Click to customize Store Coffee Logo & Branding"
-            >
-              <StoreLogo size="md" />
-              <div className="overflow-hidden">
-                <div className="flex items-center gap-1.5">
-                  <span className="font-extrabold text-base tracking-tight text-stone-100 group-hover:text-amber-400 transition truncate">
-                    {storeInfo?.name || 'Aroma POS'}
-                  </span>
+          ) : (
+            <div className="p-4 border-b border-stone-800/80 flex items-center justify-between shrink-0">
+              <div 
+                onClick={() => setIsStoreSettingsOpen(true)}
+                className="flex items-center gap-3 overflow-hidden cursor-pointer group"
+                title="Click to customize Store Coffee Logo & Branding"
+              >
+                <StoreLogo size="md" />
+                <div className="overflow-hidden">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-extrabold text-base tracking-tight text-stone-100 group-hover:text-amber-400 transition truncate">
+                      {storeInfo?.name || 'Aroma POS'}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-stone-400 font-medium tracking-wider uppercase truncate">
+                    {isKhmer ? (storeInfo?.taglineKhmer || 'ហាងកាហ្វេ Artisan Roastery') : (storeInfo?.tagline || 'Artisan Roastery')}
+                  </p>
                 </div>
-                <p className="text-[11px] text-stone-400 font-medium tracking-wider uppercase truncate">
-                  {isKhmer ? (storeInfo?.taglineKhmer || 'ហាងកាហ្វេ Artisan Roastery') : (storeInfo?.tagline || 'Artisan Roastery')}
-                </p>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={toggleCollapse}
+                  className="hidden lg:flex w-7 h-7 rounded-lg bg-stone-900 hover:bg-stone-800 border border-stone-800 text-stone-400 hover:text-amber-400 items-center justify-center transition cursor-pointer shrink-0"
+                  title="Collapse sidebar"
+                >
+                  <PanelLeftClose className="w-4 h-4" />
+                </button>
+                {/* Mobile Drawer Close Button */}
+                <button
+                  type="button"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="lg:hidden p-1.5 rounded-lg bg-stone-900 hover:bg-stone-800 border border-stone-800 text-stone-400 hover:text-rose-400 flex items-center justify-center transition cursor-pointer shrink-0"
+                  aria-label="Close navigation"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
             </div>
-
-            <button
-              onClick={toggleCollapse}
-              className="w-7 h-7 rounded-lg bg-stone-900 hover:bg-stone-800 border border-stone-800 text-stone-400 hover:text-amber-400 flex items-center justify-center transition cursor-pointer shrink-0"
-              title="Collapse sidebar"
-            >
-              <PanelLeftClose className="w-4 h-4" />
-            </button>
-          </div>
-        )}
+          )}
 
         {/* Station Controls Pill */}
         {!isCollapsed ? (
@@ -333,7 +360,10 @@ export const Sidebar = () => {
                       <div key={item.id} className="relative w-full group">
                         <button
                           type="button"
-                          onClick={() => setActiveTab(item.id)}
+                          onClick={() => {
+                            setActiveTab(item.id);
+                            setIsMobileMenuOpen(false);
+                          }}
                           className={`w-full flex items-center ${
                             isCollapsed ? 'justify-center p-3' : 'justify-between px-3.5 py-2.5'
                           } rounded-xl font-medium text-sm transition-all duration-200 cursor-pointer relative ${
@@ -601,5 +631,6 @@ export const Sidebar = () => {
         )}
       </div>
     </aside>
+    </>
   );
 };

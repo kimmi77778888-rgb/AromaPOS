@@ -20,6 +20,8 @@ import {
   Unlock,
   Store,
   FileSpreadsheet,
+  Menu,
+  X
 } from 'lucide-react';
 import { StoreLogo } from './common/StoreLogo';
 
@@ -27,6 +29,8 @@ export const Header = ({ onOpenAddProduct }) => {
   const { 
     activeTab, 
     user, 
+    isMobileMenuOpen,
+    setIsMobileMenuOpen,
     openCustomerDisplayWindow,
     setIsCustomerPreviewOpen,
     isPosFocusMode,
@@ -109,18 +113,28 @@ export const Header = ({ onOpenAddProduct }) => {
   const { icon: TabIcon, title, subtitle } = getTabInfo();
 
   return (
-    <header className="h-16 bg-stone-950/85 backdrop-blur-xl border-b border-stone-800/80 px-6 flex items-center justify-between sticky top-0 z-20 select-none">
-      {/* Left: Clean Tab Title & Icon Badge */}
-      <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl bg-stone-900 border border-stone-800 flex items-center justify-center text-amber-500 shadow-inner">
+    <header className="h-16 bg-stone-950/85 backdrop-blur-xl border-b border-stone-800/80 px-3.5 sm:px-6 flex items-center justify-between sticky top-0 z-20 select-none">
+      {/* Left: Mobile/iPad Drawer Toggle + Tab Title & Icon Badge */}
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+        <button
+          type="button"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="lg:hidden p-2 rounded-xl bg-stone-900 border border-stone-800 text-stone-300 hover:text-amber-400 hover:bg-stone-850 transition cursor-pointer shrink-0"
+          title="Open Navigation Menu"
+          aria-label="Toggle navigation drawer"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+
+        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-stone-900 border border-stone-800 flex items-center justify-center text-amber-500 shadow-inner shrink-0">
           <TabIcon className="w-4 h-4" />
         </div>
-        <div className="flex items-center gap-2.5">
-          <h1 className="text-base sm:text-lg font-bold text-stone-100 tracking-tight">
+        <div className="flex items-center gap-2 truncate">
+          <h1 className="text-sm sm:text-base md:text-lg font-bold text-stone-100 tracking-tight truncate">
             {title}
           </h1>
-          <span className="hidden sm:inline-block w-1 h-1 rounded-full bg-stone-600" />
-          <p className="text-xs text-stone-400 font-medium hidden sm:inline-block">
+          <span className="hidden md:inline-block w-1 h-1 rounded-full bg-stone-600 shrink-0" />
+          <p className="text-xs text-stone-400 font-medium hidden md:inline-block truncate">
             {subtitle}
           </p>
         </div>

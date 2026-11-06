@@ -39,7 +39,8 @@ import {
   ExternalLink,
   ChevronLeft,
   ChevronRight,
-  Copy
+  Copy,
+  X
 } from 'lucide-react';
 import { CheckoutModal } from './CheckoutModal';
 import { ReceiptModal } from './ReceiptModal';
@@ -96,6 +97,7 @@ export const PosTerminal = () => {
   const [editingNoteId, setEditingNoteId] = useState(null);
   const [noteInput, setNoteInput] = useState('');
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
 
   // Horizontal Category Scroll states & refs
   const categoryScrollRef = useRef(null);
@@ -636,11 +638,34 @@ export const PosTerminal = () => {
           </div>
         </div>
 
-        {/* Persistent Real-Time Cart / Order Ticket (Right Side) */}
-        <div className="w-80 sm:w-96 flex flex-col bg-stone-900/60 border-l border-stone-800 shrink-0">
+        {/* Mobile Cart Backdrop Overlay */}
+        {isMobileCartOpen && (
+          <div 
+            className="fixed inset-0 bg-black/75 backdrop-blur-xs z-50 lg:hidden animate-fade-in"
+            onClick={() => setIsMobileCartOpen(false)}
+          />
+        )}
+
+        {/* Real-Time Cart / Order Ticket (Side-by-side on lg+, Slide-over Drawer on Phone/iPad) */}
+        <div 
+          className={`
+            fixed inset-y-0 right-0 z-50 w-full sm:w-96 bg-stone-950/98 shadow-2xl flex flex-col border-l border-stone-800 transition-transform duration-300 ease-in-out
+            lg:static lg:w-80 xl:w-96 lg:translate-x-0 lg:shadow-none lg:bg-stone-900/60 lg:flex
+            ${isMobileCartOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
+          `}
+        >
           {/* Cart Header */}
           <div className="p-4 border-b border-stone-800 flex items-center justify-between bg-stone-950/70">
             <div className="flex items-center gap-2">
+              {/* Mobile Drawer Close Button */}
+              <button
+                type="button"
+                onClick={() => setIsMobileCartOpen(false)}
+                className="lg:hidden p-1.5 rounded-lg bg-stone-900 hover:bg-stone-800 border border-stone-800 text-stone-400 hover:text-stone-200 transition mr-1 cursor-pointer"
+                title="Close Ticket"
+              >
+                <X className="w-4 h-4" />
+              </button>
               <ShoppingBag className="w-4 h-4 text-amber-500" />
               <h3 className="text-sm font-bold text-stone-100">{t('order_ticket')}</h3>
               {cartTotals.itemCount > 0 && (
@@ -980,7 +1005,10 @@ export const PosTerminal = () => {
               <button
                 type="button"
                 disabled={cart.length === 0}
-                onClick={() => setIsCheckoutOpen(true)}
+                onClick={() => {
+                  setIsMobileCartOpen(false);
+                  setIsCheckoutOpen(true);
+                }}
                 className="w-full py-3.5 px-4 bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-300 text-stone-950 font-black text-sm rounded-xl shadow-lg shadow-amber-950/50 flex items-center justify-between transition duration-200 active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer glow-amber"
               >
                 <div className="flex items-center gap-2">
@@ -996,6 +1024,29 @@ export const PosTerminal = () => {
           </div>
         </div>
       </div>
+
+      {/* Floating Bottom Cart Action Bar for Mobile Phones & Tablets */}
+      {!isMobileCartOpen && cartTotals.itemCount > 0 && (
+        <div className="lg:hidden fixed bottom-16 sm:bottom-4 left-3 right-3 z-30 animate-in fade-in slide-in-from-bottom-2 duration-200">
+          <button
+            type="button"
+            onClick={() => setIsMobileCartOpen(true)}
+            className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 text-stone-950 font-black text-sm flex items-center justify-between shadow-2xl shadow-amber-950/80 active:scale-[0.98] transition cursor-pointer"
+          >
+            <div className="flex items-center gap-2.5">
+              <span className="w-7 h-7 rounded-full bg-stone-950 text-amber-400 font-mono text-xs flex items-center justify-center font-bold">
+                {cartTotals.itemCount}
+              </span>
+              <span className="font-sans font-bold">{isKhmer ? 'ពិនិត្យវិក្កយបត្រ' : 'View Order Ticket'}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-base font-black">${cartTotals.total.toFixed(2)}</span>
+              <span className="text-xs font-semibold">({formatKHR(cartTotals.total)})</span>
+              <ArrowRight className="w-4 h-4 stroke-[3]" />
+            </div>
+          </button>
+        </div>
+      )}
 
       {/* Modals */}
       <ProductModifierModal

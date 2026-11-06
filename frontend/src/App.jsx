@@ -22,6 +22,7 @@ import { CustomerDisplay } from './components/pos/CustomerDisplay';
 import { UserAccountModal } from './components/auth/UserAccountModal';
 import { StoreSettingsModal } from './components/common/StoreSettingsModal';
 import { CambodiaExcelInterface } from './components/excel/CambodiaExcelInterface';
+import { MobileBottomNav } from './components/common/MobileBottomNav';
 
 export const AppContent = () => {
   const { 
@@ -84,7 +85,7 @@ export const AppContent = () => {
         )}
 
         {/* Dynamic View Router with Role Protection */}
-        <main className="flex-1 flex overflow-hidden relative">
+        <main className="flex-1 flex overflow-hidden relative pb-14 md:pb-0">
           {activeTab === 'pos' && <PosTerminal />}
           {activeTab === 'dashboard' && <Dashboard />}
           {activeTab === 'inventory' && (
@@ -96,6 +97,9 @@ export const AppContent = () => {
           {activeTab === 'staff' && <StaffManagement />}
           {activeTab === 'cambodia-excel' && <CambodiaExcelInterface />}
         </main>
+
+        {/* Mobile Phone Bottom Navigation (Hidden on iPad & Desktop) */}
+        {!isFocusingPos && <MobileBottomNav />}
       </div>
 
       {/* In-App Customer Display Live Preview Slide-Over / Modal */}
