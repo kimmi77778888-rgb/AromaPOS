@@ -1,0 +1,273 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-khmer-active, "Kantumruy Pro"), "Noto Sans Khmer", "Plus Jakarta Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-heading: var(--font-khmer-active, "Kantumruy Pro"), "Outfit", "Noto Sans Khmer", system-ui, -apple-system, sans-serif;
+  --font-khmer: var(--font-khmer-active, "Kantumruy Pro"), "Noto Sans Khmer", "Koh Santepheap", sans-serif;
+}
+
+@layer base {
+  :root {
+    --font-khmer-active: 'Kantumruy Pro', 'Noto Sans Khmer', sans-serif;
+    --font-heading: var(--font-khmer-active), 'Outfit', 'Noto Sans Khmer', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-body: var(--font-khmer-active), 'Plus Jakarta Sans', 'Noto Sans Khmer', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  html {
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    font-family: var(--font-body);
+    margin: 0;
+    padding: 0;
+    background-color: #171513;
+    color: #e7e5e4;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+  }
+
+  /* Dedicated clean typography optimizations for Khmer language in Cambodia */
+  [lang="km"], .lang-km, .font-khmer {
+    font-family: var(--font-khmer-active), 'Kantumruy Pro', 'Noto Sans Khmer', sans-serif !important;
+    line-height: 1.6;
+    letter-spacing: 0.01em;
+  }
+
+  /* Monospace fallback with Khmer preservation to prevent distorted/inverted font rendering on Windows */
+  code, kbd, samp, pre, .font-mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", var(--font-khmer-active), monospace;
+    font-feature-settings: "tnum" 1;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(30, 27, 24, 0.6);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(180, 130, 80, 0.35);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(217, 119, 6, 0.6);
+}
+
+/* Glassmorphism utility */
+.glass-panel {
+  background: rgba(38, 33, 29, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(245, 158, 11, 0.12);
+}
+
+.glass-card {
+  background: rgba(44, 38, 33, 0.6);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Universal Print Styling for Receipts, Shift Slips & 1-Page A4 Reports */
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  
+  /* Thermal 80mm Customer Receipt */
+  #printable-receipt, #printable-receipt * {
+    visibility: visible !important;
+  }
+  #printable-receipt {
+    display: block !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 80mm !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    padding: 8px !important;
+    font-family: var(--font-khmer-active), 'Kantumruy Pro', 'Noto Sans Khmer', 'Courier New', Courier, monospace !important;
+  }
+
+  /* Thermal 80mm Shift X/Z-Report Slip */
+  #pos-shift-print-slip, #pos-shift-print-slip * {
+    visibility: visible !important;
+  }
+  #pos-shift-print-slip {
+    display: block !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 80mm !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    padding: 8px !important;
+    font-family: var(--font-khmer-active), 'Kantumruy Pro', 'Noto Sans Khmer', 'Courier New', Courier, monospace !important;
+  }
+
+  /* 1-Page A4 Management Reports Sheet */
+  #pos-1page-print-sheet, #pos-1page-print-sheet * {
+    visibility: visible !important;
+  }
+  #pos-1page-print-sheet {
+    display: block !important;
+    position: fixed !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 8mm 10mm !important;
+    page-break-inside: avoid !important;
+  }
+}
+
+/* KHQR Laser Sweep Scanner Effect */
+@keyframes laser-sweep {
+  0% { top: 2%; opacity: 0.2; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { top: 96%; opacity: 0.2; }
+}
+
+.animate-laser {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, #ef4444 20%, #f43f5e 50%, #ef4444 80%, transparent 100%);
+  box-shadow: 0 0 12px 3px rgba(239, 68, 68, 0.7);
+  animation: laser-sweep 2.4s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+/* Modern POS UX/UI Enhancements */
+.pos-card-hover {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.pos-card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(245, 158, 11, 0.25);
+}
+.pos-card-hover:active {
+  transform: scale(0.98);
+}
+
+.glow-amber {
+  box-shadow: 0 0 20px -3px rgba(245, 158, 11, 0.3);
+}
+
+.glow-emerald {
+  box-shadow: 0 0 20px -3px rgba(16, 185, 129, 0.3);
+}
+
+/* Keyboard Shortcut Badge */
+.kbd-shortcut {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 6px;
+  background: rgba(44, 38, 33, 0.85);
+  color: #a8a29e;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* Modern Pill & Tab Navigation */
+.segmented-tab-container {
+  background: rgba(18, 16, 14, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 4px;
+}
+
+.segmented-tab-active {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: #1c1917;
+  font-weight: 800;
+  box-shadow: 0 4px 14px -2px rgba(245, 158, 11, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.segmented-tab-inactive {
+  color: #a8a29e;
+  transition: all 0.15s ease;
+}
+.segmented-tab-inactive:hover {
+  color: #f5f5f4;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Modern KPI Metric Card */
+.modern-kpi-card {
+  position: relative;
+  background: linear-gradient(180deg, rgba(32, 28, 25, 0.85) 0%, rgba(24, 21, 18, 0.95) 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 20px;
+  padding: 16px 18px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
+}
+.modern-kpi-card:hover {
+  border-color: rgba(245, 158, 11, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.6), 0 0 16px -2px rgba(245, 158, 11, 0.15);
+}
+
+/* Modern Table Row */
+.modern-table-row {
+  transition: background-color 0.15s ease;
+}
+.modern-table-row:hover {
+  background-color: rgba(255, 255, 255, 0.035);
+}
+
+/* Quick Restock Action Button Chip */
+.quick-restock-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-weight: 800;
+  font-size: 11px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.25) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #fbbf24;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+.quick-restock-chip:hover {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: #1c1917;
+  border-color: #f59e0b;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35);
+}
+.quick-restock-chip:active {
+  transform: scale(0.96);
+}
+
+
+
