@@ -214,21 +214,11 @@ export const saveStoredAuditLogs = (logs) => {
 
 export const api = {
   async login(email, password) {
-    try {
-      const res = await fetch(`${BASE_URL}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        saveStoredUser(data.user);
-        return { success: true, user: data.user, token: data.token };
-      }
-    } catch (err) {}
+    const cleanEmail = (email || '').trim().toLowerCase();
+    const p = String(password || '').trim();
 
+    // 1. Instant local authentication (0ms response, immune to sleeping server or 401s)
     const staffList = getStoredStaff();
-    const cleanEmail = email.trim().toLowerCase();
     const found = staffList.find(
       (u) => 
         u.email.toLowerCase() === cleanEmail ||
@@ -238,8 +228,8 @@ export const api = {
         (cleanEmail === 'cashier' && u.role === 'CASHIER') ||
         (cleanEmail === 'barista' && u.role === 'BARISTA')
     );
+
     if (found) {
-      const p = String(password).trim();
       const expectedPassword = found.password || 
         (found.role === 'ADMIN' ? '77778888' : 
          found.role === 'MANAGER' ? 'manager123' : 
@@ -279,6 +269,16 @@ export const api = {
           };
           saveStoredAuditLogs([logEntry, ...getStoredAuditLogs()]);
         } catch (e) {}
+
+        // Non-blocking background sync with backend if online
+        try {
+          fetch(`${BASE_URL}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: found.email, password: p })
+          }).catch(() => {});
+        } catch (e) {}
+
         return { success: true, user: found, token: 'local-token-' + found.id };
       }
 
@@ -299,25 +299,26 @@ export const api = {
       throw new Error('Incorrect password. Please enter your valid credentials.');
     }
 
-    throw new Error('No registered staff account found with this email.');
-  },
-
-  async pinLogin(pin) {
+    // 2. Fallback to server if account is not found in local cache
     try {
-      const res = await fetch(`${BASE_URL}/auth/pin-login`, {
+      const res = await fetch(`${BASE_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pin: pin.trim() })
+        body: JSON.stringify({ email, password })
       });
       if (res.ok) {
         const data = await res.json();
         saveStoredUser(data.user);
         return { success: true, user: data.user, token: data.token };
       }
-    } catch (e) {}
+    } catch (err) {}
 
+    throw new Error('No registered staff account found with this email.');
+  },
+
+  async pinLogin(pin) {
+    const p = (pin || '').trim();
     const staffList = getStoredStaff();
-    const p = pin.trim();
     const found = staffList.find((u) => 
       u.pin === p || 
       u.pinCode === p || 
@@ -328,8 +329,29 @@ export const api = {
     );
     if (found) {
       saveStoredUser(found);
+      try {
+        fetch(`${BASE_URL}/auth/pin-login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pin: p })
+        }).catch(() => {});
+      } catch (e) {}
       return { success: true, user: found, token: 'local-token-' + found.id };
     }
+
+    try {
+      const res = await fetch(`${BASE_URL}/auth/pin-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin: p })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        saveStoredUser(data.user);
+        return { success: true, user: data.user, token: data.token };
+      }
+    } catch (e) {}
+
     throw new Error('Invalid 4-digit PIN code.');
   },
 
