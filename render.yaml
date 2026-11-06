@@ -32,7 +32,7 @@ services:
   # 2. Next.js Enterprise Frontend POS & Customer Display
   # ---------------------------------------------------------------------------
   - type: web
-    name: aromapos-frontend
+    name: aromapos
     runtime: node
     rootDir: frontend
     plan: free
