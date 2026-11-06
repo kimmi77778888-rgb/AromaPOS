@@ -1,0 +1,49 @@
+# Render Blueprint Specification for AromaPOS
+# Automatic 1-Click Full-Stack Deployment (Spring Boot + Next.js)
+
+services:
+  # ---------------------------------------------------------------------------
+  # 1. Spring Boot Backend REST API Service
+  # ---------------------------------------------------------------------------
+  - type: web
+    name: aromapos-backend
+    runtime: docker
+    rootDir: demo
+    dockerfilePath: Dockerfile
+    plan: free
+    region: singapore
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: BAKONG_API_URL
+        value: https://api-bakong.nbc.gov.kh
+      - key: BAKONG_TOKEN
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImlkIjoiODEwNjdlMjA1YTRhNGFiNyJ9LCJpYXQiOjE3OTI4MzQwMzcsImV4cCI6MTgwMDYxMDAzN30.IbqGcaBB5AqODmpYbF98CRrNJas4j2verS_ARO_SfoQ
+      - key: BAKONG_MERCHANT_ID
+        value: sophara_len@bkrt
+      - key: TELEGRAM_ENABLED
+        value: "true"
+      - key: TELEGRAM_BOT_TOKEN
+        value: 8789211551:AAExoknzxZxTQ6QfW9aoEphQ5YpS9GyDabs
+      - key: TELEGRAM_CHAT_ID
+        value: "1886655363"
+
+  # ---------------------------------------------------------------------------
+  # 2. Next.js Enterprise Frontend POS & Customer Display
+  # ---------------------------------------------------------------------------
+  - type: web
+    name: aromapos-frontend
+    runtime: node
+    rootDir: frontend
+    plan: free
+    region: singapore
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: BACKEND_URL
+        fromService:
+          type: web
+          name: aromapos-backend
+          property: host
