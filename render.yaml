@@ -38,12 +38,17 @@ services:
     plan: free
     region: singapore
     buildCommand: npm install && npm run build
-    startCommand: npm run start
+    startCommand: npm run start -- -H 0.0.0.0
     envVars:
       - key: NODE_ENV
         value: production
+      - key: NODE_VERSION
+        value: 20.18.0
+      - key: HOSTNAME
+        value: 0.0.0.0
       - key: BACKEND_URL
         fromService:
           type: web
           name: aromapos-backend
           property: host
+
