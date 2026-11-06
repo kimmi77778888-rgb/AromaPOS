@@ -19,6 +19,7 @@ import {
   Lock,
   Unlock,
   Store,
+  FileSpreadsheet,
 } from 'lucide-react';
 import { StoreLogo } from './common/StoreLogo';
 
@@ -89,6 +90,12 @@ export const Header = ({ onOpenAddProduct }) => {
           icon: Users,
           title: isKhmer ? 'បុគ្គលិក & សិទ្ធិប្រើប្រាស់' : 'Staff & Permissions',
           subtitle: isKhmer ? 'គណនីបុគ្គលិក & កូដ PIN' : 'Shift roster & PIN codes'
+        };
+      case 'cambodia-excel':
+        return {
+          icon: FileSpreadsheet,
+          title: isKhmer ? 'តារាងស្តង់ដារកម្ពុជា & Excel' : 'Cambodia Standard Excel Master',
+          subtitle: isKhmer ? 'បញ្ជីរដ្ឋបាលខេត្ត-ក្រុងទាំង២៥ តម្លៃទំនិញ ($/៛) & នាំចេញ Excel' : 'Official 25 Provinces, Menu Catalog ($/៛) & Clean Excel Lists'
         };
       default:
         return { 

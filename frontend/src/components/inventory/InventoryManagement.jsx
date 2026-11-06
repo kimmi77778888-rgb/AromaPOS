@@ -65,7 +65,8 @@ export const InventoryManagement = ({ onOpenAddModal }) => {
     recordStockAdjustment,
     createIngredient,
     updateIngredient,
-    deleteIngredient
+    deleteIngredient,
+    setActiveTab
   } = useApp();
 
   const { isKhmer, khrExchangeRate, formatUSD, formatKHR } = useLanguage();
@@ -501,6 +502,23 @@ export const InventoryManagement = ({ onOpenAddModal }) => {
                           : 'Full master workbook: Catalog + Raw Inventory + Movements Audit + 25 Provinces NIS standard'}
                       </p>
                     </div>
+                  </button>
+
+                  <div className="my-1 border-t border-stone-800/80"></div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsExportMenuOpen(false);
+                      setActiveTab('cambodia-excel');
+                    }}
+                    className="w-full p-2.5 rounded-xl bg-emerald-950/40 hover:bg-emerald-900/60 text-left transition flex items-center justify-between group cursor-pointer border border-emerald-500/40 text-emerald-300"
+                  >
+                    <span className="flex items-center gap-2 text-xs font-bold">
+                      <CambodiaFlag className="w-4 h-3 rounded-xs" />
+                      <span>{isKhmer ? 'បើកផ្ទាំងតារាង Excel ស្តង់ដារកម្ពុជា' : 'Open Cambodia Excel Interface'}</span>
+                    </span>
+                    <span className="text-xs group-hover:translate-x-1 transition-transform">→</span>
                   </button>
                 </div>
               </div>

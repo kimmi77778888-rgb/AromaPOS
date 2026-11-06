@@ -22,7 +22,8 @@ import {
   PanelLeftOpen,
   Globe,
   Sparkles,
-  Store
+  Store,
+  FileSpreadsheet
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { ROLE_PERMISSIONS } from '../services/coffeeData';
@@ -162,6 +163,14 @@ export const Sidebar = () => {
           icon: Users,
           badge: 'Manage',
           badgeColor: 'bg-amber-950 text-amber-300 border border-amber-800'
+        },
+        {
+          id: 'cambodia-excel',
+          label: 'Cambodia Excel Lists',
+          labelKm: 'តារាងស្តង់ដារកម្ពុជា & Excel',
+          icon: FileSpreadsheet,
+          badge: '🇰🇭 25 Lists',
+          badgeColor: 'bg-emerald-950 text-emerald-400 border border-emerald-800'
         }
       ]
     }

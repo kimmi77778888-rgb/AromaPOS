@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { CambodiaFlag } from '../common/FlagIcons';
 import { 
   Receipt, 
   Search, 
@@ -44,7 +45,8 @@ export const OrderHistory = () => {
     userRole,
     isCashier,
     isManagerOrAdmin,
-    isAdmin
+    isAdmin,
+    setActiveTab
   } = useApp();
   const { isKhmer, formatKHR } = useLanguage();
 
@@ -455,6 +457,16 @@ export const OrderHistory = () => {
 
         {/* Action Buttons */}
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setActiveTab('cambodia-excel')}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-600/60 text-emerald-300 text-xs font-bold transition cursor-pointer shadow-md"
+            title={isKhmer ? 'បើកផ្ទាំងតារាងស្តង់ដារកម្ពុជា & Excel' : 'Open Cambodia Standard Excel Interface'}
+          >
+            <CambodiaFlag className="w-4 h-3 rounded-xs" />
+            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
+            <span>{isKhmer ? 'ស្តង់ដារកម្ពុជា & Excel' : 'Cambodia Standard Excel'}</span>
+          </button>
           <button
             type="button"
             onClick={exportToExcel}

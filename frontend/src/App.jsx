@@ -21,6 +21,7 @@ import { StaffShiftModal } from './components/auth/StaffShiftModal';
 import { CustomerDisplay } from './components/pos/CustomerDisplay';
 import { UserAccountModal } from './components/auth/UserAccountModal';
 import { StoreSettingsModal } from './components/common/StoreSettingsModal';
+import { CambodiaExcelInterface } from './components/excel/CambodiaExcelInterface';
 
 export const AppContent = () => {
   const { 
@@ -93,6 +94,7 @@ export const AppContent = () => {
           {activeTab === 'kds' && <KitchenDisplaySystem />}
           {activeTab === 'reports' && <ManagementReports />}
           {activeTab === 'staff' && <StaffManagement />}
+          {activeTab === 'cambodia-excel' && <CambodiaExcelInterface />}
         </main>
       </div>
 

@@ -84,7 +84,7 @@ export const exportCambodiaStandardCatalog = ({
   storeInfo = {},
   user = null,
   exchangeRate = 4100,
-  mode = 'all', // 'all' | 'catalog' | 'inventory' | 'movements'
+  mode = 'all', // 'all' | 'catalog' | 'inventory' | 'movements' | 'provinces'
   customFileName = null
 }) => {
   const wb = XLSX.utils.book_new();
@@ -494,91 +494,93 @@ export const exportCambodiaStandardCatalog = ({
   // =========================================================================
   // SHEET 4: OFFICIAL CAMBODIA ADMINISTRATIVE STANDARD (ស្តង់ដាររាជធានី-ខេត្តកម្ពុជា)
   // =========================================================================
-  const adminRows = [
-    ['🇰🇭 ព្រះរាជាណាចក្រកម្ពុជា • KINGDOM OF CAMBODIA'],
-    ['តារាងស្តង់ដាររាជធានី-ខេត្ត និងកូដប្រៃសណីយ៍ផ្លូវការ • OFFICIAL CAMBODIA ADMINISTRATIVE & POSTAL CODES STANDARD'],
-    ['ឯកសារយោង: ក្រសួងមហាផ្ទៃ និងវិទ្យាស្ថានជាតិស្ថិតិ (NIS) | National Bank of Cambodia (NBC) Commercial Guidelines'],
-    [],
-    [
-      'ល.រ\nNo.',
-      'កូដខេត្ត\nISO Code',
-      'រាជធានី-ខេត្ត (ភាសាខ្មែរ)\nProvince Name (Khmer)',
-      'រាជធានី-ខេត្ត (អង់គ្លេស)\nProvince Name (English)',
-      'ប្រភេទរដ្ឋបាល\nAdmin Type',
-      'ទីរួមខេត្ត / រាជធានី\nProvincial Capital / City',
-      'លេខកូដប្រៃសណីយ៍\nPostal Code',
-      'ចំនួនក្រុង-ស្រុក-ខណ្ឌ\nDistricts Count'
-    ]
-  ];
+  if (mode === 'all' || mode === 'provinces' || mode === 'standards') {
+    const adminRows = [
+      ['🇰🇭 ព្រះរាជាណាចក្រកម្ពុជា • KINGDOM OF CAMBODIA'],
+      ['តារាងស្តង់ដាររាជធានី-ខេត្ត និងកូដប្រៃសណីយ៍ផ្លូវការ • OFFICIAL CAMBODIA ADMINISTRATIVE & POSTAL CODES STANDARD'],
+      ['ឯកសារយោង: ក្រសួងមហាផ្ទៃ និងវិទ្យាស្ថានជាតិស្ថិតិ (NIS) | National Bank of Cambodia (NBC) Commercial Guidelines'],
+      [],
+      [
+        'ល.រ\nNo.',
+        'កូដខេត្ត\nISO Code',
+        'រាជធានី-ខេត្ត (ភាសាខ្មែរ)\nProvince Name (Khmer)',
+        'រាជធានី-ខេត្ត (អង់គ្លេស)\nProvince Name (English)',
+        'ប្រភេទរដ្ឋបាល\nAdmin Type',
+        'ទីរួមខេត្ត / រាជធានី\nProvincial Capital / City',
+        'លេខកូដប្រៃសណីយ៍\nPostal Code',
+        'ចំនួនក្រុង-ស្រុក-ខណ្ឌ\nDistricts Count'
+      ]
+    ];
 
-  CAMBODIA_PROVINCES_STANDARD.forEach((p, idx) => {
+    CAMBODIA_PROVINCES_STANDARD.forEach((p, idx) => {
+      adminRows.push([
+        idx + 1,
+        p.code,
+        p.nameKm,
+        p.nameEn,
+        `${p.typeKm} / ${p.typeEn}`,
+        p.capitalTown,
+        p.postalCode,
+        p.districtsCount
+      ]);
+    });
+
+    adminRows.push([]);
     adminRows.push([
-      idx + 1,
-      p.code,
-      p.nameKm,
-      p.nameEn,
-      `${p.typeKm} / ${p.typeEn}`,
-      p.capitalTown,
-      p.postalCode,
-      p.districtsCount
+      'បទប្បញ្ញត្តិពាណិជ្ជកម្មកម្ពុជា / CAMBODIA COMMERCIAL & RETAIL COMPLIANCE NOTES',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      ''
     ]);
-  });
+    adminRows.push([
+      '១. រូបិយវត្ថុ & អត្រាប្តូរប្រាក់ (NBC Standard):',
+      'ការបង្ហាញតម្លៃត្រូវតែមានទាំងប្រាក់ដុល្លារ ($ USD) និងប្រាក់រៀល (៛ KHR)។ អត្រាប្តូរប្រាក់ស្ដង់ដារទីផ្សារ & ធនាគារជាតិ: 1 USD = 4,100 KHR។'
+    ]);
+    adminRows.push([
+      '២. ការទូទាត់ឌីជីថល (KHQR Bakong):',
+      'ស្តង់ដារកូដ KHQR ជាតិអនុលោមតាម EMVCo ISO 20022 ដែលអាចស្កេនទូទាត់ឆ្លងធនាគារទាំងអស់នៅកម្ពុជា។'
+    ]);
+    adminRows.push([
+      '៣. ពន្ធលើតម្លៃបន្ថែម (GDT VAT Rate):',
+      'អាករលើតម្លៃបន្ថែម (VAT) ស្តង់ដារទូទៅនៅកម្ពុជាគឺ ១០% (10%) លើទំនិញ និងសេវាទូទៅក្នុងស្រុក។'
+    ]);
+    adminRows.push([
+      '៤. ក្បួនបង្គត់ប្រាក់រៀល (Cash Rounding):',
+      'ការទូទាត់ជាសាច់ប្រាក់សុទ្ធជារៀលត្រូវបង្គត់ទៅជិតបំផុតត្រឹម ១០០ រៀល (100 KHR) ដើម្បីងាយស្រួលអាប់សាច់ប្រាក់។'
+    ]);
 
-  adminRows.push([]);
-  adminRows.push([
-    'បទប្បញ្ញត្តិពាណិជ្ជកម្មកម្ពុជា / CAMBODIA COMMERCIAL & RETAIL COMPLIANCE NOTES',
-    '',
-    '',
-    '',
-    '',
-    '',
-    '',
-    ''
-  ]);
-  adminRows.push([
-    '១. រូបិយវត្ថុ & អត្រាប្តូរប្រាក់ (NBC Standard):',
-    'ការបង្ហាញតម្លៃត្រូវតែមានទាំងប្រាក់ដុល្លារ ($ USD) និងប្រាក់រៀល (៛ KHR)។ អត្រាប្តូរប្រាក់ស្ដង់ដារទីផ្សារ & ធនាគារជាតិ: 1 USD = 4,100 KHR។'
-  ]);
-  adminRows.push([
-    '២. ការទូទាត់ឌីជីថល (KHQR Bakong):',
-    'ស្តង់ដារកូដ KHQR ជាតិអនុលោមតាម EMVCo ISO 20022 ដែលអាចស្កេនទូទាត់ឆ្លងធនាគារទាំងអស់នៅកម្ពុជា។'
-  ]);
-  adminRows.push([
-    '៣. ពន្ធលើតម្លៃបន្ថែម (GDT VAT Rate):',
-    'អាករលើតម្លៃបន្ថែម (VAT) ស្តង់ដារទូទៅនៅកម្ពុជាគឺ ១០% (10%) លើទំនិញ និងសេវាទូទៅក្នុងស្រុក។'
-  ]);
-  adminRows.push([
-    '៤. ក្បួនបង្គត់ប្រាក់រៀល (Cash Rounding):',
-    'ការទូទាត់ជាសាច់ប្រាក់សុទ្ធជារៀលត្រូវបង្គត់ទៅជិតបំផុតត្រឹម ១០០ រៀល (100 KHR) ដើម្បីងាយស្រួលអាប់សាច់ប្រាក់។'
-  ]);
-
-  const wsAdmin = XLSX.utils.aoa_to_sheet(adminRows);
-  formatCambodianWorksheet(
-    wsAdmin,
-    [
-      { s: { r: 0, c: 0 }, e: { r: 0, c: 7 } },
-      { s: { r: 1, c: 0 }, e: { r: 1, c: 7 } },
-      { s: { r: 2, c: 0 }, e: { r: 2, c: 7 } },
-      { s: { r: 30, c: 0 }, e: { r: 30, c: 7 } },
-      { s: { r: 31, c: 1 }, e: { r: 31, c: 7 } },
-      { s: { r: 32, c: 1 }, e: { r: 32, c: 7 } },
-      { s: { r: 33, c: 1 }, e: { r: 33, c: 7 } },
-      { s: { r: 34, c: 1 }, e: { r: 34, c: 7 } }
-    ],
-    [
-      8,  // No.
-      14, // ISO Code
-      26, // Name Khmer
-      24, // Name English
-      18, // Type
-      22, // Capital
-      16, // Postal Code
-      18  // Districts Count
-    ],
-    [{ hpt: 26 }, { hpt: 20 }, { hpt: 16 }, { hpt: 10 }, { hpt: 28 }]
-  );
-  const adminSheetName = (mode === 'all') ? '4_Cambodia_Standard_ស្តង់ដារ' : 'Cambodia_Standard_ស្តង់ដារ';
-  XLSX.utils.book_append_sheet(wb, wsAdmin, adminSheetName);
+    const wsAdmin = XLSX.utils.aoa_to_sheet(adminRows);
+    formatCambodianWorksheet(
+      wsAdmin,
+      [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 7 } },
+        { s: { r: 1, c: 0 }, e: { r: 1, c: 7 } },
+        { s: { r: 2, c: 0 }, e: { r: 2, c: 7 } },
+        { s: { r: 30, c: 0 }, e: { r: 30, c: 7 } },
+        { s: { r: 31, c: 1 }, e: { r: 31, c: 7 } },
+        { s: { r: 32, c: 1 }, e: { r: 32, c: 7 } },
+        { s: { r: 33, c: 1 }, e: { r: 33, c: 7 } },
+        { s: { r: 34, c: 1 }, e: { r: 34, c: 7 } }
+      ],
+      [
+        8,  // No.
+        14, // ISO Code
+        26, // Name Khmer
+        24, // Name English
+        18, // Type
+        22, // Capital
+        16, // Postal Code
+        18  // Districts Count
+      ],
+      [{ hpt: 26 }, { hpt: 20 }, { hpt: 16 }, { hpt: 10 }, { hpt: 28 }]
+    );
+    const adminSheetName = (mode === 'all') ? '4_Cambodia_Standard_ស្តង់ដារ' : 'Cambodia_25_Provinces_ស្តង់ដារ';
+    XLSX.utils.book_append_sheet(wb, wsAdmin, adminSheetName);
+  }
 
   // Trigger Excel File Download
   const filename = customFileName || (
@@ -588,6 +590,8 @@ export const exportCambodiaStandardCatalog = ({
       ? `AromaPOS_Cambodia_Inventory_${dateISO}.xlsx`
       : mode === 'movements'
       ? `AromaPOS_Stock_Movements_${dateISO}.xlsx`
+      : mode === 'provinces' || mode === 'standards'
+      ? `AromaPOS_Cambodia_25_Provinces_${dateISO}.xlsx`
       : `AromaPOS_Cambodia_Standard_Master_${dateISO}.xlsx`
   );
 
