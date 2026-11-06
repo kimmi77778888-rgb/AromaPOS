@@ -14,7 +14,6 @@ import {
   X, 
   Eye, 
   EyeOff, 
-  RefreshCw,
   BadgeCheck,
   Trash2,
   Loader2
@@ -68,12 +67,6 @@ export const UserAccountModal = ({ isOpen, onClose }) => {
   }, [user, isOpen]);
 
   if (!isOpen || !user) return null;
-
-  const handleGeneratePin = () => {
-    const randomPin = Math.floor(1000 + Math.random() * 9000).toString();
-    setFormData((prev) => ({ ...prev, pin: randomPin }));
-    showToast(isKhmer ? `បានបង្កើត PIN ថ្មី: ${randomPin}` : `Generated new PIN: ${randomPin}`, 'info');
-  };
 
   const handlePhotoUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -336,19 +329,9 @@ export const UserAccountModal = ({ isOpen, onClose }) => {
 
               {/* 4-Digit POS PIN */}
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-[11px] uppercase font-bold text-stone-400 block">
-                    {isKhmer ? 'លេខសម្ងាត់ PIN (៤ ខ្ទង់)' : '4-Digit POS PIN'}
-                  </label>
-                  <button
-                    type="button"
-                    onClick={handleGeneratePin}
-                    className="text-[10px] text-amber-400 hover:text-amber-300 font-semibold cursor-pointer flex items-center gap-1"
-                  >
-                    <RefreshCw className="w-2.5 h-2.5" />
-                    <span>{isKhmer ? 'បង្កើត PIN ថ្មី' : 'Random PIN'}</span>
-                  </button>
-                </div>
+                <label className="text-[11px] uppercase font-bold text-stone-400 block mb-1">
+                  {isKhmer ? 'លេខសម្ងាត់ PIN (៤ ខ្ទង់)' : '4-Digit POS PIN'}
+                </label>
                 <div className="relative">
                   <KeyRound className="w-4 h-4 text-amber-500 absolute left-3 top-2.5" />
                   <input

@@ -162,11 +162,11 @@ export const LoginScreen = () => {
               </div>
             </div>
 
-            {/* Password / Passcode */}
+            {/* Passcode / PIN */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-semibold text-stone-400 uppercase tracking-wider">
-                  Passcode / Password (77778888)
+                  Passcode / PIN
                 </label>
                 <button
                   type="button"
@@ -185,15 +185,18 @@ export const LoginScreen = () => {
                 <Lock className="w-4 h-4 text-stone-500 group-focus-within:text-amber-400 absolute left-4 top-1/2 -translate-y-1/2 transition" />
                 <input
                   type={showPassword ? 'text' : 'password'}
-                  name="station_passcode"
-                  id="station_passcode"
+                  name="station_code"
+                  id="station_code"
                   value={password}
                   onChange={(e) => { setPassword(e.target.value); setError(''); }}
-                  placeholder="77778888"
-                  autoComplete="new-password"
+                  placeholder="••••••••"
+                  autoComplete="off"
+                  aria-autocomplete="none"
                   data-lpignore="true"
                   data-1p-ignore="true"
+                  data-bwignore="true"
                   data-form-type="other"
+                  data-protonpass-ignore="true"
                   spellCheck="false"
                   required
                   className="w-full pl-11 pr-12 py-3.5 bg-stone-900 border border-stone-800 hover:border-stone-700 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 text-stone-100 text-sm rounded-2xl outline-none transition placeholder:text-stone-600 font-mono"

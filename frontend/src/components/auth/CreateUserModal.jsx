@@ -16,7 +16,6 @@ import {
   Check, 
   Eye, 
   EyeOff, 
-  Shuffle,
   Upload,
   Trash2,
   Loader2
@@ -58,12 +57,6 @@ export const CreateUserModal = ({ isOpen, onClose, onUserCreated }) => {
       hourlyRate: defaultWage,
       permissions: [...standardPerms]
     }));
-  };
-
-  const handleGeneratePin = () => {
-    const randomPin = Math.floor(1000 + Math.random() * 9000).toString();
-    setFormData((prev) => ({ ...prev, pin: randomPin }));
-    showToast(isKhmer ? `បានបង្កើតលេខកូដ PIN: ${randomPin}` : `Generated Quick PIN: ${randomPin}`, 'info');
   };
 
   const togglePermission = (permId) => {
@@ -337,19 +330,9 @@ export const CreateUserModal = ({ isOpen, onClose, onUserCreated }) => {
               </div>
 
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-[11px] font-bold text-stone-300">
-                    {isKhmer ? 'លេខកូដ PIN' : '4-Digit PIN'} <span className="text-rose-400">*</span>
-                  </label>
-                  <button
-                    type="button"
-                    onClick={handleGeneratePin}
-                    className="text-[10px] text-amber-400 hover:text-amber-300 flex items-center gap-0.5 cursor-pointer font-semibold"
-                  >
-                    <Shuffle className="w-2.5 h-2.5" />
-                    <span>{isKhmer ? 'ចៃដន្យ' : 'Roll'}</span>
-                  </button>
-                </div>
+                <label className="text-[11px] font-bold text-stone-300 block mb-1">
+                  {isKhmer ? 'លេខកូដ PIN' : '4-Digit PIN'} <span className="text-rose-400">*</span>
+                </label>
                 <input
                   type="text"
                   maxLength={4}
