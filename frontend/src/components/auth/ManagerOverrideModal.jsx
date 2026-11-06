@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { api } from '../../services/api';
 import { 
   ShieldAlert, 
@@ -10,8 +11,10 @@ import {
   AlertTriangle, 
   UserCheck,
   Delete,
-  Fingerprint
+  Fingerprint,
+  ScanFace
 } from 'lucide-react';
+import { FaceScannerModal } from './FaceScannerModal';
 
 export const ManagerOverrideModal = ({ 
   isOpen, 
@@ -22,9 +25,11 @@ export const ManagerOverrideModal = ({
   onClose 
 }) => {
   const { user, showToast, loadStaffAndAudits } = useApp();
+  const { isKhmer } = useLanguage();
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isFaceModalOpen, setIsFaceModalOpen] = useState(false);
 
   if (!isOpen) return null;
 
@@ -133,9 +138,27 @@ export const ManagerOverrideModal = ({
           </div>
         </div>
 
+        {/* Quick Face ID Override Option */}
+        <div className="px-5 pt-3">
+          <button
+            type="button"
+            onClick={() => setIsFaceModalOpen(true)}
+            className="w-full py-2.5 px-3 rounded-2xl bg-gradient-to-r from-amber-600/20 via-cyan-600/20 to-stone-900 hover:from-amber-600/30 hover:to-cyan-600/30 border border-cyan-500/40 hover:border-cyan-400 text-cyan-300 font-bold text-xs flex items-center justify-center gap-2 transition active:scale-98 cursor-pointer shadow-md group"
+          >
+            <div className="w-5 h-5 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center group-hover:scale-110 transition shrink-0">
+              <ScanFace className="w-3.5 h-3.5" />
+            </div>
+            <span className="font-khmer">{isKhmer ? 'ស្កេនមុខអ្នកគ្រប់គ្រង (Manager Face ID)' : 'Scan Manager Face ID (Fast Override)'}</span>
+          </button>
+        </div>
+
         {/* PIN Display & Keypad */}
         <div className="p-5 flex flex-col items-center space-y-4">
-          <p className="text-xs font-semibold text-stone-300">Enter 4-Digit Manager / Admin PIN</p>
+          <div className="flex items-center gap-2 w-full justify-center">
+            <span className="h-px bg-stone-800 flex-1"></span>
+            <p className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider">{isKhmer ? 'ឬវាយលេខកូដសម្ងាត់ ៤ ខ្ទង់' : 'Or Enter 4-Digit Manager PIN'}</p>
+            <span className="h-px bg-stone-800 flex-1"></span>
+          </div>
 
           {/* 4 Bullets Display */}
           <div className="flex items-center gap-3">
@@ -208,6 +231,26 @@ export const ManagerOverrideModal = ({
           </div>
         </div>
       </div>
+
+      {/* Biometric Face Scanner for Manager Override */}
+      <FaceScannerModal
+        isOpen={isFaceModalOpen}
+        onClose={() => setIsFaceModalOpen(false)}
+        mode="OVERRIDE"
+        overrideDetails={{
+          action: action || 'MANAGER_OVERRIDE',
+          details: details || 'Manager biometric face authorization',
+          cashierId: user?.id,
+          cashierName: user?.name,
+          amount
+        }}
+        onSuccess={(result) => {
+          setIsFaceModalOpen(false);
+          if (loadStaffAndAudits) loadStaffAndAudits();
+          if (onSuccess) onSuccess(result);
+          onClose();
+        }}
+      />
     </div>
   );
 };

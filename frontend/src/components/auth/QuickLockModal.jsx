@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useLanguage } from '../../context/LanguageContext';
-import { Lock, Delete, ShieldCheck, ShieldAlert } from 'lucide-react';
+import { Lock, Delete, ShieldCheck, ShieldAlert, ScanFace } from 'lucide-react';
 import { DEMO_USERS } from '../../services/coffeeData';
+import { FaceScannerModal } from './FaceScannerModal';
 
 export const QuickLockModal = ({ isOpen, onClose }) => {
   const { user, unlockScreen, showToast, staffList } = useApp();
@@ -10,6 +11,7 @@ export const QuickLockModal = ({ isOpen, onClose }) => {
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
   const [failedAttempts, setFailedAttempts] = useState(0);
+  const [isFaceModalOpen, setIsFaceModalOpen] = useState(false);
 
   if (!isOpen) return null;
 
@@ -80,6 +82,20 @@ export const QuickLockModal = ({ isOpen, onClose }) => {
           <span className="font-bold text-stone-200">{user?.name} ({user?.role})</span>
         </div>
 
+        {/* Quick Face ID Unlock Button */}
+        <div>
+          <button
+            type="button"
+            onClick={() => setIsFaceModalOpen(true)}
+            className="w-full py-2.5 px-3 rounded-2xl bg-gradient-to-r from-amber-600/20 via-cyan-600/20 to-stone-900 hover:from-amber-600/30 hover:to-cyan-600/30 border border-cyan-500/40 hover:border-cyan-400 text-cyan-300 font-bold text-xs flex items-center justify-center gap-2 transition active:scale-98 cursor-pointer shadow-md group"
+          >
+            <div className="w-5 h-5 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center group-hover:scale-110 transition shrink-0">
+              <ScanFace className="w-3.5 h-3.5" />
+            </div>
+            <span className="font-khmer">{isKhmer ? 'ដោះសោរដោយស្កេនផ្ទៃមុខ (Touchless Face ID)' : 'Touchless Unlock via Face ID'}</span>
+          </button>
+        </div>
+
         {/* PIN Dots Display */}
         <div className="space-y-2">
           <div className="flex justify-center gap-3">
@@ -143,6 +159,19 @@ export const QuickLockModal = ({ isOpen, onClose }) => {
           <span>Encrypted POS Session &bull; Protected Station</span>
         </div>
       </div>
+
+      {/* Biometric Face Scanner for Terminal Unlock */}
+      <FaceScannerModal
+        isOpen={isFaceModalOpen}
+        onClose={() => setIsFaceModalOpen(false)}
+        mode="UNLOCK"
+        targetStaff={user}
+        onSuccess={(unlockedUser) => {
+          setIsFaceModalOpen(false);
+          unlockScreen(unlockedUser);
+          onClose();
+        }}
+      />
     </div>
   );
 };

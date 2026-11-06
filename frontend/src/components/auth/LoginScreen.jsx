@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useLanguage } from '../../context/LanguageContext';
-import { Coffee, Lock, Mail, Eye, EyeOff, ArrowRight, ShieldCheck, KeyRound } from 'lucide-react';
+import { Coffee, Lock, Mail, Eye, EyeOff, ArrowRight, ShieldCheck, KeyRound, ScanFace } from 'lucide-react';
 import { LanguageSwitcher } from '../common/LanguageSwitcher';
+import { FaceScannerModal } from './FaceScannerModal';
 
 export const LoginScreen = () => {
   const { login, faceLogin } = useApp();
@@ -14,6 +15,7 @@ export const LoginScreen = () => {
   const [error, setError] = useState('');
   const [lockoutSeconds, setLockoutSeconds] = useState(0);
   const [failedCount, setFailedCount] = useState(0);
+  const [isFaceModalOpen, setIsFaceModalOpen] = useState(false);
 
   // Countdown timer for security lockout
   React.useEffect(() => {
@@ -231,7 +233,35 @@ export const LoginScreen = () => {
                 </>
               )}
             </button>
+
+            {/* Biometric Face ID Divider */}
+            <div className="relative flex py-1 items-center">
+              <div className="flex-grow border-t border-stone-850"></div>
+              <span className="flex-shrink mx-3 text-[11px] font-semibold text-stone-500 uppercase tracking-wider">
+                {isKhmer ? 'ឬចូលដោយស្កេនផ្ទៃមុខ' : 'Or Touchless Biometrics'}
+              </span>
+              <div className="flex-grow border-t border-stone-850"></div>
+            </div>
+
+            {/* Quick Face ID Login Button */}
+            <button
+              type="button"
+              onClick={() => setIsFaceModalOpen(true)}
+              className="w-full py-3.5 px-4 rounded-2xl bg-stone-900/90 hover:bg-stone-850 border border-cyan-500/40 hover:border-cyan-400 text-cyan-300 hover:text-cyan-200 font-bold text-sm shadow-lg shadow-cyan-950/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2.5 cursor-pointer group"
+            >
+              <div className="w-7 h-7 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center group-hover:scale-110 transition shrink-0">
+                <ScanFace className="w-4 h-4" />
+              </div>
+              <span className="font-khmer">{isKhmer ? 'ស្កេនផ្ទៃមុខចូល (Face ID Login)' : 'Touchless Face ID Login (0.3s)'}</span>
+            </button>
           </form>
+
+          {/* Biometric Face Scanner Modal */}
+          <FaceScannerModal
+            isOpen={isFaceModalOpen}
+            onClose={() => setIsFaceModalOpen(false)}
+            mode="LOGIN"
+          />
 
           {/* Security & Terminal Audit Footer */}
           <div className="pt-4 border-t border-stone-900 space-y-3">
