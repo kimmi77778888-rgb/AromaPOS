@@ -958,8 +958,13 @@ export const OrderHistory = () => {
 
                       {/* Customer / Service Type */}
                       <td className="py-3.5 px-4 whitespace-nowrap">
-                        <div className="font-bold text-stone-200">
-                          {order.customerName || 'Walk-in Guest'}
+                        <div className="font-bold text-stone-200 flex items-center gap-1.5">
+                          <span>{order.customerName || 'Walk-in Guest'}</span>
+                          {order.buzzerNumber && (
+                            <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/40 text-[10px] font-mono font-bold">
+                              📟 #{order.buzzerNumber}
+                            </span>
+                          )}
                         </div>
                         <div className="mt-1">
                           {order.orderType === 'DINE_IN' ? (
@@ -1135,7 +1140,12 @@ export const OrderHistory = () => {
                     {selectedOrder.customerName || 'Walk-in Guest'}
                   </span>
                   {selectedOrder.customerPhone && (
-                    <span className="text-[11px] text-stone-400 font-mono">{selectedOrder.customerPhone}</span>
+                    <span className="text-[11px] text-stone-400 font-mono block">{selectedOrder.customerPhone}</span>
+                  )}
+                  {selectedOrder.buzzerNumber && (
+                    <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[11px] font-mono font-bold">
+                      📟 Pager: #{selectedOrder.buzzerNumber}
+                    </span>
                   )}
                 </div>
                 <div className="text-right">
@@ -1279,6 +1289,20 @@ export const OrderHistory = () => {
                   type="button"
                   onClick={() => {
                     setReceiptModalOrder(selectedOrder);
+                    if (setReceiptModalView) setReceiptModalView('label');
+                    setSelectedOrder(null);
+                  }}
+                  className="px-3.5 py-2 rounded-xl bg-stone-850 hover:bg-stone-750 text-stone-200 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer border border-stone-700 shadow-sm"
+                  title="Print 50mm Barista Cup Stickers"
+                >
+                  <Tag className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Cup Stickers</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setReceiptModalOrder(selectedOrder);
+                    if (setReceiptModalView) setReceiptModalView('customer');
                     setSelectedOrder(null);
                   }}
                   className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-stone-950 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-sm"

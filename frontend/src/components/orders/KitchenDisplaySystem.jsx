@@ -9,11 +9,14 @@ import {
   ChefHat, 
   ShoppingBag, 
   Sparkles, 
-  RotateCcw,
-  Check,
-  Timer,
-  Volume2
+  RotateCcw, 
+  Check, 
+  Timer, 
+  Volume2,
+  Tag
 } from 'lucide-react';
+import { soundService } from '../../services/soundService';
+import { CupStickerModal } from '../pos/CupStickerModal';
 
 export const KitchenDisplaySystem = () => {
   const { orders, products = [], showToast, user } = useApp();
@@ -56,6 +59,32 @@ export const KitchenDisplaySystem = () => {
     delete next[orderId];
     saveStatuses(next);
     showToast(`Ticket #${orderId} recalled to brewing queue`, 'info');
+  };
+
+  // Barista Call Customer with Chime & Web Speech API Voice Announcement
+  const handleCallCustomer = (order) => {
+    if (soundService?.playKaChing) soundService.playKaChing();
+    const buzzerText = order.buzzerNumber ? `${order.buzzerNumber}` : `Order #${order.orderNumber || order.id?.slice(-4)}`;
+    const guest = order.customerName || 'Guest';
+
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      try {
+        window.speechSynthesis.cancel();
+        const text = `Order ${order.orderNumber || order.id?.slice(-4)}, ${buzzerText}, is ready for pickup!`;
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 0.95;
+        utterance.pitch = 1.0;
+        window.speechSynthesis.speak(utterance);
+      } catch (e) {}
+    }
+
+    showToast(`📢 Called ${guest} (${buzzerText})! Audio chime & voice broadcast played.`, 'success');
+  };
+
+  // Cup Sticker Label Modal State
+  const [stickerModal, setStickerModal] = useState({ isOpen: false, order: null, item: null });
+  const handleOpenStickerModal = (order, item) => {
+    setStickerModal({ isOpen: true, order, item: item || order.items[0] });
   };
 
   // Filter orders
@@ -165,6 +194,11 @@ export const KitchenDisplaySystem = () => {
                     }`}>
                       {order.orderType === 'DINE_IN' ? '🍽️ Dine-In' : '🥡 Takeaway'}
                     </span>
+                    {order.buzzerNumber && (
+                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse">
+                        🔔 {order.buzzerNumber}
+                      </span>
+                    )}
                   </div>
 
                   {/* Elapsed Live Timer */}
@@ -245,11 +279,35 @@ export const KitchenDisplaySystem = () => {
                 </div>
 
                 {/* Bottom Action Footer */}
-                <div className="p-4 border-t border-stone-800/80 bg-stone-950/80 flex items-center gap-2">
+                <div className="p-3 border-t border-stone-800/80 bg-stone-950/80 flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                    {/* Call Customer Audio & Chime Button */}
+                    <button
+                      type="button"
+                      onClick={() => handleCallCustomer(order)}
+                      className="flex-1 py-1.5 px-2.5 rounded-xl bg-amber-950/60 hover:bg-amber-900 border border-amber-700/60 text-amber-300 font-bold text-[11px] flex items-center justify-center gap-1.5 transition cursor-pointer"
+                      title="Audio Chime & Voice Call for Pickup"
+                    >
+                      <Volume2 className="w-3.5 h-3.5 text-amber-400" />
+                      <span>{order.buzzerNumber ? `Call ${order.buzzerNumber}` : 'Call Guest'}</span>
+                    </button>
+
+                    {/* Print Cup Label Sticker */}
+                    <button
+                      type="button"
+                      onClick={() => handleOpenStickerModal(order, order.items[0])}
+                      className="py-1.5 px-2.5 rounded-xl bg-stone-900 hover:bg-stone-850 border border-stone-800 text-stone-300 font-semibold text-[11px] flex items-center justify-center gap-1 transition cursor-pointer"
+                      title="Print 50mm Barista Cup Sticker"
+                    >
+                      <Tag className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Sticker</span>
+                    </button>
+                  </div>
+
                   {status === 'PENDING' ? (
                     <button
                       onClick={() => handleUpdateStatus(order.id, 'IN_PROGRESS')}
-                      className="flex-1 py-2.5 px-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-stone-950 font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-lg cursor-pointer"
+                      className="w-full py-2 px-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-stone-950 font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-lg cursor-pointer"
                     >
                       <Flame className="w-4 h-4" />
                       <span>Start Brewing</span>
@@ -257,7 +315,7 @@ export const KitchenDisplaySystem = () => {
                   ) : (
                     <button
                       onClick={() => handleUpdateStatus(order.id, 'COMPLETED')}
-                      className="flex-1 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-stone-950 font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-lg cursor-pointer"
+                      className="w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-stone-950 font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-lg cursor-pointer"
                     >
                       <Check className="w-4 h-4 stroke-[3]" />
                       <span>Complete & Dispatch</span>
@@ -303,6 +361,14 @@ export const KitchenDisplaySystem = () => {
           </div>
         </div>
       )}
+
+      {/* 50mm Cup Label Thermal Sticker Modal */}
+      <CupStickerModal
+        isOpen={stickerModal.isOpen}
+        onClose={() => setStickerModal({ isOpen: false, order: null, item: null })}
+        order={stickerModal.order}
+        item={stickerModal.item}
+      />
     </div>
   );
 };

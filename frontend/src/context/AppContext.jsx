@@ -172,6 +172,12 @@ export const AppProvider = ({ children }) => {
   const [customerName, setCustomerName] = useState('');
   const [discountPercent, setDiscountPercent] = useState(0);
 
+  // Coffee Shop Specific Features: Buzzer / Table, Combos, Happy Hour & Digital Stamp Card
+  const [buzzerNumber, setBuzzerNumber] = useState('');
+  const [isMorningComboActive, setIsMorningComboActive] = useState(true);
+  const [isHappyHourActive, setIsHappyHourActive] = useState(false);
+  const [isRedeemingFreeStampDrink, setIsRedeemingFreeStampDrink] = useState(false);
+
   // Orders & Receipts
   const [orders, setOrders] = useState([]);
   const [receiptModalOrder, setReceiptModalOrder] = useState(null);
@@ -720,7 +726,7 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  // Live Totals Calculations with Loyalty Points Deduction
+  // Live Totals Calculations with Loyalty Points, Combos, Happy Hour & Stamp Card Free Drink
   const cartTotals = useMemo(() => {
     const subtotal = cart.reduce(
       (sum, item) => sum + item.unitPrice * item.quantity,
@@ -728,7 +734,33 @@ export const AppProvider = ({ children }) => {
     );
     const percentageDiscount = Math.round(subtotal * (discountPercent / 100) * 100) / 100;
     const loyaltyDiscountAmount = Math.round((appliedPoints / 100) * 100) / 100;
-    const totalDiscount = Math.min(subtotal, Math.round((percentageDiscount + loyaltyDiscountAmount) * 100) / 100);
+
+    // 1. Morning Coffee + Pastry Combo Bundle ($1.50 OFF when buying Coffee + Bakery)
+    const hasCoffee = cart.some(item => ['Hot Coffee', 'Iced Coffee', 'Specialty'].includes(item.product?.category));
+    const hasBakery = cart.some(item => (item.product?.category || '').toLowerCase().includes('bakery') || (item.product?.category || '').toLowerCase().includes('pastry'));
+    const isComboApplicable = isMorningComboActive && hasCoffee && hasBakery;
+    const comboDiscount = isComboApplicable ? 1.50 : 0;
+
+    // 2. Happy Hour Discount (15% OFF coffee drinks)
+    const happyHourDiscount = isHappyHourActive && hasCoffee
+      ? Math.round(cart.filter(item => ['Hot Coffee', 'Iced Coffee', 'Specialty'].includes(item.product?.category))
+          .reduce((sum, item) => sum + item.unitPrice * item.quantity, 0) * 0.15 * 100) / 100
+      : 0;
+
+    // 3. Digital Stamp Card: Free 10th Cup Reward
+    let freeDrinkDiscount = 0;
+    if (isRedeemingFreeStampDrink && hasCoffee) {
+      const coffeeItems = cart.filter(item => ['Hot Coffee', 'Iced Coffee', 'Specialty'].includes(item.product?.category));
+      if (coffeeItems.length > 0) {
+        const highestPriced = Math.max(...coffeeItems.map(i => i.unitPrice));
+        freeDrinkDiscount = highestPriced;
+      }
+    }
+
+    const totalDiscount = Math.min(
+      subtotal, 
+      Math.round((percentageDiscount + loyaltyDiscountAmount + comboDiscount + happyHourDiscount + freeDrinkDiscount) * 100) / 100
+    );
     const taxableSubtotal = Math.max(0, subtotal - totalDiscount);
     const tax = Math.round(taxableSubtotal * 0.08 * 100) / 100; // 8% sales tax
     const total = Math.round((taxableSubtotal + tax) * 100) / 100;
@@ -740,6 +772,13 @@ export const AppProvider = ({ children }) => {
       discountAmount: totalDiscount,
       percentageDiscount,
       loyaltyDiscountAmount,
+      comboDiscount,
+      isComboApplicable,
+      happyHourDiscount,
+      freeDrinkDiscount,
+      isRedeemingFreeStampDrink,
+      hasCoffee,
+      hasBakery,
       appliedPoints,
       discountPercent,
       tax,
@@ -747,7 +786,7 @@ export const AppProvider = ({ children }) => {
       itemCount,
       earnedPoints
     };
-  }, [cart, discountPercent, appliedPoints]);
+  }, [cart, discountPercent, appliedPoints, isMorningComboActive, isHappyHourActive, isRedeemingFreeStampDrink]);
 
   // Checkout with immediate raw ingredient deduction, loyalty score awards, and recipe sync
   const processCheckout = async (paymentMethod, amountPaid) => {
@@ -788,6 +827,7 @@ export const AppProvider = ({ children }) => {
       orderType,
       customerName: customerName.trim() || 'Walk-in Guest',
       customerPhone: linkedCustomer?.phone || '',
+      buzzerNumber: buzzerNumber || '',
       loyaltyPointsUsed: usedPoints,
       loyaltyPointsEarned: earnedPoints
     };
@@ -795,19 +835,37 @@ export const AppProvider = ({ children }) => {
     try {
       const order = await api.checkout(checkoutPayload, user?.name || 'Staff Barista');
 
-      // Update customer loyalty score
+      // Update customer loyalty score and stamp card
       if (linkedCustomer) {
+        const coffeeDrinksCount = cart
+          .filter(i => ['Hot Coffee', 'Iced Coffee', 'Specialty'].includes(i.product?.category))
+          .reduce((sum, i) => sum + i.quantity, 0);
+
+        let newStamps = linkedCustomer.stamps || 0;
+        if (isRedeemingFreeStampDrink) {
+          newStamps = 0; // Redeemed free reward drink!
+          showToast('🎉 Redeemed 1 Free Coffee Reward! Stamps reset to 0.', 'success');
+        } else {
+          newStamps = newStamps + coffeeDrinksCount;
+          if (newStamps >= 9) {
+            showToast(`☕ Customer reached ${newStamps} stamps! Free Drink Reward unlocked!`, 'success');
+          }
+        }
+
         const updatedBalance = Math.max(0, linkedCustomer.points - usedPoints) + earnedPoints;
         const updatedCust = {
           ...linkedCustomer,
           points: updatedBalance,
+          stamps: newStamps,
           visits: (linkedCustomer.visits || 0) + 1
         };
         setCustomers((prev) =>
           prev.map((c) => (c.id === linkedCustomer.id ? updatedCust : c))
         );
         setLinkedCustomer(updatedCust);
+        setIsRedeemingFreeStampDrink(false);
       }
+      setBuzzerNumber('');
 
       // Deduct product stock immediately
       setProducts((prev) =>
@@ -1400,6 +1458,14 @@ export const AppProvider = ({ children }) => {
         unlinkCustomer,
         applyLoyaltyPoints,
         cartTotals,
+        buzzerNumber,
+        setBuzzerNumber,
+        isMorningComboActive,
+        setIsMorningComboActive,
+        isHappyHourActive,
+        setIsHappyHourActive,
+        isRedeemingFreeStampDrink,
+        setIsRedeemingFreeStampDrink,
         addToCart,
         duplicateCartItem,
         updateCartQuantity,

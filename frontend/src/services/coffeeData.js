@@ -401,6 +401,7 @@ export const DEMO_CUSTOMERS = [
     email: "sophea.kem@gmail.com",
     tier: "Gold VIP",
     points: 280,
+    stamps: 8, // 8 of 10 coffee stamps collected (Buy 9 Get 1 Free)
     avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=150&q=80",
     visits: 24,
     favoriteDrink: "Iced Brown Sugar Oat Shaken"
@@ -412,6 +413,7 @@ export const DEMO_CUSTOMERS = [
     email: "david.miller@yahoo.com",
     tier: "Silver Member",
     points: 150,
+    stamps: 9, // 9 of 10 coffee stamps - 1 FREE REWARD DRINK READY!
     avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80",
     visits: 12,
     favoriteDrink: "Velvety Flat White"
@@ -423,6 +425,7 @@ export const DEMO_CUSTOMERS = [
     email: "emma.watson@artisan.org",
     tier: "Platinum Roaster",
     points: 450,
+    stamps: 5,
     avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80",
     visits: 38,
     favoriteDrink: "Ceremonial Uji Matcha Latte"
@@ -434,6 +437,7 @@ export const DEMO_CUSTOMERS = [
     email: "alex.rivera@techflow.io",
     tier: "Bronze Member",
     points: 80,
+    stamps: 3,
     avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80",
     visits: 5,
     favoriteDrink: "Nitro Cold Brew Reserve"

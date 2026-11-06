@@ -123,6 +123,12 @@ export const ReceiptModal = () => {
                   <span className="font-bold">Ticket #:</span>
                   <span className="font-bold text-stone-950">{receiptModalOrder.orderNumber}</span>
                 </div>
+                {receiptModalOrder.buzzerNumber && (
+                  <div className="flex justify-between items-center text-amber-950 font-bold bg-amber-100/90 px-1.5 py-0.5 rounded border border-amber-300">
+                    <span className="flex items-center gap-1">📟 Pager / Buzzer:</span>
+                    <span className="font-mono text-xs font-black">#{receiptModalOrder.buzzerNumber}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-stone-600">
                   <span>Date/Time:</span>
                   <span>{formattedDate}</span>
@@ -276,6 +282,11 @@ export const ReceiptModal = () => {
                   BARISTA PREPARATION TICKET
                 </div>
                 <h3 className="text-2xl font-black tracking-tight">{receiptModalOrder.orderNumber}</h3>
+                {receiptModalOrder.buzzerNumber && (
+                  <div className="inline-block px-3 py-1 bg-amber-500 text-stone-950 font-black text-sm rounded-lg shadow-sm">
+                    📟 BUZZER / PAGER: #{receiptModalOrder.buzzerNumber}
+                  </div>
+                )}
                 <div className="flex items-center justify-center gap-2 text-[11px] font-bold">
                   <span className="px-2 py-0.5 bg-amber-200 rounded border border-amber-400">
                     {receiptModalOrder.orderType === 'DINE_IN' ? 'DINE-IN TABLE' : 'TAKEAWAY TICKET'}
@@ -371,9 +382,16 @@ export const ReceiptModal = () => {
                       <span className="flex items-center gap-1 uppercase tracking-wider text-amber-900">
                         ☕ Aroma Roasters
                       </span>
-                      <span className="px-1.5 py-0.5 rounded bg-stone-900 text-white font-black">
-                        #{receiptModalOrder.orderNumber}
-                      </span>
+                      <div className="flex items-center gap-1">
+                        {receiptModalOrder.buzzerNumber && (
+                          <span className="px-1.5 py-0.5 rounded bg-amber-400 text-stone-950 font-black">
+                            📟 #{receiptModalOrder.buzzerNumber}
+                          </span>
+                        )}
+                        <span className="px-1.5 py-0.5 rounded bg-stone-900 text-white font-black">
+                          #{receiptModalOrder.orderNumber}
+                        </span>
+                      </div>
                     </div>
 
                     {/* Customer & Type */}

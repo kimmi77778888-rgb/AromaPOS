@@ -62,6 +62,14 @@ export const PosTerminal = () => {
     setOrderType,
     customerName,
     setCustomerName,
+    buzzerNumber,
+    setBuzzerNumber,
+    isMorningComboActive,
+    setIsMorningComboActive,
+    isHappyHourActive,
+    setIsHappyHourActive,
+    isRedeemingFreeStampDrink,
+    setIsRedeemingFreeStampDrink,
     discountPercent,
     setDiscountPercent,
     setAuthorizedDiscount,
@@ -734,22 +742,94 @@ export const PosTerminal = () => {
               </button>
             </form>
 
-            {/* Linked Customer Profile Pill */}
+            {/* Buzzer / Table Number Quick Input */}
+            <div className="flex items-center gap-1.5 pt-1">
+              <input
+                type="text"
+                value={buzzerNumber}
+                onChange={(e) => setBuzzerNumber(e.target.value)}
+                placeholder={orderType === 'DINE_IN' ? (isKhmer ? 'លេខតុ/Table # (ឧ. Table 04)' : 'Table # (e.g. Table 04)') : (isKhmer ? 'លេខបាស៊ែរ/Buzzer # (ឧ. Buzzer 07)' : 'Buzzer # (e.g. Buzzer 07)')}
+                className="flex-1 bg-stone-950 border border-stone-800 focus:border-amber-500 rounded-xl px-2.5 py-1.5 text-xs text-stone-200 placeholder:text-stone-600 focus:outline-none font-mono"
+              />
+              <div className="flex items-center gap-1 shrink-0">
+                {['B1', 'B2', 'B5', 'T1', 'T4'].map((quickTag) => (
+                  <button
+                    key={quickTag}
+                    type="button"
+                    onClick={() => setBuzzerNumber(quickTag.startsWith('B') ? `Buzzer #${quickTag.slice(1)}` : `Table #${quickTag.slice(1)}`)}
+                    className="px-1.5 py-1 rounded-lg bg-stone-900 hover:bg-stone-800 text-[10px] text-stone-400 hover:text-amber-400 border border-stone-800 cursor-pointer font-mono"
+                  >
+                    {quickTag}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Linked Customer Profile & Digital Coffee Stamp Card */}
             {linkedCustomer && (
-              <div className="p-2 rounded-xl bg-amber-950/30 border border-amber-800/40 flex items-center justify-between text-xs">
-                <div>
-                  <span className="font-bold text-amber-300 block">{linkedCustomer.name}</span>
-                  <span className="text-[10px] text-stone-400">
-                    {linkedCustomer.points} {t('points_available')}
-                  </span>
+              <div className="p-2.5 rounded-xl bg-amber-950/40 border border-amber-850/60 space-y-2 text-xs">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="font-bold text-amber-300 block">{linkedCustomer.name}</span>
+                    <span className="text-[10px] text-stone-400 font-mono">
+                      {linkedCustomer.points} {t('points_available')} • {linkedCustomer.tier}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={unlinkCustomer}
+                    className="text-[10px] text-rose-400 hover:text-rose-300 font-semibold cursor-pointer"
+                  >
+                    {t('unlink')}
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={unlinkCustomer}
-                  className="text-[10px] text-rose-400 hover:text-rose-300 font-semibold"
-                >
-                  {t('unlink')}
-                </button>
+
+                {/* 10-Cup Stamp Card Visual */}
+                <div className="pt-1.5 border-t border-amber-900/50">
+                  <div className="flex items-center justify-between text-[10px] font-bold text-amber-200/90 mb-1">
+                    <span>☕ Coffee Stamp Club (Buy 9 Get 1 Free)</span>
+                    <span className="font-mono text-amber-400 font-black">
+                      {linkedCustomer.stamps || 0}/10 Stamps
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-10 gap-1 text-center select-none">
+                    {Array.from({ length: 10 }).map((_, idx) => {
+                      const isStamped = idx < (linkedCustomer.stamps || 0);
+                      const isRewardCup = idx === 9;
+                      return (
+                        <div
+                          key={idx}
+                          className={`h-6 rounded-md flex items-center justify-center text-[10px] transition border ${
+                            isStamped
+                              ? 'bg-amber-500 text-stone-950 border-amber-400 font-bold shadow-xs'
+                              : isRewardCup
+                              ? 'bg-emerald-950 text-emerald-400 border-emerald-600 animate-pulse'
+                              : 'bg-stone-900 text-stone-600 border-stone-800'
+                          }`}
+                          title={`Cup #${idx + 1}`}
+                        >
+                          {isRewardCup ? '🎁' : isStamped ? '☕' : idx + 1}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Free Drink Reward Claim Button */}
+                  {(linkedCustomer.stamps || 0) >= 9 && (
+                    <button
+                      type="button"
+                      onClick={() => setIsRedeemingFreeStampDrink(!isRedeemingFreeStampDrink)}
+                      className={`w-full mt-2 py-1.5 px-2.5 rounded-lg text-xs font-bold transition flex items-center justify-between cursor-pointer ${
+                        isRedeemingFreeStampDrink
+                          ? 'bg-emerald-600 text-white border border-emerald-400 shadow-md'
+                          : 'bg-gradient-to-r from-amber-500 to-amber-600 text-stone-950 hover:from-amber-400 hover:to-amber-500 shadow animate-pulse'
+                      }`}
+                    >
+                      <span>🎉 {isRedeemingFreeStampDrink ? 'Free Drink Applied (-100%)' : '1 Free Drink Available!'}</span>
+                      <span className="underline font-bold text-[11px]">{isRedeemingFreeStampDrink ? 'Cancel' : 'Redeem Free Coffee'}</span>
+                    </button>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -948,6 +1028,51 @@ export const PosTerminal = () => {
                 ))}
               </div>
             </div>
+
+            {/* Cafe Promotions: Morning Combo & Happy Hour Toggles */}
+            <div className="flex items-center gap-1.5 pt-1 border-t border-stone-850">
+              <button
+                type="button"
+                onClick={() => setIsHappyHourActive(!isHappyHourActive)}
+                className={`flex-1 py-1 px-2 rounded-lg text-[10px] font-bold border transition flex items-center justify-center gap-1 cursor-pointer ${
+                  isHappyHourActive
+                    ? 'bg-amber-500 text-stone-950 border-amber-400 shadow-sm'
+                    : 'bg-stone-900 text-stone-400 hover:text-stone-200 border-stone-800'
+                }`}
+                title="15% discount on all coffee beverages"
+              >
+                <span>⚡ Happy Hour 15%</span>
+                {isHappyHourActive && <span>✓</span>}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsMorningComboActive(!isMorningComboActive)}
+                className={`flex-1 py-1 px-2 rounded-lg text-[10px] font-bold border transition flex items-center justify-center gap-1 cursor-pointer ${
+                  isMorningComboActive
+                    ? 'bg-amber-950/80 text-amber-300 border-amber-700/80'
+                    : 'bg-stone-900 text-stone-500 border-stone-800'
+                }`}
+                title="Morning bundle: $1.50 off Coffee + Pastry"
+              >
+                <span>🥐 Coffee+Pastry Combo</span>
+                {isMorningComboActive && <span>✓</span>}
+              </button>
+            </div>
+
+            {/* Active Combo / Free Drink Notification Banner */}
+            {cartTotals.comboDiscount > 0 && (
+              <div className="flex items-center justify-between text-xs text-amber-300 font-bold bg-amber-950/50 p-2 rounded-xl border border-amber-800/60">
+                <span>🥐 Morning Combo Applied:</span>
+                <span className="font-mono">-$1.50</span>
+              </div>
+            )}
+            {cartTotals.freeDrinkDiscount > 0 && (
+              <div className="flex items-center justify-between text-xs text-emerald-300 font-bold bg-emerald-950/50 p-2 rounded-xl border border-emerald-800/60">
+                <span>🎁 10th Cup Free Stamp Reward:</span>
+                <span className="font-mono">-${cartTotals.freeDrinkDiscount.toFixed(2)}</span>
+              </div>
+            )}
 
             {/* Subtotal, Tax, and Dual Currency Totals */}
             <div className="space-y-1.5 text-xs text-stone-400 border-t border-stone-900 pt-2 font-medium">
