@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useLanguage } from '../../context/LanguageContext';
-import { Coffee, Lock, Mail, Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { Coffee, Lock, Mail, Eye, EyeOff, ArrowRight, ShieldCheck, KeyRound } from 'lucide-react';
 import { LanguageSwitcher } from '../common/LanguageSwitcher';
 
 export const LoginScreen = () => {
@@ -201,38 +201,26 @@ export const LoginScreen = () => {
             </button>
           </form>
 
-          {/* Quick Demo Test Account Selector */}
-          <div className="pt-3 border-t border-stone-900 space-y-2">
-            <p className="text-[11px] text-stone-500 font-medium text-center">
-              {isKhmer ? 'ជ្រើសរើសគណនីសាកល្បងរហ័ស (Quick Select):' : 'Quick Demo Logins:'}
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              {[
-                { role: 'Admin', name: 'Marcus', email: 'admin@cafe.com', pass: 'admin123', color: 'border-purple-800/60 bg-purple-950/30 text-purple-300 hover:bg-purple-900/40' },
-                { role: 'Manager', name: 'Sophia', email: 'manager@cafe.com', pass: 'manager123', color: 'border-amber-800/60 bg-amber-950/30 text-amber-300 hover:bg-amber-900/40' },
-                { role: 'Cashier', name: 'Chloe', email: 'cashier@cafe.com', pass: 'cashier123', color: 'border-sky-800/60 bg-sky-950/30 text-sky-300 hover:bg-sky-900/40' },
-                { role: 'Barista', name: 'Liam', email: 'barista@cafe.com', pass: 'coffee123', color: 'border-emerald-800/60 bg-emerald-950/30 text-emerald-300 hover:bg-emerald-900/40' },
-              ].map((acc) => (
-                <button
-                  key={acc.role}
-                  type="button"
-                  onClick={() => {
-                    setEmail(acc.email);
-                    setPassword(acc.pass);
-                    setError('');
-                  }}
-                  className={`p-2 rounded-xl border text-[11px] font-semibold text-left transition hover:scale-[1.02] cursor-pointer flex flex-col ${acc.color}`}
-                >
-                  <span className="font-bold text-xs">{acc.role}: {acc.name}</span>
-                  <span className="text-[10px] opacity-75 font-mono">{acc.email}</span>
-                </button>
-              ))}
+          {/* Security & Terminal Audit Footer */}
+          <div className="pt-4 border-t border-stone-900 space-y-3">
+            <div className="flex items-center justify-center gap-2 text-xs text-stone-400">
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              <span className="font-semibold text-stone-300">
+                {isKhmer ? 'ប្រព័ន្ធការពារសុវត្ថិភាព 256-Bit TLS' : '256-Bit TLS Station Encryption'}
+              </span>
+            </div>
+
+            <div className="p-3 rounded-xl bg-stone-900/50 border border-stone-850 text-center space-y-1">
+              <p className="text-[11px] text-stone-400 leading-relaxed">
+                {isKhmer 
+                  ? '🔒 ប្រព័ន្ធការពារការប៉ុនប៉ងទាយពាក្យសម្ងាត់ (Brute-Force Protected)។ រាល់ការចូលប្រើប្រាស់ត្រូវបានកត់ត្រាក្នុង Audit Ledger។'
+                  : '🔒 Protected against unauthorized access & brute-force attempts. All login events are audited.'}
+              </p>
+              <p className="text-[10px] text-stone-500 font-mono">
+                Station ID: AR-TERM-01 • Secure TLS v1.3
+              </p>
             </div>
           </div>
-
-          <p className="text-center text-xs text-stone-600">
-            AromaPOS System v2.4 • Secure Station Encryption
-          </p>
         </div>
       </div>
     </div>
