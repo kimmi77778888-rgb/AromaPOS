@@ -113,7 +113,7 @@ export const getStoredUser = () => {
   } catch (e) {
     console.warn('LocalStorage error', e);
   }
-  return sanitizeUserAvatar(DEMO_USERS[0]);
+  return null;
 };
 
 export const saveStoredUser = (user) => {

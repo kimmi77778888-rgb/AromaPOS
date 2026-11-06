@@ -11,7 +11,7 @@ const AppContext = createContext();
 export const AppProvider = ({ children }) => {
   // Navigation & Auth
   const [user, setUser] = useState(() => getStoredUser());
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => Boolean(getStoredUser()));
   const [activeTab, setActiveTab] = useState('pos'); // pos, kds, dashboard, inventory, orders, reports, staff
 
   // RBAC Role Separation & Permissions
