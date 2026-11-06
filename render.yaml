@@ -47,8 +47,7 @@ services:
       - key: HOSTNAME
         value: 0.0.0.0
       - key: BACKEND_URL
-        fromService:
-          type: web
-          name: aromapos-backend
-          property: host
+        value: https://aromapos-backend.onrender.com
+      - key: NEXT_PUBLIC_API_URL
+        value: https://aromapos-backend.onrender.com
 

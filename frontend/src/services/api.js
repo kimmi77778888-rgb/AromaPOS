@@ -1,7 +1,10 @@
 import { INITIAL_PRODUCTS, INITIAL_ORDERS, DEMO_USERS, INITIAL_INGREDIENTS, CATEGORIES } from './coffeeData';
 import { storage } from '../utils/storage';
 
-const BASE_URL = '/api';
+const API_HOST = typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_API_URL 
+  ? process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '') 
+  : '';
+const BASE_URL = API_HOST ? `${API_HOST}/api` : '/api';
 
 const STORAGE_PRODUCTS_KEY = 'aromapos_products';
 const STORAGE_ORDERS_KEY = 'aromapos_orders';
