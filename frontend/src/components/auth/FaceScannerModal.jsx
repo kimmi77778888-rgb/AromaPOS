@@ -75,6 +75,7 @@ export const FaceScannerModal = ({
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraLoading, setCameraLoading] = useState(false);
   const [cameraError, setCameraError] = useState(null);
+  const [isPermissionDenied, setIsPermissionDenied] = useState(false);
   const [videoDevices, setVideoDevices] = useState([]);
   const [selectedDeviceId, setSelectedDeviceId] = useState('');
 
@@ -171,6 +172,7 @@ export const FaceScannerModal = ({
     stopCamera();
     setCameraLoading(true);
     setCameraError(null);
+    setIsPermissionDenied(false);
     setScanStep('ALIGNING');
     setScanProgress(15);
     setStatusMessage(isKhmer ? 'កំពុងភ្ជាប់កាមេរ៉ាស្កេន...' : 'Accessing live optical sensor...');
@@ -213,10 +215,13 @@ export const FaceScannerModal = ({
       setCameraActive(false);
 
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        setCameraError(isKhmer ? 'ការអនុញ្ញាតកាមេរ៉ាត្រូវបានបដិសេធ។ សូមបើកសិទ្ធិកាមេរ៉ាក្នុង Browser' : 'Camera permission denied. Please allow camera access in your browser bar.');
+        setIsPermissionDenied(true);
+        setCameraError(isKhmer ? 'ការអនុញ្ញាតកាមេរ៉ាត្រូវបានបដិសេធក្នុង Browser' : 'Camera permission denied in browser.');
       } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+        setIsPermissionDenied(false);
         setCameraError(isKhmer ? 'រកមិនឃើញកាមេរ៉ា Webcam ទេ' : 'No webcam found on this device.');
       } else {
+        setIsPermissionDenied(false);
         setCameraError(isKhmer ? 'មិនអាចបើកកាមេរ៉ាបានទេ: ' + err.message : 'Could not access webcam: ' + err.message);
       }
     }
@@ -1020,28 +1025,48 @@ export const FaceScannerModal = ({
                     </span>
                   </div>
                 ) : cameraError ? (
-                  <div className="flex flex-col items-center gap-2.5">
-                    <VideoOff className="w-8 h-8 text-rose-400" />
-                    <span className="text-xs font-semibold text-rose-300 max-w-[220px] leading-tight">
+                  <div className="flex flex-col items-center gap-2 p-2">
+                    <div className="w-10 h-10 rounded-xl bg-rose-950/80 border border-rose-500/40 flex items-center justify-center text-rose-400 shrink-0">
+                      <VideoOff className="w-5 h-5" />
+                    </div>
+                    <span className="text-xs font-bold text-rose-300 max-w-[240px] leading-tight text-center">
                       {cameraError}
                     </span>
-                    <span className="text-[10px] text-stone-400 max-w-[220px] leading-snug">
-                      {isKhmer 
-                        ? 'ចុចលើរូបសោក្នុង Browser URL ដើម្បីបើកការអនុញ្ញាតកាមេរ៉ា ឬផ្ទុករូបភាព'
-                        : 'Allow camera in your browser bar, or upload a photo file:'}
-                    </span>
+                    {isPermissionDenied ? (
+                      <div className="p-2.5 rounded-xl bg-stone-900 border border-stone-800 text-[10px] text-stone-300 space-y-1 text-left w-full max-w-[250px]">
+                        <p className="font-bold text-amber-400 flex items-center gap-1">
+                          <span>🔒</span>
+                          <span>{isKhmer ? 'របៀបបើកកាមេរ៉ាក្នុង Chrome:' : 'How to allow in Chrome:'}</span>
+                        </p>
+                        <p className="text-stone-300">
+                          {isKhmer ? '1. ចុចរូបសោ 🔒 ឬកាមេរ៉ា 📹 ខាងឆ្វេង URL' : '1. Click lock 🔒 or camera icon in URL bar'}
+                        </p>
+                        <p className="text-stone-300">
+                          {isKhmer ? '2. កន្លែង Camera ជ្រើសរើសយក «Allow»' : '2. Toggle Camera to "Allow"'}
+                        </p>
+                        <p className="text-stone-300">
+                          {isKhmer ? '3. ចុច «ព្យាយាមម្ដងទៀត» ខាងក្រោម' : '3. Click Retry Camera button below'}
+                        </p>
+                      </div>
+                    ) : (
+                      <span className="text-[10px] text-stone-400 max-w-[220px] leading-snug">
+                        {isKhmer 
+                          ? 'សូមពិនិត្យមើលការតភ្ជាប់កាមេរ៉ា ឬផ្ទុករូបថតផ្ទាល់:' 
+                          : 'Check webcam connection or upload a photo directly:'}
+                      </span>
+                    )}
                     <div className="flex items-center gap-2 mt-1">
                       <button
                         type="button"
                         onClick={() => startCamera(selectedDeviceId)}
-                        className="px-2.5 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-cyan-400 text-xs font-semibold flex items-center gap-1 transition cursor-pointer"
+                        className="px-3 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-cyan-400 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer border border-stone-700 shadow"
                       >
-                        <RefreshCw className="w-3 h-3" />
-                        <span>{isKhmer ? 'ព្យាយាមកាមេរ៉ា' : 'Retry'}</span>
+                        <RefreshCw className="w-3.5 h-3.5" />
+                        <span>{isKhmer ? 'ព្យាយាមម្ដងទៀត' : 'Retry'}</span>
                       </button>
-                      <label className="px-2.5 py-1.5 rounded-lg bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-700 text-cyan-300 text-xs font-semibold flex items-center gap-1 transition cursor-pointer">
-                        <Upload className="w-3 h-3" />
-                        <span>{isKhmer ? 'ផ្ទុករូបភាព' : 'Upload Photo'}</span>
+                      <label className="px-3 py-1.5 rounded-lg bg-cyan-950/90 hover:bg-cyan-900 border border-cyan-600/70 text-cyan-200 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow">
+                        <Upload className="w-3.5 h-3.5 text-cyan-400" />
+                        <span>{isKhmer ? 'ផ្ទុករូបថត' : 'Upload Photo'}</span>
                         <input
                           type="file"
                           accept="image/*"
