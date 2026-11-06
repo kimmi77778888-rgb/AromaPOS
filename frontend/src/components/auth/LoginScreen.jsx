@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useLanguage } from '../../context/LanguageContext';
-import { Coffee, Lock, Mail, Eye, EyeOff, ArrowRight, ShieldCheck, KeyRound, ScanFace } from 'lucide-react';
+import { Coffee, Lock, Mail, Eye, EyeOff, ArrowRight, ShieldCheck, ScanFace } from 'lucide-react';
 import { LanguageSwitcher } from '../common/LanguageSwitcher';
 import { FaceScannerModal } from './FaceScannerModal';
 
@@ -166,23 +166,9 @@ export const LoginScreen = () => {
 
             {/* Passcode / PIN */}
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold text-stone-400 uppercase tracking-wider">
-                  Passcode / PIN
-                </label>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEmail('admin@cafe.com');
-                    setPassword('77778888');
-                    setError('');
-                  }}
-                  className="text-[11px] text-amber-500 hover:text-amber-400 font-semibold cursor-pointer transition flex items-center gap-1"
-                >
-                  <KeyRound className="w-3 h-3" />
-                  <span>Fill Admin Key</span>
-                </button>
-              </div>
+              <label className="text-xs font-semibold text-stone-400 uppercase tracking-wider block">
+                Passcode / PIN
+              </label>
               <div className="relative group">
                 <Lock className="w-4 h-4 text-stone-500 group-focus-within:text-amber-400 absolute left-4 top-1/2 -translate-y-1/2 transition" />
                 <input
