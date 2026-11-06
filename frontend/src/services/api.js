@@ -231,28 +231,10 @@ export const api = {
     );
 
     if (found) {
-      const expectedPassword = found.password || 
-        (found.role === 'ADMIN' ? '77778888' : 
-         found.role === 'MANAGER' ? 'manager123' : 
-         found.role === 'SECURITY' ? 'security123' :
-         found.role === 'BARISTA' ? 'coffee123' : 'cashier123');
-
       const isMatch = 
-        p === '77778888' ||
-        p === '7777' ||
-        p === '8888' ||
-        p === expectedPassword ||
-        p === found.password ||
-        p === found.pin ||
-        p === found.pinCode ||
-        (p === 'admin123' && found.role === 'ADMIN') ||
-        (p === 'barista123' && found.role === 'BARISTA') ||
-        (p === 'coffee123' && found.role === 'BARISTA') ||
-        (p === 'manager123' && found.role === 'MANAGER') ||
-        (p === 'security123' && found.role === 'SECURITY') ||
-        (p === 'cashier123' && found.role === 'CASHIER') ||
-        p === '1234' ||
-        p === '123456';
+        (found.password && p === found.password) ||
+        (found.pin && p === found.pin) ||
+        (found.pinCode && p === found.pinCode);
 
       if (isMatch) {
         saveStoredUser(found);
@@ -321,12 +303,8 @@ export const api = {
     const p = (pin || '').trim();
     const staffList = getStoredStaff();
     const found = staffList.find((u) => 
-      u.pin === p || 
-      u.pinCode === p || 
-      ((p === '77778888' || p === '7777' || p === '3333' || p === '1234') && u.role === 'ADMIN') ||
-      (p === '2222' && u.role === 'MANAGER') ||
-      (p === '4444' && u.role === 'CASHIER') ||
-      (p === '1111' && u.role === 'BARISTA')
+      (u.pin && u.pin === p) || 
+      (u.pinCode && u.pinCode === p)
     );
     if (found) {
       saveStoredUser(found);
@@ -376,9 +354,8 @@ export const api = {
     const staffList = getStoredStaff();
     const mp = managerPin.trim();
     const authorizer = staffList.find((u) => 
-      u.pin === mp || 
-      ((mp === '77778888' || mp === '7777' || mp === '3333') && u.role === 'ADMIN') ||
-      (mp === '2222' && u.role === 'MANAGER')
+      (u.pin && u.pin === mp) || 
+      (u.pinCode && u.pinCode === mp)
     );
     if (!authorizer) {
       throw new Error('Invalid Manager PIN. Access Denied.');

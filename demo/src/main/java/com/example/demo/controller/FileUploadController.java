@@ -90,11 +90,21 @@ public class FileUploadController {
             else if (header.contains("webp")) extension = ".webp";
         }
 
+        // Security: Prevent Denial-of-Service with excessively large base64 payloads
+        if (cleanBase64.length() > 20 * 1024 * 1024) {
+            return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
+                    .body(Map.of("success", false, "message", "Image payload exceeds maximum allowed size (15MB)"));
+        }
+
         try {
             if (!Files.exists(uploadDir)) {
                 Files.createDirectories(uploadDir);
             }
             byte[] imageBytes = Base64.getDecoder().decode(cleanBase64.trim());
+            if (imageBytes.length > 15 * 1024 * 1024) {
+                return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
+                        .body(Map.of("success", false, "message", "Decoded image file exceeds 15MB limit"));
+            }
             String newFilename = "img_" + UUID.randomUUID().toString().replace("-", "").substring(0, 16) + extension;
             Path targetLocation = uploadDir.resolve(newFilename);
             Files.write(targetLocation, imageBytes);

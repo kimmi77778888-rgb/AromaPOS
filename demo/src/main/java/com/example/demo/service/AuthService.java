@@ -129,40 +129,57 @@ public class AuthService {
         if (email == null || password == null) return Optional.empty();
         String pass = password.trim();
         String mail = email.trim();
-        return users.stream()
+
+        Optional<User> userOpt = users.stream()
                 .filter(u -> (u.getEmail().equalsIgnoreCase(mail) || 
                               u.getEmail().equalsIgnoreCase(mail + "@cafe.com") || 
-                              (mail.equalsIgnoreCase("admin") && "ADMIN".equalsIgnoreCase(u.getRole()))) && (
-                        (u.getPassword() != null && u.getPassword().equalsIgnoreCase(pass)) ||
-                        (u.getPinCode() != null && u.getPinCode().equals(pass)) ||
-                        pass.equals("77778888") ||
-                        pass.equals("7777") ||
-                        pass.equals("8888") ||
-                        (pass.equalsIgnoreCase("barista123") && "BARISTA".equalsIgnoreCase(u.getRole())) ||
-                        (pass.equalsIgnoreCase("coffee123") && "BARISTA".equalsIgnoreCase(u.getRole())) ||
-                        (pass.equalsIgnoreCase("manager123") && "MANAGER".equalsIgnoreCase(u.getRole())) ||
-                        (pass.equalsIgnoreCase("admin123") && "ADMIN".equalsIgnoreCase(u.getRole())) ||
-                        (pass.equalsIgnoreCase("security123") && "SECURITY".equalsIgnoreCase(u.getRole())) ||
-                        (pass.equalsIgnoreCase("cashier123") && "CASHIER".equalsIgnoreCase(u.getRole())) ||
-                        pass.equals("1234") || pass.equals("123456")
-                ))
+                              (mail.equalsIgnoreCase("admin") && "ADMIN".equalsIgnoreCase(u.getRole()))))
+                .filter(u -> (u.getPassword() != null && u.getPassword().equals(pass)) ||
+                             (u.getPinCode() != null && u.getPinCode().equals(pass)))
                 .findFirst();
+
+        if (userOpt.isPresent()) {
+            User u = userOpt.get();
+            recordAudit("LOGIN_SUCCESS", "User authenticated into terminal", u.getName() + " (" + u.getRole() + ")");
+            return Optional.of(u);
+        } else {
+            recordAudit("LOGIN_FAILED", "Failed credential verification for: " + mail, "ANONYMOUS");
+            return Optional.empty();
+        }
     }
 
     public Optional<User> authenticatePin(String pin) {
         if (pin == null || pin.isBlank()) return Optional.empty();
         String p = pin.trim();
-        return users.stream()
-                .filter(u -> (u.getPinCode() != null && u.getPinCode().equals(p)) ||
-                             ((p.equals("77778888") || p.equals("7777") || p.equals("3333")) && "ADMIN".equalsIgnoreCase(u.getRole())))
+        Optional<User> userOpt = users.stream()
+                .filter(u -> u.getPinCode() != null && u.getPinCode().equals(p))
                 .findFirst();
+
+        if (userOpt.isPresent()) {
+            User u = userOpt.get();
+            recordAudit("PIN_LOGIN_SUCCESS", "POS Terminal unlocked via PIN code", u.getName() + " (" + u.getRole() + ")");
+            return Optional.of(u);
+        } else {
+            recordAudit("PIN_LOGIN_FAILED", "Invalid terminal PIN code attempt", "ANONYMOUS");
+            return Optional.empty();
+        }
     }
 
     public Optional<User> authenticateFace(String staffIdOrName) {
         if (staffIdOrName == null || staffIdOrName.isBlank()) return Optional.empty();
-        return users.stream()
-                .filter(u -> (u.getId().equalsIgnoreCase(staffIdOrName.trim()) || u.getName().equalsIgnoreCase(staffIdOrName.trim())) && u.isFaceEnrolled())
+        String target = staffIdOrName.trim();
+        Optional<User> userOpt = users.stream()
+                .filter(u -> (u.getId().equalsIgnoreCase(target) || u.getName().equalsIgnoreCase(target)) && u.isFaceEnrolled())
                 .findFirst();
+
+        if (userOpt.isPresent()) {
+            User u = userOpt.get();
+            recordAudit("FACE_LOGIN_SUCCESS", "Touchless Face ID biometrics verified", u.getName() + " (" + u.getRole() + ")");
+            return Optional.of(u);
+        } else {
+            recordAudit("FACE_LOGIN_FAILED", "Face biometric match failed for target: " + target, "ANONYMOUS");
+            return Optional.empty();
+        }
     }
 
     public Map<String, Object> verifyManagerFaceOverride(String managerIdOrName, String action, String details, String cashierId, String cashierName, double amount) {
@@ -327,11 +344,9 @@ public class AuthService {
                 if (updated.getFaceEnrolled() != null) existing.setFaceEnrolled(updated.getFaceEnrolled());
                 if (updated.getFacePhoto() != null) {
                     existing.setFacePhoto(updated.getFacePhoto().trim());
-                    if (!updated.getFacePhoto().isBlank()) {
-                        existing.setFaceEnrolled(true);
-                    }
                 }
                 if (updated.getPermissions() != null) existing.setPermissions(new ArrayList<>(updated.getPermissions()));
+                recordAudit("STAFF_UPDATED", "Updated profile & security settings for " + existing.getName(), "ADMIN");
                 return Optional.of(existing);
             }
         }
@@ -340,7 +355,12 @@ public class AuthService {
 
     public boolean deleteUser(String id) {
         if (id == null) return false;
-        return users.removeIf(u -> u.getId().equalsIgnoreCase(id.trim()));
+        Optional<User> target = getUserById(id);
+        boolean removed = users.removeIf(u -> u.getId().equalsIgnoreCase(id.trim()));
+        if (removed && target.isPresent()) {
+            recordAudit("STAFF_DELETED", "Removed staff account: " + target.get().getName() + " (" + target.get().getRole() + ")", "ADMIN");
+        }
+        return removed;
     }
 
     public List<AuditLog> getAuditLogs() {
@@ -350,5 +370,22 @@ public class AuthService {
     public void logAudit(AuditLog log) {
         if (log.getId() == null) log.setId("aud-" + System.currentTimeMillis());
         auditLogs.add(0, log);
+        while (auditLogs.size() > 500) {
+            auditLogs.remove(auditLogs.size() - 1);
+        }
+    }
+
+    public void recordAudit(String action, String details, String performedBy) {
+        AuditLog log = new AuditLog(
+                "aud-" + System.currentTimeMillis() + "-" + (int)(Math.random() * 1000),
+                "sys",
+                performedBy != null ? performedBy : "System",
+                "SECURITY",
+                action,
+                details,
+                performedBy != null ? performedBy : "System",
+                0.0
+        );
+        logAudit(log);
     }
 }

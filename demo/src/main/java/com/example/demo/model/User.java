@@ -1,17 +1,24 @@
 package com.example.demo.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class User {
     private String id;
     private String name;
     private String email;
+
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
+
     private String pinCode; // 4-digit PIN for quick station handover & manager overrides
     private String role; // ADMIN, MANAGER, CASHIER, BARISTA
     private double hourlyRate;
     private String status; // ACTIVE, INACTIVE
     private String phone;
     private String avatar;
-    private Boolean faceEnrolled = true;
+    private Boolean faceEnrolled = false;
     private String facePhoto;
     private String faceHash;
     private String faceBiometrics;
@@ -33,8 +40,8 @@ public class User {
         this.status = status != null ? status : "ACTIVE";
         this.phone = phone;
         this.avatar = avatar;
-        this.faceEnrolled = true;
-        this.facePhoto = avatar;
+        this.faceEnrolled = false;
+        this.facePhoto = null;
     }
 
     public User(String id, String name, String email, String password, String pinCode, String role, double hourlyRate, String status, String phone, String avatar, boolean faceEnrolled, java.util.List<String> permissions) {

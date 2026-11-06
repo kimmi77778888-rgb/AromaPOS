@@ -107,7 +107,7 @@ public class AuthController {
         }
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(Map.of("message", "Invalid email or password. Try barista@cafe.com / coffee123"));
+                .body(Map.of("message", "Invalid email or password. Please verify your credentials."));
     }
 
     @PostMapping("/pin-login")

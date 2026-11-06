@@ -27,10 +27,10 @@ public class BakongConfig {
     @Value("${telegram.enabled:true}")
     private boolean telegramEnabled;
 
-    @Value("${telegram.bot.token:8578514013:AAE6HUX-lAN7rATHPJQSy7bFioIfxt8T2_k}")
+    @Value("${telegram.bot.token:${TELEGRAM_BOT_TOKEN:}}")
     private String telegramBotToken;
 
-    @Value("${telegram.chat.id:1886655363}")
+    @Value("${telegram.chat.id:${TELEGRAM_CHAT_ID:}}")
     private String telegramChatId;
 
     public String getApiUrl() { return apiUrl; }
