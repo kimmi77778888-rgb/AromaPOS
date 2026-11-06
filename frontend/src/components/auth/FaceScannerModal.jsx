@@ -225,6 +225,13 @@ export const FaceScannerModal = ({
   // Lifecycle: open/close camera
   useEffect(() => {
     if (isOpen) {
+      if (mode === 'ENROLL') {
+        const target = getEffectiveTarget();
+        if (!target || !target.id || !availableStaff.some((s) => s.id === target.id)) {
+          // Do not start camera if target staff account is not already created in the system
+          return;
+        }
+      }
       autoScanTriggeredRef.current = false;
       setCapturedPhoto(null);
       setMatchedStaff(null);
@@ -321,6 +328,12 @@ export const FaceScannerModal = ({
 
             // Hands-Free Auto-Scan: automatically captures and opens when face is aligned!
             if (consecutiveDetections >= 16 && !autoScanTriggeredRef.current && autoScanEnabled) {
+              if (mode === 'ENROLL') {
+                const target = getEffectiveTarget();
+                if (!target || !target.id || !availableStaff.some((s) => s.id === target.id)) {
+                  return;
+                }
+              }
               autoScanTriggeredRef.current = true;
               if (handleCaptureRef.current) {
                 handleCaptureRef.current();
@@ -352,6 +365,18 @@ export const FaceScannerModal = ({
 
   // Save enrolled face to server, local database and active user profile
   const executeSaveEnrolledFace = async (staffToEnroll, photoDataUrl, faceFeatures = null) => {
+    // Enforce: Face ID can ONLY be enrolled for accounts that are already created!
+    if (!staffToEnroll || !staffToEnroll.id || !availableStaff.some((s) => s.id === staffToEnroll.id)) {
+      setIsSaving(false);
+      setScanStep('ERROR');
+      const errAccountMsg = isKhmer 
+        ? '⚠️ អាច save Face ID បានតែសម្រាប់គណនីដែលបានបង្កើតរួចរាល់ប៉ុណ្ណោះ! សូមបង្កើតគណនីជាមុនសិន។' 
+        : '⚠️ Face ID can only be saved for accounts that have already been created!';
+      setStatusMessage(errAccountMsg);
+      showToast(errAccountMsg, 'error');
+      return false;
+    }
+
     setIsSaving(true);
     setScanStep('SAVING');
     setStatusMessage(isKhmer ? 'កំពុងផ្ទៀងផ្ទាត់ និងរក្សាទុក Face ID...' : 'Validating 1-Face-1-Account rule & saving biometric vector...');
@@ -536,6 +561,16 @@ export const FaceScannerModal = ({
     // MODE 1: ENROLL (1 Face = 1 Account uniqueness check)
     // ============================================================
     if (mode === 'ENROLL') {
+      if (!chosen || !chosen.id || !availableStaff.some((s) => s.id === chosen.id)) {
+        setScanStep('ERROR');
+        const notFoundMsg = isKhmer 
+          ? '⚠️ អាចស្កេន Face ID បានតែសម្រាប់គណនីដែលបានបង្កើតរួចរាល់ប៉ុណ្ណោះ! សូមបង្កើតគណនីជាមុនសិន។'
+          : '⚠️ Face ID can only be enrolled for pre-created accounts! Please create the staff account first.';
+        setStatusMessage(notFoundMsg);
+        showToast(notFoundMsg, 'error');
+        return;
+      }
+
       if (liveFeatures) {
         const uniqueness = checkFaceUniqueness(liveFeatures, chosen.id, availableStaff);
         if (!uniqueness.isUnique) {
@@ -841,6 +876,7 @@ export const FaceScannerModal = ({
   if (!isOpen) return null;
 
   const currentTarget = getEffectiveTarget();
+  const isExistingStaff = Boolean(currentTarget && currentTarget.id && availableStaff.some((s) => s.id === currentTarget.id));
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl animate-fade-in select-none">
@@ -860,7 +896,7 @@ export const FaceScannerModal = ({
               <div className="flex items-center gap-2">
                 <h3 className="text-base font-extrabold text-stone-100 tracking-tight">
                   {mode === 'ENROLL'
-                    ? (isKhmer ? 'ស្កេន & រក្សាទុក Face ID' : 'Scan Face & Save ID')
+                    ? (isKhmer ? 'ចុះឈ្មោះស្កេនមុខ Face ID' : 'Enroll Biometric Face ID')
                     : mode === 'OVERRIDE'
                     ? (isKhmer ? 'ការអនុញ្ញាតដោយស្កេនមុខ (Manager)' : 'Manager Biometric Override')
                     : (isKhmer ? 'ស្កេនមុខចូលប្រព័ន្ធ (Face ID)' : 'Real Optical Face ID Login')}
@@ -876,7 +912,9 @@ export const FaceScannerModal = ({
               </div>
               <p className="text-xs text-stone-400">
                 {mode === 'ENROLL'
-                  ? (isKhmer ? `ថតរូបភាពផ្ទាល់ពី Webcam ដើម្បីរក្សាទុក Face ID សម្រាប់ ${currentTarget?.name}` : `Capture live camera face snapshot and save Face ID for ${currentTarget?.name}`)
+                  ? (isExistingStaff
+                      ? (isKhmer ? `ស្កេនផ្ទៃមុខសម្រាប់៖ ${currentTarget?.name} (${currentTarget?.role}) · មុខមួយបានតែមួយគណនី` : `Enrolling real face biometrics for: ${currentTarget?.name} (${currentTarget?.role}) · 1-Face = 1-Account`)
+                      : (isKhmer ? 'ទាមទារគណនីដែលបានបង្កើតរួចរាល់ជាមុនសិន' : 'Pre-created staff account is required'))
                   : (isKhmer ? 'ស្កេនផ្ទៃមុខផ្ទាល់ពីកាមេរ៉ាដើម្បីបញ្ជាក់អត្តសញ្ញាណ' : 'Position your face in front of the camera to verify')}
               </p>
             </div>
@@ -890,8 +928,34 @@ export const FaceScannerModal = ({
           </button>
         </div>
 
-        {/* Biometric Viewport & Live Stream Area */}
-        <div className="p-6 flex flex-col items-center justify-center space-y-4 bg-stone-950/60">
+        {/* If enrolling and account doesn't exist yet */}
+        {mode === 'ENROLL' && !isExistingStaff ? (
+          <div className="p-8 text-center space-y-4 bg-stone-950/70">
+            <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto text-amber-400 shadow-lg">
+              <ScanFace className="w-7 h-7" />
+            </div>
+            <div className="space-y-1.5">
+              <h3 className="text-base font-extrabold text-stone-100">
+                {isKhmer ? 'ទាមទារគណនីដែលបានបង្កើតរួចរាល់' : 'Pre-Created Account Required'}
+              </h3>
+              <p className="text-xs text-stone-400 max-w-sm mx-auto leading-relaxed">
+                {isKhmer 
+                  ? 'សម្រាប់ការ save ផ្ទៃមុខ Face ID ទាល់តែគណនីបុគ្គលិកត្រូវបានបង្កើតរួចរាល់ក្នុងប្រព័ន្ធជាមុនសិន។ សូមចូលទៅកាន់ Staff Management ដើម្បីបង្កើតគណនី រួចចុចប៊ូតុង [ 📷 ស្កេនមុខ Face ID ]។' 
+                  : 'Face ID biometric enrollment is only available for accounts that have already been created in the system. Please create the staff account first in Staff Management, then click [ 📷 Enroll Face ID ].'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-stone-950 font-extrabold text-xs shadow-lg transition cursor-pointer"
+            >
+              {isKhmer ? 'យល់ព្រម / ត្រឡប់ក្រោយ' : 'Understood / Go Back'}
+            </button>
+          </div>
+        ) : (
+          <>
+            {/* Biometric Viewport & Live Stream Area */}
+            <div className="p-6 flex flex-col items-center justify-center space-y-4 bg-stone-950/60">
           {/* Circular / Rounded Viewport Reticle */}
           <div className="relative w-68 h-68 rounded-3xl overflow-hidden border-2 border-stone-800 bg-stone-950 shadow-2xl flex items-center justify-center group ring-2 ring-cyan-500/30">
             {/* Real HTML5 Video Camera Feed */}
@@ -1375,6 +1439,8 @@ export const FaceScannerModal = ({
             </div>
           )}
         </div>
+        </>
+        )}
 
         {/* Security / Liveness Footer */}
         <div className="p-3 bg-stone-950 border-t border-stone-800 text-[11px] text-stone-400 flex items-center justify-between px-6">

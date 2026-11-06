@@ -271,6 +271,11 @@ public class AuthController {
             return ResponseEntity.badRequest().body(Map.of("message", "Name, Role, and 4-digit PIN are required"));
         }
         user.setPinCode(pin.trim());
+        // Enforce: newly created staff account cannot have face enrolled until enrolled explicitly
+        user.setFaceEnrolled(false);
+        user.setFacePhoto(null);
+        user.setFaceHash(null);
+        user.setFaceBiometrics(null);
         User created = authService.createUser(user);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }

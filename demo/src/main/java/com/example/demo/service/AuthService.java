@@ -283,14 +283,14 @@ public class AuthService {
         if (user.getPassword() == null || user.getPassword().isBlank()) {
             user.setPassword("password123");
         }
-        if (user.getAvatar() == null || user.getAvatar().isBlank()) {
-            if (user.getFacePhoto() != null && !user.getFacePhoto().isBlank()) {
-                user.setAvatar(user.getFacePhoto());
-                user.setFaceEnrolled(true);
-            } else {
-                user.setAvatar("");
-            }
+        if (user.getAvatar() == null) {
+            user.setAvatar("");
         }
+        // Enforce: Face ID can ONLY be enrolled for accounts that are already created
+        user.setFaceEnrolled(false);
+        user.setFacePhoto(null);
+        user.setFaceHash(null);
+        user.setFaceBiometrics(null);
         if (user.getPermissions() == null || user.getPermissions().isEmpty()) {
             if ("ADMIN".equalsIgnoreCase(user.getRole())) {
                 user.setPermissions(new ArrayList<>(List.of("canAccessPos", "canAccessKds", "canAccessDashboard", "canAccessInventory", "canAccessOrders", "canAccessReports", "canPerformOverrides", "canSeeExpectedCash", "canManageStaff", "canEditInventory", "canEditMenu", "canScanFace")));

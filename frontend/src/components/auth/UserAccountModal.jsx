@@ -89,8 +89,7 @@ export const UserAccountModal = ({ isOpen, onClose }) => {
         setFormData((prev) => ({
           ...prev,
           avatar: res.imageUrl,
-          facePhoto: res.imageUrl,
-          faceEnrolled: true
+          facePhoto: res.imageUrl
         }));
         showToast(isKhmer ? 'បានផ្ទុករូបភាពពិតប្រាកដជោគជ័យ!' : 'Real photo uploaded to server successfully!', 'success');
       }

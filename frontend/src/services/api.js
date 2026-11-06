@@ -570,8 +570,11 @@ export const api = {
       ...payload,
       id: 'usr-' + Date.now(),
       status: payload.status || 'ACTIVE',
-      avatar: payload.facePhoto || payload.avatar || '',
-      faceEnrolled: !!(payload.facePhoto || payload.faceEnrolled)
+      avatar: payload.avatar || payload.facePhoto || '',
+      faceEnrolled: false,
+      facePhoto: null,
+      faceBiometrics: null,
+      faceHash: null
     };
     saveStoredStaff([...current, newStaff]);
     return newStaff;

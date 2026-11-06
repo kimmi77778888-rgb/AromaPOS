@@ -18,7 +18,8 @@ import {
   EyeOff, 
   Upload,
   Trash2,
-  Loader2
+  Loader2,
+  ScanFace
 } from 'lucide-react';
 import { ROLE_PERMISSIONS, SYSTEM_PERMISSIONS } from '../../services/coffeeData';
 import { UserAvatar } from '../common/UserAvatar';
@@ -36,8 +37,7 @@ export const CreateUserModal = ({ isOpen, onClose, onUserCreated }) => {
     phone: '+855 ',
     password: 'password123',
     status: 'ACTIVE',
-    faceEnrolled: false,
-    facePhoto: '',
+    avatar: '',
     permissions: ROLE_PERMISSIONS.CASHIER?.permissions || ['canAccessPos']
   });
 
@@ -69,29 +69,6 @@ export const CreateUserModal = ({ isOpen, onClose, onUserCreated }) => {
     });
   };
 
-  const handleFaceEnrolled = async (result) => {
-    const photo = result?.facePhoto || result?.photoData;
-    let finalUrl = photo;
-    if (photo && photo.startsWith('data:')) {
-      try {
-        const uploadRes = await api.uploadBase64Image(photo);
-        if (uploadRes?.imageUrl) {
-          finalUrl = uploadRes.imageUrl;
-        }
-      } catch (err) {}
-    }
-    if (finalUrl) {
-      setFormData((prev) => ({
-        ...prev,
-        faceEnrolled: true,
-        facePhoto: finalUrl,
-        avatar: finalUrl
-      }));
-    }
-    setIsFaceModalOpen(false);
-    showToast(isKhmer ? 'បានថតរូបស្កេនមុខផ្ទាល់ជោគជ័យ!' : 'Real face captured and registered!', 'success');
-  };
-
   const handlePhotoUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -111,11 +88,9 @@ export const CreateUserModal = ({ isOpen, onClose, onUserCreated }) => {
       if (res && res.imageUrl) {
         setFormData((prev) => ({
           ...prev,
-          faceEnrolled: true,
-          facePhoto: res.imageUrl,
           avatar: res.imageUrl
         }));
-        showToast(isKhmer ? 'បានផ្ទុករូបភាពពិតប្រាកដជោគជ័យ!' : 'Real photo uploaded to server!', 'success');
+        showToast(isKhmer ? 'បានផ្ទុករូបភាពប្រវត្តិរូបជោគជ័យ!' : 'Profile photo uploaded successfully!', 'success');
       }
     } catch (err) {
       showToast(isKhmer ? 'បរាជ័យក្នុងការផ្ទុករូបភាព' : 'Failed to upload photo', 'error');
@@ -128,8 +103,6 @@ export const CreateUserModal = ({ isOpen, onClose, onUserCreated }) => {
   const handleRemovePhoto = () => {
     setFormData((prev) => ({
       ...prev,
-      faceEnrolled: false,
-      facePhoto: '',
       avatar: ''
     }));
     showToast(isKhmer ? 'បានលុបរូបភាពចេញ' : 'Photo removed', 'info');
@@ -158,9 +131,11 @@ export const CreateUserModal = ({ isOpen, onClose, onUserCreated }) => {
         phone: formData.phone,
         password: formData.password || 'password123',
         status: formData.status || 'ACTIVE',
-        faceEnrolled: !!formData.faceEnrolled,
-        facePhoto: formData.facePhoto || null,
-        avatar: formData.facePhoto || null,
+        faceEnrolled: false,
+        facePhoto: null,
+        faceBiometrics: null,
+        faceHash: null,
+        avatar: formData.avatar || null,
         permissions: formData.permissions
       };
 
@@ -454,6 +429,21 @@ export const CreateUserModal = ({ isOpen, onClose, onUserCreated }) => {
                   onChange={handlePhotoUpload}
                   className="hidden"
                 />
+              </div>
+            </div>
+
+            {/* Informational Callout: Face ID enrollment is only for created accounts */}
+            <div className="flex items-start gap-2.5 p-3 rounded-xl bg-cyan-950/40 border border-cyan-800/40 text-xs text-cyan-300">
+              <ScanFace className="w-4 h-4 shrink-0 text-cyan-400 mt-0.5" />
+              <div className="space-y-0.5">
+                <span className="font-bold text-[11px] text-cyan-200">
+                  {isKhmer ? 'ការចុះឈ្មោះស្កេនផ្ទៃមុខ Face ID (Biometric Enrollment)' : 'Biometric Face ID Enrollment Notice'}
+                </span>
+                <p className="text-[11px] text-stone-400 leading-relaxed">
+                  {isKhmer 
+                    ? 'សម្រាប់ការ save ផ្ទៃមុខ Face ID ទាល់តែគណនីនេះត្រូវបានបង្កើតរួចរាល់ជាមុនសិន។ បន្ទាប់ពីបង្កើតរួច សូមចុចប៊ូតុង [ 📷 ស្កេនមុខ Face ID ] នៅលើជួរឈ្មោះបុគ្គលិកក្នុងបញ្ជី Staff Management ដើម្បីស្កេនមុខពិតប្រាកដ។'
+                    : 'Face ID biometric enrollment is only permitted for accounts that are already created. After creating this account, click [ 📷 Enroll Face ID ] on their row in Staff Management to capture live face biometrics.'}
+                </p>
               </div>
             </div>
           </div>

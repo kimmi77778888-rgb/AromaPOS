@@ -209,10 +209,9 @@ export const StaffManagement = () => {
         setFormData((prev) => ({
           ...prev,
           facePhoto: res.imageUrl,
-          avatar: res.imageUrl,
-          faceEnrolled: true
+          avatar: res.imageUrl
         }));
-        showToast(isKhmer ? 'បានផ្ទុករូបភាពពិតប្រាកដជោគជ័យ!' : 'Real photo uploaded to server!', 'success');
+        showToast(isKhmer ? 'បានផ្ទុករូបភាពប្រវត្តិរូបជោគជ័យ!' : 'Profile photo uploaded to server!', 'success');
       }
     } catch (err) {
       showToast(isKhmer ? 'បរាជ័យក្នុងការផ្ទុករូបភាព' : 'Failed to upload photo to server', 'error');
@@ -226,8 +225,7 @@ export const StaffManagement = () => {
     setFormData((prev) => ({
       ...prev,
       facePhoto: '',
-      avatar: '',
-      faceEnrolled: false
+      avatar: ''
     }));
     showToast(isKhmer ? 'បានលុបរូបភាពចេញ' : 'Profile photo removed', 'info');
   };
@@ -248,7 +246,7 @@ export const StaffManagement = () => {
       phone: staff.phone || '',
       password: staff.password || 'password123',
       status: staff.status || 'ACTIVE',
-      faceEnrolled: staff.faceEnrolled ?? true,
+      faceEnrolled: Boolean(staff.faceEnrolled),
       facePhoto: staff.facePhoto || staff.avatar || '',
       permissions: existingPerms
     });
@@ -869,14 +867,31 @@ export const StaffManagement = () => {
 
                         {/* 7. Actions */}
                         <td className="py-3.5 px-5 text-right">
-                          <div className="flex items-center justify-end gap-1.5">
-                            {/* Live Face Scanner Enrollment */}
+                          <div className="flex items-center justify-end gap-2">
+                            {/* Prominent Live Face Scanner Enrollment Button */}
                             <button
+                              type="button"
                               onClick={() => handleOpenFaceScan(staff)}
-                              className="p-1.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-400 hover:text-amber-400 border border-stone-700/60 transition cursor-pointer"
-                              title="Face Biometrics Scanner"
+                              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-bold border transition cursor-pointer shrink-0 shadow-sm ${
+                                staff.faceEnrolled
+                                  ? 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                                  : 'bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 hover:text-cyan-200 border-cyan-500/40 hover:border-cyan-400'
+                              }`}
+                              title={
+                                staff.faceEnrolled
+                                  ? (isKhmer ? 'Face ID រួចរាល់ · ចុចដើម្បីស្កេនម្ដងទៀត' : 'Face ID Enrolled · Click to re-scan')
+                                  : (isKhmer ? 'ចុះឈ្មោះស្កេនមុខ Face ID សម្រាប់គណនីនេះ' : 'Click to enroll Face ID for this account')
+                              }
                             >
+                              {staff.faceEnrolled ? (
+                                <Check className="w-3.5 h-3.5 text-emerald-400 stroke-[3]" />
+                              ) : null}
                               <ScanFace className="w-3.5 h-3.5" />
+                              <span className="hidden sm:inline">
+                                {staff.faceEnrolled 
+                                  ? (isKhmer ? 'Face ID រួចរាល់' : 'Enrolled') 
+                                  : (isKhmer ? 'ស្កេនមុខ Face ID' : 'Enroll Face ID')}
+                              </span>
                             </button>
 
                             {/* Edit Button */}
@@ -1431,6 +1446,25 @@ export const StaffManagement = () => {
                   </div>
 
                   <div className="flex items-center gap-2">
+                    {/* Live Biometric Face ID Scan */}
+                    <button
+                      type="button"
+                      onClick={() => handleOpenFaceScan(editingStaff)}
+                      className={`px-3 py-1.5 font-bold text-xs rounded-xl transition cursor-pointer flex items-center gap-1.5 shadow border ${
+                        formData.faceEnrolled
+                          ? 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                          : 'bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 hover:text-cyan-200 border-cyan-500/40'
+                      }`}
+                      title={formData.faceEnrolled ? 'Face ID Enrolled - Click to re-scan' : 'Enroll Face ID for this account'}
+                    >
+                      <ScanFace className="w-3.5 h-3.5" />
+                      <span>
+                        {formData.faceEnrolled 
+                          ? (isKhmer ? 'Face ID រួចរាល់' : 'Re-scan Face') 
+                          : (isKhmer ? 'ស្កេនមុខ Face ID' : 'Enroll Face ID')}
+                      </span>
+                    </button>
+
                     <label
                       htmlFor="staff-photo-edit-file"
                       className={`px-3 py-1.5 bg-stone-900 hover:bg-stone-800 border border-stone-700 text-stone-300 font-bold text-xs rounded-xl transition cursor-pointer flex items-center gap-1.5 shadow ${
