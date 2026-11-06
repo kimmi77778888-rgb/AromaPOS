@@ -30,7 +30,7 @@ export const AppProvider = ({ children }) => {
     const allowedTabsSet = new Set(base.allowedTabs || []);
 
     if (userRole === 'ADMIN') {
-      ['pos', 'dashboard', 'inventory', 'orders', 'reports', 'kds', 'staff', 'cambodia-excel'].forEach((t) => allowedTabsSet.add(t));
+      ['pos', 'dashboard', 'inventory', 'orders', 'reports', 'kds', 'staff'].forEach((t) => allowedTabsSet.add(t));
     } else {
       if (userPermList.includes('canAccessPos')) allowedTabsSet.add('pos');
       if (userPermList.includes('canAccessKds')) allowedTabsSet.add('kds');

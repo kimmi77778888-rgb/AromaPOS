@@ -23,7 +23,6 @@ import {
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { soundService } from '../../services/soundService';
-import { CambodiaFlag } from '../common/FlagIcons';
 
 export const StocktakeAuditModal = ({ isOpen, onClose }) => {
   const { 

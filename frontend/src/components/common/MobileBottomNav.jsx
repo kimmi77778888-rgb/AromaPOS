@@ -7,11 +7,9 @@ import {
   ShoppingCart, 
   Receipt, 
   ChefHat, 
-  FileSpreadsheet, 
   Menu,
   Boxes
 } from 'lucide-react';
-import { CambodiaFlag } from './FlagIcons';
 
 export const MobileBottomNav = () => {
   const { 
@@ -94,25 +92,7 @@ export const MobileBottomNav = () => {
         </span>
       </button>
 
-      {/* 4. Cambodia Standard Excel */}
-      <button
-        type="button"
-        onClick={() => setActiveTab('cambodia-excel')}
-        className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition cursor-pointer relative ${
-          activeTab === 'cambodia-excel'
-            ? 'text-emerald-400 font-bold'
-            : 'text-stone-400 hover:text-stone-200'
-        }`}
-      >
-        <div className="relative flex items-center justify-center">
-          <FileSpreadsheet className="w-5 h-5 text-emerald-400" />
-        </div>
-        <span className="text-[10px] font-medium mt-0.5 flex items-center gap-0.5">
-          <span>{isKhmer ? 'ស្តង់ដារ' : 'Excel'}</span>
-        </span>
-      </button>
-
-      {/* 5. More / Menu Drawer Toggle */}
+      {/* 4. More / Menu Drawer Toggle */}
       <button
         type="button"
         onClick={() => setIsMobileMenuOpen(true)}

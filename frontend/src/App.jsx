@@ -21,7 +21,6 @@ import { StaffShiftModal } from './components/auth/StaffShiftModal';
 import { CustomerDisplay } from './components/pos/CustomerDisplay';
 import { UserAccountModal } from './components/auth/UserAccountModal';
 import { StoreSettingsModal } from './components/common/StoreSettingsModal';
-import { CambodiaExcelInterface } from './components/excel/CambodiaExcelInterface';
 import { MobileBottomNav } from './components/common/MobileBottomNav';
 
 export const AppContent = () => {
@@ -95,7 +94,6 @@ export const AppContent = () => {
           {activeTab === 'kds' && <KitchenDisplaySystem />}
           {activeTab === 'reports' && <ManagementReports />}
           {activeTab === 'staff' && <StaffManagement />}
-          {activeTab === 'cambodia-excel' && <CambodiaExcelInterface />}
         </main>
 
         {/* Mobile Phone Bottom Navigation (Hidden on iPad & Desktop) */}

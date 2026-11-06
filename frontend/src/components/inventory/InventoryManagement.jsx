@@ -46,7 +46,6 @@ import { IngredientFormModal } from './IngredientFormModal';
 import { StockOperationModal } from './StockOperationModal';
 import { DailyWasteModal } from './DailyWasteModal';
 import { StocktakeAuditModal } from './StocktakeAuditModal';
-import { CambodiaFlag } from '../common/FlagIcons';
 import { exportCambodiaStandardCatalog } from '../../services/cambodiaExcelExport';
 import { soundService } from '../../services/soundService';
 
@@ -403,17 +402,16 @@ export const InventoryManagement = ({ onOpenAddModal }) => {
 
         {/* Action Group: Cambodia Standard Excel Export & Stock Operations */}
         <div className="flex items-center gap-2.5 flex-wrap">
-          {/* Cambodia Standard Excel (.xlsx) Dropdown */}
+          {/* Clean Excel (.xlsx) Dropdown */}
           <div className="relative" ref={exportMenuRef}>
             <button
               type="button"
               onClick={() => setIsExportMenuOpen(!isExportMenuOpen)}
-              className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-stone-900/90 hover:bg-stone-850 border border-emerald-500/40 hover:border-emerald-400 text-stone-100 font-bold text-xs shadow-md shadow-emerald-950/30 transition active:scale-95 cursor-pointer group"
-              title={isKhmer ? 'នាំចេញ Excel ស្តង់ដារកម្ពុជា' : 'Export clean Cambodia standard Excel (.xlsx)'}
+              className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-stone-900/90 hover:bg-stone-850 border border-emerald-500/40 hover:border-emerald-400 text-stone-100 font-bold text-xs shadow-md shadow-emerald-950/30 transition active:scale-95 cursor-pointer group"
+              title={isKhmer ? 'នាំចេញឯកសារ Excel' : 'Export Excel Master (.xlsx)'}
             >
-              <CambodiaFlag className="w-4 h-3 rounded-xs shadow-xs shrink-0" />
               <FileSpreadsheet className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition shrink-0" />
-              <span className="font-sans">{isKhmer ? 'នាំចេញ Excel ស្តង់ដារកម្ពុជា' : 'Cambodia Standard Excel'}</span>
+              <span className="font-sans">{isKhmer ? 'នាំចេញឯកសារ Excel' : 'Export Excel'}</span>
               <ChevronDown className={`w-3.5 h-3.5 text-stone-400 transition-transform duration-200 ${isExportMenuOpen ? 'rotate-180' : ''}`} />
             </button>
 
@@ -421,8 +419,8 @@ export const InventoryManagement = ({ onOpenAddModal }) => {
               <div className="absolute right-0 mt-2 w-80 rounded-2xl bg-stone-900/95 backdrop-blur-xl border border-stone-700 shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
                 <div className="px-3 py-2 border-b border-stone-800 text-[11px] font-bold text-stone-400 uppercase tracking-wider flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
-                    <CambodiaFlag className="w-3.5 h-2.5 rounded-xs" />
-                    <span>{isKhmer ? 'ជម្រើសនាំចេញ Excel' : 'Cambodia Standard Exports'}</span>
+                    <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>{isKhmer ? 'ជម្រើសនាំចេញ Excel' : 'Export Excel Options'}</span>
                   </span>
                   <span className="text-[10px] text-emerald-400 font-mono font-bold">$1 = {khrExchangeRate || 4100}៛</span>
                 </div>
@@ -500,31 +498,14 @@ export const InventoryManagement = ({ onOpenAddModal }) => {
                     </div>
                     <div>
                       <p className="text-xs font-extrabold text-emerald-300 group-hover:text-emerald-200 flex items-center gap-1.5">
-                        <span>{isKhmer ? '៤. កញ្ចប់ពេញលេញ ៤ សន្លឹក (.xlsx)' : '4. Complete 4-Sheet Cambodian Workbook'}</span>
+                        <span>{isKhmer ? '៤. កញ្ចប់ពេញលេញ ៣ សន្លឹក (.xlsx)' : '4. Complete 3-Sheet Master Workbook (.xlsx)'}</span>
                       </p>
                       <p className="text-[11px] text-stone-400 leading-tight mt-0.5">
                         {isKhmer
-                          ? 'រួមបញ្ចូលទាំង បញ្ជីទំនិញ + វត្ថុធាតុដើម + ចលនាស្តុក + ស្តង់ដារ ២៥ ខេត្ត-ក្រុង'
-                          : 'Full master workbook: Catalog + Raw Inventory + Movements Audit + 25 Provinces NIS standard'}
+                          ? 'រួមបញ្ចូលទាំង បញ្ជីទំនិញ + វត្ថុធាតុដើម + ចលនាស្តុក'
+                          : 'Full master workbook: Menu Catalog + Raw Materials + Movements Audit'}
                       </p>
                     </div>
-                  </button>
-
-                  <div className="my-1 border-t border-stone-800/80"></div>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsExportMenuOpen(false);
-                      setActiveTab('cambodia-excel');
-                    }}
-                    className="w-full p-2.5 rounded-xl bg-emerald-950/40 hover:bg-emerald-900/60 text-left transition flex items-center justify-between group cursor-pointer border border-emerald-500/40 text-emerald-300"
-                  >
-                    <span className="flex items-center gap-2 text-xs font-bold">
-                      <CambodiaFlag className="w-4 h-3 rounded-xs" />
-                      <span>{isKhmer ? 'បើកផ្ទាំងតារាង Excel ស្តង់ដារកម្ពុជា' : 'Open Cambodia Excel Interface'}</span>
-                    </span>
-                    <span className="text-xs group-hover:translate-x-1 transition-transform">→</span>
                   </button>
                 </div>
               </div>
