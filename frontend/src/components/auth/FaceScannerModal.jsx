@@ -567,39 +567,38 @@ export const FaceScannerModal = ({
     let finalAuthStaff = chosen;
 
     // ============================================================
-    // MODE 2: LOGIN (1:N Identification: Face recognizes its 1 account)
+    // MODE 2: LOGIN (1:N Identification: Pure Hands-Free, 1 Face = 1 Account)
     // ============================================================
     if (mode === 'LOGIN') {
-      const identification = identifyFaceOwner(liveFeatures, availableStaff);
+      const enrolledStaff = availableStaff.filter((s) => s.faceEnrolled && (s.faceBiometrics || s.faceSignature || s.faceHash));
 
-      if (identification.isRecognized) {
-        // Enforce: this face matches this exact account only!
+      if (enrolledStaff.length === 0) {
+        setScanStep('UNRECOGNIZED');
+        const emptyMsg = isKhmer 
+          ? '⚠️ មិនទាន់មានគណនីណាបានចុះឈ្មោះ Face ID នៅឡើយទេ។ សូម Login វាយលេខសម្ងាត់ រួចចុះឈ្មោះ Face ID ក្នុង Staff Management ជាមុនសិន។'
+          : '⚠️ No Face ID profiles registered yet. Please login with Passcode and enroll Face ID in Staff Management first.';
+        setStatusMessage(emptyMsg);
+        showToast(emptyMsg, 'warning');
+        setTimeout(() => {
+          autoScanTriggeredRef.current = false;
+          setScanStep('ALIGNING');
+          setScanProgress(20);
+        }, 3000);
+        return;
+      }
+
+      const identification = identifyFaceOwner(liveFeatures, enrolledStaff);
+
+      if (identification.isRecognized && identification.matchedStaff) {
+        // STRICT 1-FACE = 1-ACCOUNT: Exactly matched single account!
         finalAuthStaff = identification.matchedStaff;
       } else {
-        // If the user selected an account that has no face enrolled yet, allow enrollment if unique
-        if (chosen && !chosen.faceEnrolled) {
-          if (liveFeatures) {
-            const uniqueness = checkFaceUniqueness(liveFeatures, chosen.id, availableStaff);
-            if (!uniqueness.isUnique) {
-              setScanStep('CONFLICT');
-              setConflictStaff(uniqueness.conflictingStaff);
-              const conflictMsg = isKhmer 
-                ? `⚠️ បរាជ័យ៖ ផ្ទៃមុខនេះត្រូវបានចុះឈ្មោះជាមួយគណនី "${uniqueness.conflictingStaff.name}" (${uniqueness.conflictingStaff.role}) រួចហើយ! ផ្ទៃមុខមួយអាចប្រើបានតែ ១ គណនីប៉ុណ្ណោះ។` 
-                : `⚠️ Conflict: This face is already enrolled for "${uniqueness.conflictingStaff.name}" (${uniqueness.conflictingStaff.role})! One face can only be used by 1 account.`;
-              setStatusMessage(conflictMsg);
-              showToast(conflictMsg, 'error');
-              return;
-            }
-          }
-          await executeSaveEnrolledFace(chosen, realPhotoDataUrl, liveFeatures);
-          return;
-        }
-
-        // Unrecognized Face: Does not match any registered account!
+        // Face is NOT registered to ANY account in the system!
+        // DO NOT auto-enroll or fallback to another account!
         setScanStep('UNRECOGNIZED');
         const notFoundMsg = isKhmer 
-          ? '⚠️ រកមិនឃើញគណនីដែលត្រូវនឹងផ្ទៃមុខនេះទេ! ផ្ទៃមុខមួយអាចប្រើបានតែ ១ គណនីដែលមានចុះឈ្មោះប៉ុណ្ណោះ។' 
-          : '⚠️ Unrecognized Face. No registered account matches this face. One face can only be used by 1 account.';
+          ? '⚠️ មិនស្គាល់ផ្ទៃមុខនេះទេ! ផ្ទៃមុខនេះមិនទាន់បានចុះឈ្មោះក្នុងប្រព័ន្ធឡើយ (មុខ ១ ប្រើបានតែ ១ គណនីប៉ុណ្ណោះ)។' 
+          : '⚠️ Access Denied: Unrecognized Face. (Strict 1 Face = 1 Account).';
         setStatusMessage(notFoundMsg);
         showToast(notFoundMsg, 'error');
         setTimeout(() => {
@@ -1179,74 +1178,28 @@ export const FaceScannerModal = ({
           {/* ============================================================ */}
           {(scanStep === 'ALIGNING' || scanStep === 'SCANNING') && (
             <div className="w-full max-w-sm space-y-3">
-              {/* Account Selector for Existing Accounts in LOGIN mode */}
+              {/* Hands-Free Notification in LOGIN Mode */}
               {mode === 'LOGIN' && (
-                <div className="space-y-1.5 p-2.5 rounded-2xl bg-stone-900/90 border border-stone-800">
-                  <div className="flex items-center justify-between text-[11px] text-stone-400">
-                    <span className="font-semibold text-stone-300">
-                      {isKhmer ? 'ជ្រើសរើសគណនីដែលមានស្រាប់:' : 'Select Account to Authenticate:'}
-                    </span>
-                    <span className="text-[10px] text-cyan-400 font-mono">
-                      {currentTarget?.faceEnrolled 
-                        ? (isKhmer ? '✓ បានរក្សាទុក Face ID' : '✓ Face ID Enrolled') 
-                        : (isKhmer ? '⚡ មិនទាន់ចុះឈ្មោះ' : '⚡ Not Enrolled Yet')}
-                    </span>
+                <div className="p-3 rounded-2xl bg-cyan-950/40 border border-cyan-500/30 text-center space-y-1">
+                  <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-cyan-300">
+                    <Sparkles className="w-4 h-4 text-cyan-400 animate-pulse" />
+                    <span>{isKhmer ? 'ស្កេនស្គាល់មុខស្វ័យប្រវត្តិ (Touchless 0.3s)' : 'Touchless Auto-Scan (0.3s)'}</span>
                   </div>
-                  
-                  <div className="grid grid-cols-2 gap-1.5 max-h-32 overflow-y-auto pr-0.5">
-                    {availableStaff.map((s) => {
-                      const isSelected = (currentTarget?.id === s.id);
-                      return (
-                        <button
-                          key={s.id}
-                          type="button"
-                          onClick={() => setSelectedStaffId(s.id)}
-                          className={`p-2 rounded-xl border flex items-center gap-2 text-left transition-all duration-150 cursor-pointer ${
-                            isSelected
-                              ? 'bg-cyan-950/80 border-cyan-500/80 ring-1 ring-cyan-500/50 text-stone-100 shadow-sm'
-                              : 'bg-stone-950/60 border-stone-800 hover:border-stone-700 text-stone-400'
-                          }`}
-                        >
-                          <div className="relative shrink-0">
-                            {s.facePhoto || s.avatar ? (
-                              <img src={s.facePhoto || s.avatar} alt={s.name} className="w-7 h-7 rounded-full object-cover border border-stone-700" />
-                            ) : (
-                              <div className="w-7 h-7 rounded-full bg-stone-800 border border-stone-700 flex items-center justify-center text-[10px] font-bold text-stone-300">
-                                {s.name?.slice(0, 2).toUpperCase()}
-                              </div>
-                            )}
-                            {s.faceEnrolled && (
-                              <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-emerald-500 border border-stone-950 flex items-center justify-center text-[7px] text-stone-950 font-black">
-                                ✓
-                              </span>
-                            )}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className={`text-xs font-bold truncate leading-tight ${isSelected ? 'text-cyan-300' : 'text-stone-300'}`}>
-                              {s.name}
-                            </p>
-                            <p className="text-[9px] text-stone-500 uppercase font-mono">{s.role}</p>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
+                  <p className="text-[11px] text-stone-400 leading-snug">
+                    {isKhmer 
+                      ? 'គ្រាន់តែឈរមុខកាមេរ៉ា — ប្រព័ន្ធនឹងស្វែងរកគណនីរបស់អ្នក និងចូលភ្លាមៗ (មុខ ១ = គណនី ១)' 
+                      : 'Position face in front of camera — System recognizes and logs in automatically (1 Face = 1 Account).'}
+                  </p>
                 </div>
               )}
 
               {/* Action Buttons */}
               <div className="space-y-1.5">
                 <div className="flex items-center gap-2">
-                  {/* Primary Real Camera Capture Button */}
+                  {/* Primary Camera Capture Button */}
                   <button
                     type="button"
-                    onClick={() => {
-                      if (mode === 'LOGIN' && !currentTarget?.faceEnrolled) {
-                        handleScanAndSaveForAccount();
-                      } else {
-                        handleCaptureRealFace();
-                      }
-                    }}
+                    onClick={() => handleCaptureRealFace()}
                     className="flex-1 py-3 px-4 bg-gradient-to-r from-cyan-600 via-cyan-500 to-teal-500 hover:from-cyan-500 hover:to-teal-400 text-stone-950 font-extrabold text-sm rounded-xl shadow-lg shadow-cyan-950/60 flex items-center justify-center gap-2 transition duration-200 cursor-pointer active:scale-98"
                   >
                     <Camera className="w-4 h-4 text-stone-950" />
@@ -1256,25 +1209,10 @@ export const FaceScannerModal = ({
                         : mode === 'ENROLL'
                         ? (isKhmer ? '📷 ស្កេន & រក្សាទុកផ្ទៃមុខ' : '📷 Capture & Save Face')
                         : mode === 'LOGIN'
-                        ? (currentTarget?.faceEnrolled
-                            ? (isKhmer ? 'ស្កេន & ចូលប្រើ' : 'Scan & Login')
-                            : (isKhmer ? '📷 ស្កេន & រក្សាទុក Face ID' : '📷 Scan & Save Face ID'))
+                        ? (isKhmer ? '📷 ស្កេនស្គាល់មុខភ្លាម' : '📷 Auto-Scan Face ID')
                         : (isKhmer ? 'ស្កេន & ផ្ទៀងផ្ទាត់មុខ' : 'Scan & Verify Live Face')}
                     </span>
                   </button>
-
-                  {/* Secondary Option: In LOGIN mode if already enrolled, allow quick re-enroll / update */}
-                  {mode === 'LOGIN' && currentTarget?.faceEnrolled && (
-                    <button
-                      type="button"
-                      onClick={handleScanAndSaveForAccount}
-                      className="py-3 px-3 bg-stone-900 hover:bg-stone-850 border border-stone-700 hover:border-cyan-500/50 text-cyan-300 font-bold text-xs rounded-xl flex items-center justify-center gap-1 transition cursor-pointer shrink-0 shadow-md"
-                      title={isKhmer ? 'ថតស្កេនរក្សាទុករូបថ្មី' : 'Update Face Photo'}
-                    >
-                      <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
-                      <span className="hidden sm:inline">{isKhmer ? 'ថតថ្មី' : 'Re-Enroll'}</span>
-                    </button>
-                  )}
 
                   {/* Upload Image Fallback */}
                   <label
@@ -1293,15 +1231,6 @@ export const FaceScannerModal = ({
                     className="hidden"
                   />
                 </div>
-
-                {/* Subtext info for non-enrolled accounts in LOGIN mode */}
-                {mode === 'LOGIN' && !currentTarget?.faceEnrolled && (
-                  <p className="text-[10px] text-amber-400/90 text-center font-medium">
-                    {isKhmer 
-                      ? `* គណនី ${currentTarget?.name} មិនទាន់មាន Face ID នៅឡើយទេ។ ចុចប៊ូតុងខាងលើដើម្បីស្កេនផ្ទៃមុខ និងរក្សាទុក!` 
-                      : `* ${currentTarget?.name} has not enrolled Face ID yet. Click above to scan & save Face ID!`}
-                  </p>
-                )}
               </div>
 
               {/* Mode notice / target indication */}

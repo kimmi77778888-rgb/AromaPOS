@@ -1,5 +1,6 @@
 import { INITIAL_PRODUCTS, INITIAL_ORDERS, DEMO_USERS, INITIAL_INGREDIENTS, CATEGORIES } from './coffeeData';
 import { storage } from '../utils/storage';
+import { checkFaceUniqueness } from '../utils/faceBiometrics';
 
 const API_HOST = typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_API_URL 
   ? process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '') 
@@ -506,14 +507,18 @@ export const api = {
     }
 
     const staffList = getStoredStaff();
-    // Enforce 1 face = 1 account check in local storage fallback
-    const conflict = staffList.find((u) => u.id !== staffId && u.faceEnrolled && ((faceHash && u.faceHash === faceHash) || (facePhoto && u.facePhoto === facePhoto)));
-    if (conflict) {
-      const conflictErr = new Error(`This face is already registered to ${conflict.name} (${conflict.role}). One face can only be used by 1 account.`);
-      conflictErr.conflict = true;
-      conflictErr.existingStaffName = conflict.name;
-      conflictErr.existingStaffRole = conflict.role;
-      throw conflictErr;
+    // Enforce strict 1 face = 1 account check in local storage fallback
+    const features = faceBiometrics || (faceHash ? { hash: faceHash } : null);
+    if (features) {
+      const uniqueness = checkFaceUniqueness(features, staffId, staffList);
+      if (!uniqueness.isUnique && uniqueness.conflictingStaff) {
+        const conflict = uniqueness.conflictingStaff;
+        const conflictErr = new Error(`This face is already registered to ${conflict.name} (${conflict.role}). One face can only be used by 1 account.`);
+        conflictErr.conflict = true;
+        conflictErr.existingStaffName = conflict.name;
+        conflictErr.existingStaffRole = conflict.role;
+        throw conflictErr;
+      }
     }
 
     const updated = staffList.map((u) =>

@@ -3,7 +3,8 @@
  * Rule: ONE FACE CAN ONLY BE USED BY 1 ACCOUNT (1 Face = 1 Account)
  */
 
-export const FACE_MATCH_THRESHOLD = 0.72; // 72% biometric confidence threshold
+export const FACE_MATCH_THRESHOLD = 0.70; // 70% biometric confidence threshold for 1:N login identification
+export const FACE_CONFLICT_THRESHOLD = 0.65; // Strict: 65%+ match means SAME person (Prevents 1 face on multiple accounts)
 
 /**
  * Extracts a compact perceptual biometric vector and gradient hash from a video element,
@@ -221,7 +222,7 @@ export const checkFaceUniqueness = (newFeatures, targetStaffId, staffList = []) 
       const sim = compareFaceBiometrics(newFeatures, staffFeatures);
       if (sim > maxSimilarity) {
         maxSimilarity = sim;
-        if (sim >= FACE_MATCH_THRESHOLD) {
+        if (sim >= (FACE_CONFLICT_THRESHOLD || 0.65)) {
           highestConflict = staff;
         }
       }
