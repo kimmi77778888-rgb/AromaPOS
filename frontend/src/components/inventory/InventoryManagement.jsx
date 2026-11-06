@@ -338,80 +338,43 @@ export const InventoryManagement = ({ onOpenAddModal }) => {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6 bg-stone-900/40">
-      {/* Modern Header Navigation & Action Bar */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-stone-800/80 pb-5">
-        <div className="segmented-tab-container inline-flex flex-wrap items-center gap-1.5 p-1.5 rounded-2xl bg-stone-950/80 border border-stone-800/80 shadow-inner">
-          {/* Sub-Tab 1: Menu Products */}
-          <button
-            onClick={() => setActiveSubTab('products')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-              activeSubTab === 'products'
-                ? 'segmented-tab-active shadow-md'
-                : 'text-stone-400 hover:text-stone-100 hover:bg-stone-900/60'
-            }`}
-          >
-            <Coffee className="w-4 h-4" />
-            <span>{isKhmer ? 'បញ្ជីមុខទំនិញ' : 'Menu Catalog'}</span>
-            <span className={`text-[11px] px-2 py-0.5 rounded-full font-mono font-bold ${
-              activeSubTab === 'products' ? 'bg-stone-950/20 text-stone-950' : 'bg-stone-850 text-stone-400'
-            }`}>
-              {products.length}
-            </span>
-          </button>
-
-          {/* Sub-Tab 2: Raw Ingredients & BOM */}
-          <button
-            onClick={() => setActiveSubTab('ingredients')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer relative ${
-              activeSubTab === 'ingredients'
-                ? 'segmented-tab-active shadow-md'
-                : 'text-stone-400 hover:text-stone-100 hover:bg-stone-900/60'
-            }`}
-          >
-            <Layers className="w-4 h-4" />
-            <span>{isKhmer ? 'វត្ថុធាតុដើម & រូបមន្ត' : 'Raw Materials & BOM'}</span>
-            <span className={`text-[11px] px-2 py-0.5 rounded-full font-mono font-bold ${
-              activeSubTab === 'ingredients' ? 'bg-stone-950/20 text-stone-950' : 'bg-stone-850 text-stone-400'
-            }`}>
-              {ingredients.length}
-            </span>
-            {lowStockIngredients.length > 0 && (
-              <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping absolute -top-0.5 -right-0.5"></span>
-            )}
-          </button>
-
-          {/* Sub-Tab 3: Stock Movement & Audit Ledger */}
-          <button
-            onClick={() => setActiveSubTab('movements')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-              activeSubTab === 'movements'
-                ? 'segmented-tab-active shadow-md'
-                : 'text-stone-400 hover:text-stone-100 hover:bg-stone-900/60'
-            }`}
-          >
-            <History className="w-4 h-4" />
-            <span>{isKhmer ? 'ប្រវត្តិនាំចេញ-ចូលស្តុក' : 'Movements & Audit'}</span>
-            <span className={`text-[11px] px-2 py-0.5 rounded-full font-mono font-bold ${
-              activeSubTab === 'movements' ? 'bg-stone-950/20 text-stone-950' : 'bg-stone-850 text-stone-400'
-            }`}>
-              {stockMovements.length}
-            </span>
-          </button>
+    <div className="flex-1 overflow-y-auto p-5 md:p-7 space-y-5 bg-stone-900/40">
+      {/* Tier 1: Page Title, Live Indicator & High-Level Action Toolbar */}
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 pb-4 border-b border-stone-800/80">
+        <div className="flex items-center gap-3.5">
+          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-500/20 via-amber-600/10 to-stone-900 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-lg shadow-amber-950/20 shrink-0">
+            <Boxes className="w-5 h-5 text-amber-400" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-xl md:text-2xl font-black text-stone-100 tracking-tight font-khmer">
+                {isKhmer ? 'គ្រប់គ្រងស្តុក & មុខទំនិញ' : 'Inventory & Catalog'}
+              </h1>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>Live POS</span>
+              </span>
+            </div>
+            <p className="text-xs text-stone-400 font-medium mt-0.5 font-khmer">
+              {isKhmer 
+                ? 'ប្រព័ន្ធគ្រប់គ្រងស្តុកកាហ្វេ ថ្លៃដើមរូបមន្ត BOM និងសវនកម្មស្តុកជាក់ស្តែង' 
+                : 'Automated F&B recipe costing, physical stocktake & movement audit ledger'}
+            </p>
+          </div>
         </div>
 
         {/* Action Group: Cambodia Standard Excel Export & Stock Operations */}
-        <div className="flex items-center gap-2.5 flex-wrap">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 xl:pb-0 no-scrollbar flex-wrap sm:flex-nowrap">
           {/* Clean Excel (.xlsx) Dropdown */}
           <div className="relative" ref={exportMenuRef}>
             <button
               type="button"
               onClick={() => setIsExportMenuOpen(!isExportMenuOpen)}
-              className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-stone-900/90 hover:bg-stone-850 border border-emerald-500/40 hover:border-emerald-400 text-stone-100 font-bold text-xs shadow-md shadow-emerald-950/30 transition active:scale-95 cursor-pointer group"
+              className="flex items-center gap-2 px-3 py-2 rounded-xl bg-stone-900/90 hover:bg-stone-850 border border-emerald-500/40 hover:border-emerald-400 text-stone-100 font-bold text-xs shadow-md shadow-emerald-950/30 transition active:scale-95 cursor-pointer group whitespace-nowrap"
               title={isKhmer ? 'នាំចេញឯកសារ Excel' : 'Export Excel Master (.xlsx)'}
             >
               <FileSpreadsheet className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition shrink-0" />
-              <span className="font-sans">{isKhmer ? 'នាំចេញឯកសារ Excel' : 'Export Excel'}</span>
+              <span className="font-khmer">{isKhmer ? 'នាំចេញ Excel' : 'Export Excel'}</span>
               <ChevronDown className={`w-3.5 h-3.5 text-stone-400 transition-transform duration-200 ${isExportMenuOpen ? 'rotate-180' : ''}`} />
             </button>
 
@@ -420,7 +383,7 @@ export const InventoryManagement = ({ onOpenAddModal }) => {
                 <div className="px-3 py-2 border-b border-stone-800 text-[11px] font-bold text-stone-400 uppercase tracking-wider flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
                     <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>{isKhmer ? 'ជម្រើសនាំចេញ Excel' : 'Export Excel Options'}</span>
+                    <span className="font-khmer">{isKhmer ? 'ជម្រើសនាំចេញ Excel' : 'Export Excel Options'}</span>
                   </span>
                   <span className="text-[10px] text-emerald-400 font-mono font-bold">$1 = {khrExchangeRate || 4100}៛</span>
                 </div>
@@ -435,10 +398,10 @@ export const InventoryManagement = ({ onOpenAddModal }) => {
                       <Coffee className="w-4 h-4" />
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-stone-100 group-hover:text-emerald-300">
+                      <p className="text-xs font-bold text-stone-100 group-hover:text-emerald-300 font-khmer">
                         {isKhmer ? '១. បញ្ជីមុខទំនិញស្តង់ដារកម្ពុជា (.xlsx)' : '1. Menu Items Catalog (.xlsx)'}
                       </p>
-                      <p className="text-[11px] text-stone-400 leading-tight mt-0.5">
+                      <p className="text-[11px] text-stone-400 leading-tight mt-0.5 font-khmer">
                         {isKhmer
                           ? 'កូដទំនិញ ឈ្មោះខ្មែរ-អង់គ្លេស តម្លៃ ($/៛) ថ្លៃដើម BOM & ស្ថានភាពស្តុក'
                           : 'Bilingual names, USD ($) & KHR (៛), BOM recipe cost & stock status'}
@@ -455,10 +418,10 @@ export const InventoryManagement = ({ onOpenAddModal }) => {
                       <Layers className="w-4 h-4" />
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-stone-200 group-hover:text-amber-300">
+                      <p className="text-xs font-bold text-stone-200 group-hover:text-amber-300 font-khmer">
                         {isKhmer ? '២. បញ្ជីស្តុកវត្ថុធាតុដើម & រូបមន្ត (.xlsx)' : '2. Raw Materials & Recipes (.xlsx)'}
                       </p>
-                      <p className="text-[11px] text-stone-400 leading-tight mt-0.5">
+                      <p className="text-[11px] text-stone-400 leading-tight mt-0.5 font-khmer">
                         {isKhmer
                           ? 'ស្តុកគ្រឿងផ្សំ តម្លៃក្នុង១ខ្នាត និងការព្យាករណ៍ទិញបន្ថែម'
                           : 'Ingredient stock levels, unit costs, and reorder forecasts'}
@@ -475,10 +438,10 @@ export const InventoryManagement = ({ onOpenAddModal }) => {
                       <History className="w-4 h-4" />
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-stone-200 group-hover:text-blue-300">
+                      <p className="text-xs font-bold text-stone-200 group-hover:text-blue-300 font-khmer">
                         {isKhmer ? '៣. ប្រវត្តិនាំចូល និងកែសម្រួលស្តុក (.xlsx)' : '3. Stock Movements & Audit Ledger (.xlsx)'}
                       </p>
-                      <p className="text-[11px] text-stone-400 leading-tight mt-0.5">
+                      <p className="text-[11px] text-stone-400 leading-tight mt-0.5 font-khmer">
                         {isKhmer
                           ? 'កំណត់ត្រានាំចូល ខូចខាត ចាក់ចោល និងកែតម្រូវស្តុកជាក់ស្តែង'
                           : 'Stock-in, spoilage, adjustments with timestamps, units & operator'}
@@ -497,10 +460,10 @@ export const InventoryManagement = ({ onOpenAddModal }) => {
                       <FileSpreadsheet className="w-4 h-4" />
                     </div>
                     <div>
-                      <p className="text-xs font-extrabold text-emerald-300 group-hover:text-emerald-200 flex items-center gap-1.5">
+                      <p className="text-xs font-extrabold text-emerald-300 group-hover:text-emerald-200 flex items-center gap-1.5 font-khmer">
                         <span>{isKhmer ? '៤. កញ្ចប់ពេញលេញ ៣ សន្លឹក (.xlsx)' : '4. Complete 3-Sheet Master Workbook (.xlsx)'}</span>
                       </p>
-                      <p className="text-[11px] text-stone-400 leading-tight mt-0.5">
+                      <p className="text-[11px] text-stone-400 leading-tight mt-0.5 font-khmer">
                         {isKhmer
                           ? 'រួមបញ្ចូលទាំង បញ្ជីទំនិញ + វត្ថុធាតុដើម + ចលនាស្តុក'
                           : 'Full master workbook: Menu Catalog + Raw Materials + Movements Audit'}
@@ -516,44 +479,110 @@ export const InventoryManagement = ({ onOpenAddModal }) => {
           <button
             type="button"
             onClick={() => handleOpenStockIn(null)}
-            className="px-3 py-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 hover:text-emerald-100 font-bold text-xs flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-sm"
+            className="px-3 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 hover:text-emerald-100 font-bold text-xs flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-sm whitespace-nowrap"
             title={isKhmer ? 'កត់ត្រានាំចូលស្តុក' : 'Receive Stock In'}
           >
             <ArrowDownToLine className="w-4 h-4 text-emerald-400" />
-            <span>{isKhmer ? '📥 នាំចូលស្តុក' : '📥 Stock In'}</span>
+            <span className="font-khmer">{isKhmer ? 'នាំចូលស្តុក' : 'Stock In'}</span>
           </button>
 
           {/* F&B Standard Daily Waste / Dial-In Button */}
           <button
             type="button"
             onClick={() => setIsDailyWasteModalOpen(true)}
-            className="px-3 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-300 hover:text-rose-100 font-bold text-xs flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-sm"
+            className="px-3 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-300 hover:text-rose-100 font-bold text-xs flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-sm whitespace-nowrap"
             title={isKhmer ? 'កត់ត្រាការខូចខាត & កិនសាកល្បងម៉ាស៊ីនកាហ្វេ' : 'Log Daily Barista Dial-In & Spoilage Waste'}
           >
             <Trash2 className="w-4 h-4 text-rose-400" />
-            <span>{isKhmer ? '☕ កិនសាកល្បង & ខូច' : '☕ Dial-In & Waste'}</span>
+            <span className="font-khmer">{isKhmer ? 'កិនសាក & ខូច' : 'Dial-In & Waste'}</span>
           </button>
 
           {/* F&B Standard Physical Stocktake Audit Button */}
           <button
             type="button"
             onClick={() => setIsStocktakeAuditModalOpen(true)}
-            className="px-3 py-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 hover:text-amber-100 font-bold text-xs flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-sm"
+            className="px-3 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 hover:text-amber-100 font-bold text-xs flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-sm whitespace-nowrap"
             title={isKhmer ? 'ផ្ទៀងផ្ទាត់ និងរាប់ស្តុកជាក់ស្តែង (Stocktake)' : 'Periodic Physical Stock Count & Variance Audit'}
           >
             <Scale className="w-4 h-4 text-amber-400" />
-            <span>{isKhmer ? '📋 រាប់ស្តុកជាក់ស្តែង' : '📋 Stocktake Audit'}</span>
+            <span className="font-khmer">{isKhmer ? 'រាប់ស្តុក' : 'Stocktake'}</span>
           </button>
 
           {/* Add Menu Product or Ingredient */}
           <button
             type="button"
             onClick={activeSubTab === 'products' ? handleOpenAdd : handleOpenAddIngredient}
-            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-extrabold text-xs flex items-center gap-2 shadow-md shadow-amber-950/40 transition active:scale-95 cursor-pointer"
+            className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-extrabold text-xs flex items-center gap-1.5 shadow-md shadow-amber-950/40 transition active:scale-95 cursor-pointer whitespace-nowrap"
           >
             <Plus className="w-4 h-4 stroke-[2.5]" />
-            <span>{activeSubTab === 'products' ? (isKhmer ? 'បន្ថែមមុខទំនិញ' : 'New Product') : (isKhmer ? 'បន្ថែមគ្រឿងផ្សំ' : 'New Ingredient')}</span>
+            <span className="font-khmer">{activeSubTab === 'products' ? (isKhmer ? 'បន្ថែមទំនិញ' : 'New Product') : (isKhmer ? 'បន្ថែមគ្រឿងផ្សំ' : 'New Ingredient')}</span>
           </button>
+        </div>
+      </div>
+
+      {/* Tier 2: Sub-Tabs View Switcher Strip */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="segmented-tab-container inline-flex items-center gap-1 p-1 rounded-2xl bg-stone-950/90 border border-stone-800/80 shadow-inner overflow-x-auto max-w-full no-scrollbar">
+          {/* Sub-Tab 1: Menu Products */}
+          <button
+            onClick={() => setActiveSubTab('products')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer whitespace-nowrap ${
+              activeSubTab === 'products'
+                ? 'segmented-tab-active shadow-md'
+                : 'text-stone-400 hover:text-stone-100 hover:bg-stone-900/60'
+            }`}
+          >
+            <Coffee className="w-4 h-4" />
+            <span className="font-khmer">{isKhmer ? 'បញ្ជីមុខទំនិញ' : 'Menu Catalog'}</span>
+            <span className={`text-[11px] px-2 py-0.5 rounded-full font-mono font-bold ${
+              activeSubTab === 'products' ? 'bg-stone-950/20 text-stone-950' : 'bg-stone-850 text-stone-400'
+            }`}>
+              {products.length}
+            </span>
+          </button>
+
+          {/* Sub-Tab 2: Raw Ingredients & BOM */}
+          <button
+            onClick={() => setActiveSubTab('ingredients')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer whitespace-nowrap relative ${
+              activeSubTab === 'ingredients'
+                ? 'segmented-tab-active shadow-md'
+                : 'text-stone-400 hover:text-stone-100 hover:bg-stone-900/60'
+            }`}
+          >
+            <Layers className="w-4 h-4" />
+            <span className="font-khmer">{isKhmer ? 'វត្ថុធាតុដើម & រូបមន្ត' : 'Raw Materials & BOM'}</span>
+            <span className={`text-[11px] px-2 py-0.5 rounded-full font-mono font-bold ${
+              activeSubTab === 'ingredients' ? 'bg-stone-950/20 text-stone-950' : 'bg-stone-850 text-stone-400'
+            }`}>
+              {ingredients.length}
+            </span>
+            {lowStockIngredients.length > 0 && (
+              <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping absolute -top-0.5 -right-0.5"></span>
+            )}
+          </button>
+
+          {/* Sub-Tab 3: Stock Movement & Audit Ledger */}
+          <button
+            onClick={() => setActiveSubTab('movements')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer whitespace-nowrap ${
+              activeSubTab === 'movements'
+                ? 'segmented-tab-active shadow-md'
+                : 'text-stone-400 hover:text-stone-100 hover:bg-stone-900/60'
+            }`}
+          >
+            <History className="w-4 h-4" />
+            <span className="font-khmer">{isKhmer ? 'ប្រវត្តិនាំចេញ-ចូលស្តុក' : 'Movements & Audit'}</span>
+            <span className={`text-[11px] px-2 py-0.5 rounded-full font-mono font-bold ${
+              activeSubTab === 'movements' ? 'bg-stone-950/20 text-stone-950' : 'bg-stone-850 text-stone-400'
+            }`}>
+              {stockMovements.length}
+            </span>
+          </button>
+        </div>
+
+        <div className="hidden sm:flex items-center gap-2 text-xs text-stone-400 font-mono">
+          <span className="text-amber-400 font-bold">$1 = {khrExchangeRate || 4100}៛</span>
         </div>
       </div>
 
@@ -806,20 +835,14 @@ export const InventoryManagement = ({ onOpenAddModal }) => {
               }`}
             >
               <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />
-              <span>{isKhmer ? 'ត្រងស្តុកទាប' : 'Low Stock Only'}</span>
+              <span className="font-khmer">{isKhmer ? 'ត្រងស្តុកទាប' : 'Low Stock Only'}</span>
+              {(activeSubTab === 'products' ? lowStockProducts.length : lowStockIngredients.length) > 0 && (
+                <span className="px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-rose-500/30 text-rose-300 border border-rose-500/40">
+                  {activeSubTab === 'products' ? lowStockProducts.length : lowStockIngredients.length}
+                </span>
+              )}
             </button>
           )}
-
-          {/* Quick Export Button */}
-          <button
-            type="button"
-            onClick={() => handleExportExcel(activeSubTab === 'products' ? 'catalog' : 'inventory')}
-            className="px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer bg-stone-900 hover:bg-emerald-950/60 text-stone-200 hover:text-emerald-300 border border-stone-800 hover:border-emerald-600/50"
-            title={isKhmer ? 'ទាញយក Excel បញ្ជីនេះ' : 'Quick export this view to Excel (.xlsx)'}
-          >
-            <Download className="w-3.5 h-3.5 text-emerald-400" />
-            <span>{isKhmer ? 'ទាញយក Excel' : 'Quick Export'}</span>
-          </button>
         </div>
       </div>
 
@@ -830,13 +853,13 @@ export const InventoryManagement = ({ onOpenAddModal }) => {
             <table className="w-full text-left text-xs">
               <thead className="bg-stone-950/95 border-b border-stone-800 uppercase tracking-wider text-[11px] text-stone-400 font-bold">
                 <tr>
-                  <th className="py-3.5 px-4">{isKhmer ? 'មុខទំនិញ' : 'Product'}</th>
-                  <th className="py-3.5 px-4">{isKhmer ? 'ប្រភេទ' : 'Category'}</th>
-                  <th className="py-3.5 px-4">{isKhmer ? 'ថ្លៃដើម / តម្លៃលក់ / ចំណេញ' : 'Cost / Price / Margin'}</th>
-                  <th className="py-3.5 px-4">{isKhmer ? 'ស្តុក & ខ្នាត' : 'Physical Stock & UOM'}</th>
-                  <th className="py-3.5 px-4">{isKhmer ? 'កម្រិតប្រកាស' : 'Min Alert'}</th>
-                  <th className="py-3.5 px-4">{isKhmer ? 'ស្ថានភាព POS' : 'Terminal Status'}</th>
-                  <th className="py-3.5 px-4 text-right">{isKhmer ? 'សកម្មភាពស្តុក & កែប្រែ' : 'Stock Actions & Edit'}</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap font-khmer">{isKhmer ? 'មុខទំនិញ' : 'Product'}</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap font-khmer">{isKhmer ? 'ប្រភេទ' : 'Category'}</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap font-khmer">{isKhmer ? 'ថ្លៃដើម / តម្លៃលក់ / ចំណេញ' : 'Cost / Price / Margin'}</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap font-khmer">{isKhmer ? 'ស្តុក & ខ្នាត' : 'Physical Stock & UOM'}</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap font-khmer">{isKhmer ? 'កម្រិតប្រកាស' : 'Min Alert'}</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap font-khmer">{isKhmer ? 'ស្ថានភាព POS' : 'Terminal Status'}</th>
+                  <th className="py-3.5 px-4 text-right whitespace-nowrap font-khmer">{isKhmer ? 'សកម្មភាព' : 'Actions'}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-800/60 text-stone-300">
@@ -878,9 +901,19 @@ export const InventoryManagement = ({ onOpenAddModal }) => {
 
                       {/* Category */}
                       <td className="py-3 px-4">
-                        <span className="px-2.5 py-1 rounded-full bg-stone-950 text-stone-300 border border-stone-800 text-[11px] font-medium whitespace-nowrap">
-                          {product.categoryKm ? `${product.categoryKm} (${product.category})` : product.category}
-                        </span>
+                        {(() => {
+                          const catObj = CATEGORIES.find((c) => c.id === product.category || c.name === product.category);
+                          const kmCat = (product.categoryKm && product.categoryKm !== product.category) 
+                            ? product.categoryKm 
+                            : (catObj?.nameKm || product.category);
+                          const enCat = catObj?.name || product.category;
+                          return (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-stone-950 text-stone-300 border border-stone-800 text-[11px] font-medium whitespace-nowrap shadow-xs font-khmer">
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-500/80 shrink-0"></span>
+                              <span>{isKhmer ? kmCat : enCat}</span>
+                            </span>
+                          );
+                        })()}
                       </td>
 
                       {/* Cost / Price / Margin */}
@@ -1047,13 +1080,13 @@ export const InventoryManagement = ({ onOpenAddModal }) => {
             <table className="w-full text-left text-xs">
               <thead className="bg-stone-950/95 border-b border-stone-800 uppercase tracking-wider text-[11px] text-stone-400 font-bold">
                 <tr>
-                  <th className="py-3.5 px-4">{isKhmer ? 'វត្ថុធាតុដើម & រូបមន្ត' : 'Raw Material & Recipes'}</th>
-                  <th className="py-3.5 px-4">{isKhmer ? 'ខ្នាត & ប្រភេទ' : 'UOM & Category'}</th>
-                  <th className="py-3.5 px-4">{isKhmer ? 'ស្តុកបច្ចុប្បន្ន' : 'Current Physical Stock'}</th>
-                  <th className="py-3.5 px-4">{isKhmer ? 'កម្រិតសុវត្ថិភាព' : 'Safety Min Alert'}</th>
-                  <th className="py-3.5 px-4">{isKhmer ? 'ថ្លៃដើម & តម្លៃស្តុក' : 'Unit Cost & Asset Val'}</th>
-                  <th className="py-3.5 px-4">{isKhmer ? 'ស្ថានភាព' : 'Status Alert'}</th>
-                  <th className="py-3.5 px-4 text-right">{isKhmer ? 'សកម្មភាពបំពេញស្តុក & គ្រប់គ្រង' : 'Stock Restock & Actions'}</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap font-khmer">{isKhmer ? 'វត្ថុធាតុដើម & រូបមន្ត' : 'Raw Material & Recipes'}</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap font-khmer">{isKhmer ? 'ខ្នាត & ប្រភេទ' : 'UOM & Category'}</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap font-khmer">{isKhmer ? 'ស្តុកបច្ចុប្បន្ន' : 'Current Physical Stock'}</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap font-khmer">{isKhmer ? 'កម្រិតសុវត្ថិភាព' : 'Safety Min Alert'}</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap font-khmer">{isKhmer ? 'ថ្លៃដើម & តម្លៃស្តុក' : 'Unit Cost & Asset Val'}</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap font-khmer">{isKhmer ? 'ស្ថានភាព' : 'Status Alert'}</th>
+                  <th className="py-3.5 px-4 text-right whitespace-nowrap font-khmer">{isKhmer ? 'សកម្មភាព' : 'Actions'}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-800/60 text-stone-300">
@@ -1247,14 +1280,14 @@ export const InventoryManagement = ({ onOpenAddModal }) => {
             <table className="w-full text-left text-xs">
               <thead className="bg-stone-950/95 border-b border-stone-800 uppercase tracking-wider text-[11px] text-stone-400 font-bold">
                 <tr>
-                  <th className="py-3.5 px-4">{isKhmer ? 'កាលបរិច្ឆេទ & ម៉ោង' : 'Date & Time'}</th>
-                  <th className="py-3.5 px-4">{isKhmer ? 'ប្រភេទប្រតិបត្តិការ' : 'Movement Type'}</th>
-                  <th className="py-3.5 px-4">{isKhmer ? 'មុខទំនិញ' : 'Product'}</th>
-                  <th className="py-3.5 px-4">{isKhmer ? 'បរិមាណ' : 'Qty Delta'}</th>
-                  <th className="py-3.5 px-4">{isKhmer ? 'ស្តុកនៅសល់' : 'Balance'}</th>
-                  <th className="py-3.5 px-4">{isKhmer ? 'តម្លៃ / ថ្លៃដើម' : 'Cost / Value'}</th>
-                  <th className="py-3.5 px-4">{isKhmer ? 'លេខយោង & មូលហេតុ' : 'Reference & Reason'}</th>
-                  <th className="py-3.5 px-4">{isKhmer ? 'អ្នកកត់ត្រា' : 'Operator'}</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap font-khmer">{isKhmer ? 'កាលបរិច្ឆេទ & ម៉ោង' : 'Date & Time'}</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap font-khmer">{isKhmer ? 'ប្រភេទប្រតិបត្តិការ' : 'Movement Type'}</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap font-khmer">{isKhmer ? 'មុខទំនិញ' : 'Product'}</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap font-khmer">{isKhmer ? 'បរិមាណ' : 'Qty Delta'}</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap font-khmer">{isKhmer ? 'ស្តុកនៅសល់' : 'Balance'}</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap font-khmer">{isKhmer ? 'តម្លៃ / ថ្លៃដើម' : 'Cost / Value'}</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap font-khmer">{isKhmer ? 'លេខយោង & មូលហេតុ' : 'Reference & Reason'}</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap font-khmer">{isKhmer ? 'អ្នកកត់ត្រា' : 'Operator'}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-800/60 text-stone-300">

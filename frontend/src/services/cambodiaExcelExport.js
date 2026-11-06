@@ -134,7 +134,7 @@ export const exportCambodiaStandardCatalog = ({
         p.sku || `SKU-${String(index + 1).padStart(3, '0')}`,
         p.nameKm || p.name || '-',
         p.name || '-',
-        p.categoryKm ? `${p.categoryKm} (${p.category})` : p.category || 'General',
+        p.categoryKm && p.categoryKm !== p.category ? `${p.categoryKm} (${p.category})` : (p.categoryKm || p.category || 'General'),
         price,
         priceKHR,
         cost,
