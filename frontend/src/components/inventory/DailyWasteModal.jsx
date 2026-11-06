@@ -414,3 +414,4 @@ export const DailyWasteModal = ({ isOpen, onClose }) => {
     </div>
   );
 };
+

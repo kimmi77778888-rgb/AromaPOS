@@ -639,3 +639,4 @@ export const StocktakeAuditModal = ({ isOpen, onClose }) => {
     </div>
   );
 };
+

@@ -29,18 +29,21 @@ export const LoginScreen = () => {
     if (lockoutSeconds > 0) return;
     setError('');
 
-    if (!email || !email.includes('@')) {
-      setError('សូមបំពេញ Email ឲ្យបានត្រឹមត្រូវ!');
+    const cleanInput = (email || '').trim();
+    if (!cleanInput) {
+      setError(isKhmer ? 'សូមបំពេញ Email ឬ Username!' : 'Please enter your Email or Username (admin@cafe.com)!');
       return;
     }
-    if (!password || password.length < 4) {
-      setError('Password ត្រូវមានយ៉ាងតិច ៤ តួអក្សរ!');
+    if (!password || password.length < 3) {
+      setError(isKhmer ? 'Passcode ត្រូវមានយ៉ាងតិច ៤ ខ្ទង់!' : 'Passcode must be at least 4 characters!');
       return;
     }
 
+    const formattedEmail = cleanInput.includes('@') ? cleanInput : `${cleanInput}@cafe.com`;
+
     setIsLoading(true);
     try {
-      await login(email, password);
+      await login(formattedEmail, password);
       setFailedCount(0);
     } catch (err) {
       const nextFails = failedCount + 1;
@@ -137,37 +140,63 @@ export const LoginScreen = () => {
             {/* Email */}
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-stone-400 uppercase tracking-wider">
-                Staff Email
+                Staff Email / Username
               </label>
               <div className="relative group">
                 <Mail className="w-4 h-4 text-stone-500 group-focus-within:text-amber-400 absolute left-4 top-1/2 -translate-y-1/2 transition" />
                 <input
-                  type="email"
+                  type="text"
+                  name="station_identity"
+                  id="station_identity"
                   value={email}
                   onChange={(e) => { setEmail(e.target.value); setError(''); }}
-                  placeholder="name@cafe.com"
-                  autoComplete="email"
+                  placeholder="admin@cafe.com (or admin)"
+                  autoComplete="off"
+                  data-lpignore="true"
+                  data-1p-ignore="true"
+                  data-form-type="other"
+                  spellCheck="false"
                   required
                   className="w-full pl-11 pr-4 py-3.5 bg-stone-900 border border-stone-800 hover:border-stone-700 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 text-stone-100 text-sm rounded-2xl outline-none transition placeholder:text-stone-600"
                 />
               </div>
             </div>
 
-            {/* Password */}
+            {/* Password / Passcode */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-stone-400 uppercase tracking-wider">
-                Passcode / Password
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold text-stone-400 uppercase tracking-wider">
+                  Passcode / Password (77778888)
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail('admin@cafe.com');
+                    setPassword('77778888');
+                    setError('');
+                  }}
+                  className="text-[11px] text-amber-500 hover:text-amber-400 font-semibold cursor-pointer transition flex items-center gap-1"
+                >
+                  <KeyRound className="w-3 h-3" />
+                  <span>Fill Admin Key</span>
+                </button>
+              </div>
               <div className="relative group">
                 <Lock className="w-4 h-4 text-stone-500 group-focus-within:text-amber-400 absolute left-4 top-1/2 -translate-y-1/2 transition" />
                 <input
                   type={showPassword ? 'text' : 'password'}
+                  name="station_passcode"
+                  id="station_passcode"
                   value={password}
                   onChange={(e) => { setPassword(e.target.value); setError(''); }}
-                  placeholder="••••••••"
-                  autoComplete="current-password"
+                  placeholder="77778888"
+                  autoComplete="new-password"
+                  data-lpignore="true"
+                  data-1p-ignore="true"
+                  data-form-type="other"
+                  spellCheck="false"
                   required
-                  className="w-full pl-11 pr-12 py-3.5 bg-stone-900 border border-stone-800 hover:border-stone-700 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 text-stone-100 text-sm rounded-2xl outline-none transition placeholder:text-stone-600"
+                  className="w-full pl-11 pr-12 py-3.5 bg-stone-900 border border-stone-800 hover:border-stone-700 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 text-stone-100 text-sm rounded-2xl outline-none transition placeholder:text-stone-600 font-mono"
                 />
                 <button
                   type="button"
