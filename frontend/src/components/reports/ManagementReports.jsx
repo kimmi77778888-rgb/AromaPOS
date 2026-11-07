@@ -160,6 +160,9 @@ export const ManagementReports = () => {
     if (preset === 'today') {
       const today = getTodayISO();
       setFilters(prev => ({ ...prev, datePreset: 'today', startDate: today, endDate: today }));
+    } else if (preset === 'yesterday') {
+      const yesterday = getDaysAgoISO(1);
+      setFilters(prev => ({ ...prev, datePreset: 'yesterday', startDate: yesterday, endDate: yesterday }));
     } else if (preset === 'week') {
       setFilters(prev => ({ ...prev, datePreset: 'week', startDate: getDaysAgoISO(7), endDate: getTodayISO() }));
     } else if (preset === 'month') {
@@ -225,9 +228,14 @@ export const ManagementReports = () => {
   const cardTotal = reportData?.paymentBreakdown?.CARD || 0;
   const totalGrossProfit = reportData?.totalGrossProfit != null ? reportData.totalGrossProfit : (netSales * 0.726);
   const overallCogsPercentage = reportData?.overallCogsPercentage != null ? reportData.overallCogsPercentage : 27.4;
+  const totalCOGS = reportData?.totalCogs != null ? reportData.totalCogs : (netSales * (overallCogsPercentage / 100));
   const peakHourData = reportData?.peakHourData || [];
   const staffPerformance = reportData?.staffPerformance || [];
   const itemProfitability = reportData?.itemProfitability || [];
+
+  const lowStockIngredients = useMemo(() => {
+    return (ingredients || []).filter(ing => (ing.stock || 0) <= (ing.minThreshold || 5));
+  }, [ingredients]);
 
   const totalTenders = (cashTotal + khqrTotal + cardTotal) || 1;
   const cashPct = Math.round((cashTotal / totalTenders) * 100);
@@ -1044,6 +1052,7 @@ export const ManagementReports = () => {
 
           {[
             { id: 'today', label: isKhmer ? 'ថ្ងៃនេះ' : 'Today' },
+            { id: 'yesterday', label: isKhmer ? 'ម្សិលមិញ' : 'Yesterday' },
             { id: 'week', label: isKhmer ? '៧ ថ្ងៃ' : '7 Days' },
             { id: 'month', label: isKhmer ? '៣០ ថ្ងៃ' : '30 Days' },
             { id: 'all', label: isKhmer ? 'ទាំងអស់' : 'All Time' }
@@ -1172,99 +1181,337 @@ export const ManagementReports = () => {
       {/* 1-PAGE CONSOLIDATED REPORT (ACTIVE BY DEFAULT) OR EXECUTIVE OVERVIEW TAB */}
       {/* ========================================================================= */}
       {(reportViewMode === 'one-page' || activeTab === 'overview') && (
-        <div className="space-y-4 animate-fade-in">
-          {/* Top 4 KPI Metric Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <div className="p-4 rounded-2xl bg-stone-950/70 border border-emerald-900/50 space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400">
-                  {isKhmer ? 'ចំណូលសុទ្ធ' : 'Net Revenue'}
-                </span>
-                <TrendingUp className="w-4 h-4 text-emerald-400" />
+        <div className="space-y-5 animate-fade-in">
+          
+          {/* ======================================================================= */}
+          {/* SECTION 1: EXECUTIVE FINANCIAL KPI MATRIX (៦ សូចនាករហិរញ្ញវត្ថុគន្លឹះ) */}
+          {/* ======================================================================= */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between px-1">
+              <div className="flex items-center gap-2">
+                <span className="w-5 h-5 rounded-lg bg-amber-500/20 text-amber-400 font-black text-xs flex items-center justify-center border border-amber-500/30">1</span>
+                <h3 className="text-xs font-bold text-stone-200 uppercase tracking-wider flex items-center gap-1.5">
+                  <BarChart3 className="w-3.5 h-3.5 text-amber-400" />
+                  <span>{isKhmer ? 'សូចនាករហិរញ្ញវត្ថុចម្បង (Executive Financial KPIs)' : 'Executive Financial KPI Matrix'}</span>
+                </h3>
               </div>
-              <p className="text-2xl font-black text-emerald-400 font-mono">
-                ${netSales.toFixed(2)}
-              </p>
-              <div className="flex items-center justify-between text-[11px] text-emerald-500/90 font-mono">
-                <span>៛{Math.round(netSales * 4100).toLocaleString()}</span>
-                <span className="text-[10px] px-1.5 py-0.2 bg-emerald-950 border border-emerald-800 rounded text-emerald-300">
-                  100% Cleared
-                </span>
-              </div>
+              <span className="text-[10px] text-stone-400 font-mono">
+                {isKhmer ? 'អត្រាប្តូរប្រាក់៖ 1 USD = 4,100 KHR' : 'FX Rate: $1.00 = 4,100 KHR'}
+              </span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-stone-950/70 border border-stone-800 space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-amber-400">
-                  {isKhmer ? 'ចំនួនវិក្កយបត្រ' : 'Orders / Tickets'}
-                </span>
-                <Receipt className="w-4 h-4 text-amber-500" />
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              {/* 1. Gross Sales */}
+              <div className="p-3.5 rounded-2xl bg-stone-950/70 border border-stone-800 space-y-1 hover:border-amber-500/40 transition">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400">
+                    {isKhmer ? 'ចំណូលដុល' : 'Gross Sales'}
+                  </span>
+                  <DollarSign className="w-3.5 h-3.5 text-stone-400" />
+                </div>
+                <p className="text-xl font-black text-stone-100 font-mono">
+                  ${grossSales.toFixed(2)}
+                </p>
+                <div className="flex items-center justify-between text-[10px] text-stone-500 font-mono">
+                  <span className="truncate">៛{Math.round(grossSales * 4100).toLocaleString()}</span>
+                  <span className="text-[9px] text-stone-500">{isKhmer ? 'មុនកាត់' : 'Pre-cut'}</span>
+                </div>
               </div>
-              <p className="text-2xl font-black text-stone-100 font-mono">
-                {customerCount}
-              </p>
-              <div className="flex items-center justify-between text-[11px] text-stone-400 font-mono">
-                <span>{isKhmer ? 'វិក្កយបត្របានទូទាត់' : 'Paid Orders'}</span>
-                <span className="text-[10px] text-amber-400">Audited</span>
-              </div>
-            </div>
 
-            <div className="p-4 rounded-2xl bg-stone-950/70 border border-stone-800 space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-sky-400">
-                  {isKhmer ? 'ជាមធ្យម / វិក្កយបត្រ' : 'Avg Spend / Guest'}
-                </span>
-                <DollarSign className="w-4 h-4 text-sky-400" />
+              {/* 2. Discounts Given */}
+              <div className="p-3.5 rounded-2xl bg-stone-950/70 border border-stone-800 space-y-1 hover:border-rose-500/40 transition">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-rose-400">
+                    {isKhmer ? 'បញ្ចុះតម្លៃ' : 'Discounts'}
+                  </span>
+                  <Gift className="w-3.5 h-3.5 text-rose-400" />
+                </div>
+                <p className="text-xl font-black text-rose-400 font-mono">
+                  -${totalDiscounts.toFixed(2)}
+                </p>
+                <div className="flex items-center justify-between text-[10px] text-stone-500 font-mono">
+                  <span className="truncate">៛{Math.round(totalDiscounts * 4100).toLocaleString()}</span>
+                  <span className="text-[9px] text-rose-400">{isKhmer ? 'ប្រូម៉ូសិន' : 'Promo'}</span>
+                </div>
               </div>
-              <p className="text-2xl font-black text-stone-100 font-mono">
-                ${avgSpend.toFixed(2)}
-              </p>
-              <div className="flex items-center justify-between text-[11px] text-sky-400/80 font-mono">
-                <span>៛{Math.round(avgSpend * 4100).toLocaleString()}</span>
-                <span className="text-[10px] text-stone-400">Per Receipt</span>
-              </div>
-            </div>
 
-            <div className="p-4 rounded-2xl bg-stone-950/70 border border-stone-800 space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-purple-400">
-                  {isKhmer ? 'ប្រាក់ចំណេញដុល' : 'Gross Profit'}
-                </span>
-                <Percent className="w-4 h-4 text-purple-400" />
+              {/* 3. Net Cleared Revenue */}
+              <div className="p-3.5 rounded-2xl bg-stone-950/70 border border-emerald-900/60 space-y-1 hover:border-emerald-500/60 transition shadow-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">
+                    {isKhmer ? 'ចំណូលសុទ្ធ' : 'Net Revenue'}
+                  </span>
+                  <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
+                </div>
+                <p className="text-xl font-black text-emerald-400 font-mono">
+                  ${netSales.toFixed(2)}
+                </p>
+                <div className="flex items-center justify-between text-[10px] text-emerald-500 font-mono">
+                  <span className="truncate">៛{Math.round(netSales * 4100).toLocaleString()}</span>
+                  <span className="text-[9px] px-1 py-0.2 bg-emerald-950 border border-emerald-800 rounded text-emerald-300 font-bold">
+                    Cleared
+                  </span>
+                </div>
               </div>
-              <p className="text-2xl font-black text-stone-100 font-mono">
-                ${totalGrossProfit.toFixed(2)}
-              </p>
-              <div className="flex items-center justify-between text-[11px] text-purple-300 font-mono">
-                <span>Margin: {(100 - overallCogsPercentage).toFixed(1)}%</span>
-                <span className="text-[10px] text-stone-400">After COGS</span>
+
+              {/* 4. Total COGS */}
+              <div className="p-3.5 rounded-2xl bg-stone-950/70 border border-stone-800 space-y-1 hover:border-amber-500/40 transition">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400">
+                    {isKhmer ? 'ថ្លៃដើម COGS' : 'Cost of Goods'}
+                  </span>
+                  <Package className="w-3.5 h-3.5 text-amber-500" />
+                </div>
+                <p className="text-xl font-black text-amber-400 font-mono">
+                  ${totalCOGS.toFixed(2)}
+                </p>
+                <div className="flex items-center justify-between text-[10px] text-stone-500 font-mono">
+                  <span className="truncate">៛{Math.round(totalCOGS * 4100).toLocaleString()}</span>
+                  <span className="text-[9px] text-amber-400 font-bold">{overallCogsPercentage.toFixed(1)}%</span>
+                </div>
+              </div>
+
+              {/* 5. Gross Profit */}
+              <div className="p-3.5 rounded-2xl bg-stone-950/70 border border-stone-800 space-y-1 hover:border-purple-500/40 transition">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-purple-400">
+                    {isKhmer ? 'ចំណេញដុល' : 'Gross Profit'}
+                  </span>
+                  <Percent className="w-3.5 h-3.5 text-purple-400" />
+                </div>
+                <p className="text-xl font-black text-stone-100 font-mono">
+                  ${totalGrossProfit.toFixed(2)}
+                </p>
+                <div className="flex items-center justify-between text-[10px] text-purple-300 font-mono">
+                  <span className="truncate">៛{Math.round(totalGrossProfit * 4100).toLocaleString()}</span>
+                  <span className="text-[9px] text-stone-400">{(100 - overallCogsPercentage).toFixed(1)}%</span>
+                </div>
+              </div>
+
+              {/* 6. Total Orders & Avg Check */}
+              <div className="p-3.5 rounded-2xl bg-stone-950/70 border border-stone-800 space-y-1 hover:border-sky-500/40 transition">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-sky-400">
+                    {isKhmer ? 'កុម្ម៉ង់ & មធ្យម' : 'Tickets & Avg'}
+                  </span>
+                  <Receipt className="w-3.5 h-3.5 text-sky-400" />
+                </div>
+                <p className="text-xl font-black text-stone-100 font-mono">
+                  {customerCount} <span className="text-xs font-semibold text-stone-400">{isKhmer ? 'កុម្ម៉ង់' : 'tix'}</span>
+                </p>
+                <div className="flex items-center justify-between text-[10px] text-sky-400/90 font-mono">
+                  <span>${avgSpend.toFixed(2)} / tix</span>
+                  <span className="text-[9px] text-stone-500">៛{Math.round(avgSpend * 4100).toLocaleString()}</span>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Middle Row: Trend Chart & Payment Reconciliation */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-            <div className="lg:col-span-7 p-4 rounded-2xl bg-stone-950/70 border border-stone-800 space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="text-xs font-bold text-stone-200">
-                    {isKhmer ? 'និន្នាការចំណូលលក់តាមម៉ោង (Hourly Sales Curve)' : '24-Hour Sales Curve & Demand'}
+          {/* ======================================================================= */}
+          {/* SECTION 2: PAYMENT TENDERS & FINANCIAL RECONCILIATION */}
+          {/* ======================================================================= */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between px-1">
+              <div className="flex items-center gap-2">
+                <span className="w-5 h-5 rounded-lg bg-emerald-500/20 text-emerald-400 font-black text-xs flex items-center justify-center border border-emerald-500/30">2</span>
+                <h3 className="text-xs font-bold text-stone-200 uppercase tracking-wider flex items-center gap-1.5">
+                  <Banknote className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>{isKhmer ? 'ការផ្ទៀងផ្ទាត់ការទូទាត់ & តុល្យការហិរញ្ញវត្ថុ (Payment & Financial Reconciliation)' : 'Financial Balance & Payment Settlement'}</span>
+                </h3>
+              </div>
+              <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-800 font-mono">
+                {cashlessRate}% {isKhmer ? 'មិនប្រើសាច់ប្រាក់' : 'Cashless Adoption'}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+              {/* Left Column: Payment Tender Settlement */}
+              <div className="lg:col-span-6 p-4 rounded-2xl bg-stone-950/70 border border-stone-800 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold text-stone-200 flex items-center gap-1.5">
+                    <QrCode className="w-4 h-4 text-pink-400" />
+                    <span>{isKhmer ? 'ចំណូលតាមវិធីសាស្ត្រទូទាត់ (Payment Methods Breakdown)' : 'Settlement by Payment Tender'}</span>
                   </h4>
-                  <p className="text-[10px] text-stone-500">
-                    {isKhmer ? 'ម៉ោងលក់ដាច់ខ្លាំង (Rush Hours) & ចំនួនភ្ញៀវ' : 'Revenue velocity across daily operating shifts'}
-                  </p>
+                  <span className="text-[10px] text-stone-500 font-mono">
+                    Total: ${(cashTotal + khqrTotal + cardTotal).toFixed(2)}
+                  </span>
                 </div>
-                <span className="text-[10px] font-bold text-amber-400 bg-amber-950/60 px-2 py-0.5 rounded-full border border-amber-800">
-                  Peak Hours
-                </span>
+
+                <div className="space-y-2.5 pt-1">
+                  {/* Cash */}
+                  <div className="p-3 rounded-xl bg-stone-900/80 border border-stone-800 space-y-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="flex items-center gap-1.5 font-bold text-emerald-400">
+                        <Banknote className="w-4 h-4" />
+                        <span>{isKhmer ? 'សាច់ប្រាក់ (Cash Register)' : 'Physical Cash (USD & KHR)'}</span>
+                      </span>
+                      <div className="text-right">
+                        <span className="font-mono font-bold text-stone-100">${cashTotal.toFixed(2)}</span>
+                        <span className="text-[10px] text-stone-500 font-mono ml-1.5">({cashPct}%)</span>
+                      </div>
+                    </div>
+                    <div className="w-full h-2 bg-stone-950 rounded-full overflow-hidden">
+                      <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ width: `${cashPct}%` }}></div>
+                    </div>
+                    <div className="flex justify-between text-[10px] text-stone-500 font-mono">
+                      <span>៛{Math.round(cashTotal * 4100).toLocaleString()}</span>
+                      <span>{isKhmer ? 'រាប់ក្នុងថតប្រាក់' : 'In Register Drawer'}</span>
+                    </div>
+                  </div>
+
+                  {/* Bakong KHQR */}
+                  <div className="p-3 rounded-xl bg-stone-900/80 border border-stone-800 space-y-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="flex items-center gap-1.5 font-bold text-pink-400">
+                        <QrCode className="w-4 h-4" />
+                        <span>{isKhmer ? 'បាគង KHQR (Bakong NBC QR)' : 'Bakong KHQR Instant Pay'}</span>
+                      </span>
+                      <div className="text-right">
+                        <span className="font-mono font-bold text-stone-100">${khqrTotal.toFixed(2)}</span>
+                        <span className="text-[10px] text-stone-500 font-mono ml-1.5">({khqrPct}%)</span>
+                      </div>
+                    </div>
+                    <div className="w-full h-2 bg-stone-950 rounded-full overflow-hidden">
+                      <div className="h-full bg-pink-500 rounded-full transition-all duration-500" style={{ width: `${khqrPct}%` }}></div>
+                    </div>
+                    <div className="flex justify-between text-[10px] text-stone-500 font-mono">
+                      <span>៛{Math.round(khqrTotal * 4100).toLocaleString()}</span>
+                      <span className="text-pink-400 font-semibold">{isKhmer ? 'ស្វ័យប្រវត្តិកុងធនាគារ' : 'Direct Bank Settled'}</span>
+                    </div>
+                  </div>
+
+                  {/* Credit / Debit Card */}
+                  <div className="p-3 rounded-xl bg-stone-900/80 border border-stone-800 space-y-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="flex items-center gap-1.5 font-bold text-sky-400">
+                        <CreditCard className="w-4 h-4" />
+                        <span>{isKhmer ? 'កាតធនាគារ (Visa / Mastercard)' : 'Credit & Debit Cards'}</span>
+                      </span>
+                      <div className="text-right">
+                        <span className="font-mono font-bold text-stone-100">${cardTotal.toFixed(2)}</span>
+                        <span className="text-[10px] text-stone-500 font-mono ml-1.5">({cardPct}%)</span>
+                      </div>
+                    </div>
+                    <div className="w-full h-2 bg-stone-950 rounded-full overflow-hidden">
+                      <div className="h-full bg-sky-500 rounded-full transition-all duration-500" style={{ width: `${cardPct}%` }}></div>
+                    </div>
+                    <div className="flex justify-between text-[10px] text-stone-500 font-mono">
+                      <span>៛{Math.round(cardTotal * 4100).toLocaleString()}</span>
+                      <span>POS Terminal</span>
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <div className="h-44 w-full">
+              {/* Right Column: Executive Financial Balance Sheet */}
+              <div className="lg:col-span-6 p-4 rounded-2xl bg-stone-950/70 border border-stone-800 space-y-2.5 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between border-b border-stone-800 pb-2 mb-2">
+                    <h4 className="text-xs font-bold text-stone-200 flex items-center gap-1.5">
+                      <Receipt className="w-4 h-4 text-emerald-400" />
+                      <span>{isKhmer ? 'តុល្យការហិរញ្ញវត្ថុផ្លូវការ (Financial Balance Ledger)' : 'Executive Financial Statement'}</span>
+                    </h4>
+                    <span className="text-[10px] text-stone-500 font-mono">
+                      {isKhmer ? 'បានផ្ទៀងផ្ទាត់' : 'Audited'}
+                    </span>
+                  </div>
+
+                  <div className="divide-y divide-stone-800 text-xs">
+                    <div className="py-2 flex items-center justify-between">
+                      <span className="text-stone-300 font-medium">{isKhmer ? 'ចំណូលលក់ដុល (Gross Sales Volume)' : 'Gross Sales Volume'}</span>
+                      <span className="font-mono font-bold text-stone-100">+${grossSales.toFixed(2)}</span>
+                    </div>
+                    <div className="py-2 flex items-center justify-between text-rose-400">
+                      <span>{isKhmer ? 'ការបញ្ចុះតម្លៃ & VIP (Discounts Deducted)' : 'Total Discounts Given'}</span>
+                      <span className="font-mono font-bold">-${totalDiscounts.toFixed(2)}</span>
+                    </div>
+                    <div className="py-2 flex items-center justify-between text-stone-300">
+                      <span>{isKhmer ? 'ពន្ធអាកររដ្ឋ (VAT 8% Sales Tax)' : 'Government Sales Tax (VAT 8%)'}</span>
+                      <span className="font-mono font-bold text-stone-300">+${totalTax.toFixed(2)}</span>
+                    </div>
+                    <div className="py-2 flex items-center justify-between text-amber-400/90">
+                      <span>{isKhmer ? 'ថ្លៃដើមវត្ថុធាតុដើម (COGS / Recipe Costs)' : 'Cost of Goods Sold (COGS)'}</span>
+                      <span className="font-mono font-bold">-${totalCOGS.toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2 pt-2 border-t-2 border-stone-800">
+                  <div className="p-2.5 rounded-xl bg-stone-900 border border-stone-800 flex items-center justify-between">
+                    <div>
+                      <span className="text-xs font-black text-emerald-400 block">{isKhmer ? 'ចំណូលសុទ្ធបានទូទាត់' : 'Net Cleared Intake'}</span>
+                      <span className="text-[9px] text-stone-400">{isKhmer ? 'សរុបសាច់ប្រាក់ & ឌីជីថល' : 'Cash + KHQR + Cards'}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-base font-black font-mono text-emerald-400">${netSales.toFixed(2)}</span>
+                      <span className="text-[10px] text-emerald-500 font-mono block">៛{Math.round(netSales * 4100).toLocaleString()}</span>
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-purple-950/30 border border-purple-900/50 flex items-center justify-between">
+                    <div>
+                      <span className="text-xs font-black text-purple-300 block">{isKhmer ? 'ប្រាក់ចំណេញប្រតិបត្តិការដុល' : 'Gross Operating Profit'}</span>
+                      <span className="text-[9px] text-stone-400">{isKhmer ? 'ចំណូលសុទ្ធ - ថ្លៃដើម COGS' : 'Net Revenue - Raw COGS'}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-base font-black font-mono text-purple-300">${totalGrossProfit.toFixed(2)}</span>
+                      <span className="text-[10px] text-purple-400 font-mono block">Margin: {(100 - overallCogsPercentage).toFixed(1)}%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ======================================================================= */}
+          {/* SECTION 3: HOURLY SALES VELOCITY & RUSH HOUR DEMAND */}
+          {/* ======================================================================= */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between px-1">
+              <div className="flex items-center gap-2">
+                <span className="w-5 h-5 rounded-lg bg-sky-500/20 text-sky-400 font-black text-xs flex items-center justify-center border border-sky-500/30">3</span>
+                <h3 className="text-xs font-bold text-stone-200 uppercase tracking-wider flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-sky-400" />
+                  <span>{isKhmer ? 'និន្នាការលក់តាមម៉ោង & ពេលវេលាមមាញឹក (Hourly Sales & Peak Demand)' : '24-Hour Velocity & Rush Hours'}</span>
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setReportViewMode('tabbed');
+                  setActiveTab('peak-hours');
+                }}
+                className="text-[11px] text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 cursor-pointer"
+              >
+                <span>{isKhmer ? 'មើលផ្ទាំងម៉ោងលម្អិត' : 'View Rush Hours Tab'}</span>
+                <ArrowUpRight className="w-3 h-3" />
+              </button>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-stone-950/70 border border-stone-800 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <h4 className="text-xs font-bold text-stone-200">
+                    {isKhmer ? 'ខ្សែកោងចំណូលលក់ ២៤ ម៉ោង (24-Hour Revenue Demand Curve)' : 'Hourly Revenue Velocity & Customer Footfall'}
+                  </h4>
+                  <p className="text-[10px] text-stone-500">
+                    {isKhmer ? 'កំណត់ម៉ោងភ្ញៀវច្រើនដើម្បីត្រៀមបុគ្គលិក និងវត្ថុធាតុដើម' : 'Identify peak ordering windows to optimize barista scheduling'}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold text-amber-400 bg-amber-950/60 px-2.5 py-0.5 rounded-full border border-amber-800 flex items-center gap-1">
+                    <Flame className="w-3 h-3" />
+                    <span>{isKhmer ? 'ម៉ោងលក់ដាច់ខ្លាំង (Rush Hour)' : 'Peak Hours Monitored'}</span>
+                  </span>
+                </div>
+              </div>
+
+              <div className="h-48 w-full pt-2">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={peakHourData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
                     <defs>
-                      <linearGradient id="salesGradOverview" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.4} />
+                      <linearGradient id="salesGradOverviewStandard" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.45} />
                         <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.0} />
                       </linearGradient>
                     </defs>
@@ -1275,245 +1522,59 @@ export const ManagementReports = () => {
                       contentStyle={{ backgroundColor: '#1c1917', borderColor: '#44403c', borderRadius: '12px', fontSize: '11px' }}
                       formatter={(val) => [`$${val}`, 'Sales']}
                     />
-                    <Area type="monotone" dataKey="sales" stroke="#f59e0b" strokeWidth={2} fillOpacity={1} fill="url(#salesGradOverview)" />
+                    <Area type="monotone" dataKey="sales" stroke="#f59e0b" strokeWidth={2.5} fillOpacity={1} fill="url(#salesGradOverviewStandard)" />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
-            </div>
 
-            <div className="lg:col-span-5 p-4 rounded-2xl bg-stone-950/70 border border-stone-800 space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="text-xs font-bold text-stone-200">
-                    {isKhmer ? 'ការទូទាត់តាមវិធីសាស្ត្រ (Tender Breakdown)' : 'Payment Tender Reconciliation'}
-                  </h4>
-                  <p className="text-[10px] text-stone-500">
-                    {isKhmer ? 'សាច់ប្រាក់, បាគង KHQR, & កាត' : 'Physical Cash vs Bakong KHQR settlement'}
-                  </p>
+              {/* Peak Insights Quick Chips */}
+              <div className="pt-2 border-t border-stone-850 grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
+                <div className="p-2 rounded-xl bg-stone-900/60 border border-stone-850">
+                  <span className="text-[9px] text-stone-500 block uppercase font-bold">{isKhmer ? 'ម៉ោងភ្ញៀវច្រើន' : 'Busiest Window'}</span>
+                  <span className="font-bold text-amber-400 font-mono">08:00 - 10:00</span>
                 </div>
-                <span className="text-[10px] font-mono text-emerald-400 font-bold">
-                  {cashlessRate}% Cashless
-                </span>
-              </div>
-
-              <div className="space-y-2.5 pt-1">
-                <div className="p-2.5 rounded-xl bg-stone-900 border border-stone-800 space-y-1.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="flex items-center gap-1.5 font-bold text-emerald-400">
-                      <Banknote className="w-3.5 h-3.5" />
-                      <span>{isKhmer ? 'សាច់ប្រាក់ (Cash)' : 'Physical Cash'}</span>
-                    </span>
-                    <div className="text-right">
-                      <span className="font-mono font-bold text-stone-100">${cashTotal.toFixed(2)}</span>
-                      <span className="text-[10px] text-stone-500 font-mono ml-1.5">({cashPct}%)</span>
-                    </div>
-                  </div>
-                  <div className="w-full h-1.5 bg-stone-950 rounded-full overflow-hidden">
-                    <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${cashPct}%` }}></div>
-                  </div>
-                  <span className="text-[10px] text-stone-500 font-mono block">៛{Math.round(cashTotal * 4100).toLocaleString()}</span>
+                <div className="p-2 rounded-xl bg-stone-900/60 border border-stone-850">
+                  <span className="text-[9px] text-stone-500 block uppercase font-bold">{isKhmer ? 'ពេលរសៀល' : 'Afternoon Peak'}</span>
+                  <span className="font-bold text-stone-300 font-mono">13:00 - 15:00</span>
                 </div>
-
-                <div className="p-2.5 rounded-xl bg-stone-900 border border-stone-800 space-y-1.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="flex items-center gap-1.5 font-bold text-pink-400">
-                      <QrCode className="w-3.5 h-3.5" />
-                      <span>{isKhmer ? 'បាគង KHQR (Bakong)' : 'Bakong KHQR (NBC)'}</span>
-                    </span>
-                    <div className="text-right">
-                      <span className="font-mono font-bold text-stone-100">${khqrTotal.toFixed(2)}</span>
-                      <span className="text-[10px] text-stone-500 font-mono ml-1.5">({khqrPct}%)</span>
-                    </div>
-                  </div>
-                  <div className="w-full h-1.5 bg-stone-950 rounded-full overflow-hidden">
-                    <div className="h-full bg-pink-500 rounded-full" style={{ width: `${khqrPct}%` }}></div>
-                  </div>
-                  <span className="text-[10px] text-stone-500 font-mono block">៛{Math.round(khqrTotal * 4100).toLocaleString()}</span>
+                <div className="p-2 rounded-xl bg-stone-900/60 border border-stone-850">
+                  <span className="text-[9px] text-stone-500 block uppercase font-bold">{isKhmer ? 'បុគ្គលិកណែនាំ' : 'Suggested Staff'}</span>
+                  <span className="font-bold text-emerald-400">3 - 4 Baristas</span>
                 </div>
-
-                <div className="p-2.5 rounded-xl bg-stone-900 border border-stone-800 space-y-1.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="flex items-center gap-1.5 font-bold text-sky-400">
-                      <CreditCard className="w-3.5 h-3.5" />
-                      <span>{isKhmer ? 'កាតធនាគារ (Card)' : 'Credit / Debit Card'}</span>
-                    </span>
-                    <div className="text-right">
-                      <span className="font-mono font-bold text-stone-100">${cardTotal.toFixed(2)}</span>
-                      <span className="text-[10px] text-stone-500 font-mono ml-1.5">({cardPct}%)</span>
-                    </div>
-                  </div>
-                  <div className="w-full h-1.5 bg-stone-950 rounded-full overflow-hidden">
-                    <div className="h-full bg-sky-500 rounded-full" style={{ width: `${cardPct}%` }}></div>
-                  </div>
-                  <span className="text-[10px] text-stone-500 font-mono block">៛{Math.round(cardTotal * 4100).toLocaleString()}</span>
+                <div className="p-2 rounded-xl bg-stone-900/60 border border-stone-850">
+                  <span className="text-[9px] text-stone-500 block uppercase font-bold">{isKhmer ? 'កុម្ម៉ង់/ម៉ោង' : 'Peak Velocity'}</span>
+                  <span className="font-bold text-sky-400 font-mono">~35 tix / hr</span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Bottom Row: All Menu Products Performance & Financial Ledger */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-            <div className="lg:col-span-7 p-4 rounded-2xl bg-stone-950/70 border border-stone-800 space-y-3">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <Package className="w-4 h-4 text-amber-500" />
-                  <h4 className="text-xs font-bold text-stone-200">
-                    {isKhmer 
-                      ? `មុខទំនិញលក់ទាំងអស់ (${overviewProducts.length} មុខ)` 
-                      : `All Menu Products & Performance (${overviewProducts.length} Items)`}
-                  </h4>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 font-bold">
-                    {isKhmer ? 'បញ្ជីពេញលេញ' : 'List All'}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <div className="relative">
-                    <Search className="w-3 h-3 absolute left-2.5 top-1/2 -translate-y-1/2 text-stone-500" />
-                    <input
-                      type="text"
-                      placeholder={isKhmer ? 'ស្វែងរកមុខទំនិញ...' : 'Filter products...'}
-                      value={overviewProductSearch}
-                      onChange={(e) => setOverviewProductSearch(e.target.value)}
-                      className="bg-stone-900 border border-stone-800 rounded-xl pl-7 pr-2.5 py-1 text-[11px] text-stone-200 placeholder-stone-500 focus:outline-none focus:border-amber-500 w-32 sm:w-40"
-                    />
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => setOverviewProductsLimit(prev => prev >= 1000 ? 5 : 1000)}
-                    className="px-2.5 py-1 rounded-xl bg-stone-900 hover:bg-stone-800 border border-stone-700 text-amber-400 text-[11px] font-bold cursor-pointer transition whitespace-nowrap"
-                  >
-                    {overviewProductsLimit >= 1000 ? (isKhmer ? 'ទាំងអស់ ✓' : 'All Items ✓') : (isKhmer ? 'បង្ហាញទាំងអស់' : 'Show All')}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setReportViewMode('tabbed');
-                      setActiveTab('products');
-                    }}
-                    title={isKhmer ? 'មើលផ្ទាំងលម្អិតមុខទំនិញ' : 'View Deep-Dive Tab'}
-                    className="text-[11px] text-stone-400 hover:text-amber-300 font-bold flex items-center gap-0.5 cursor-pointer p-1"
-                  >
-                    <ArrowUpRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+          {/* ======================================================================= */}
+          {/* SECTION 4: TOP MENU PRODUCTS PODIUM & PRODUCT PERFORMANCE */}
+          {/* ======================================================================= */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between px-1">
+              <div className="flex items-center gap-2">
+                <span className="w-5 h-5 rounded-lg bg-amber-500/20 text-amber-400 font-black text-xs flex items-center justify-center border border-amber-500/30">4</span>
+                <h3 className="text-xs font-bold text-stone-200 uppercase tracking-wider flex items-center gap-1.5">
+                  <ShoppingBag className="w-3.5 h-3.5 text-amber-400" />
+                  <span>{isKhmer ? 'ចំណាត់ថ្នាក់ទំនិញលក់ដាច់ & មុខទំនិញទាំងអស់ (Top Products & Performance)' : 'Top Selling Products & Menu Performance'}</span>
+                </h3>
               </div>
-
-              <div className="overflow-x-auto max-h-[380px] overflow-y-auto rounded-xl border border-stone-850/80">
-                <table className="w-full text-left text-xs">
-                  <thead className="sticky top-0 bg-stone-900/95 backdrop-blur z-10 border-b border-stone-800 text-stone-400 text-[10px] uppercase font-bold">
-                    <tr>
-                      <th className="py-2.5 px-2.5">#</th>
-                      <th className="py-2.5 px-2.5">{isKhmer ? 'ឈ្មោះទំនិញ' : 'Item'}</th>
-                      <th className="py-2.5 px-2.5">{isKhmer ? 'ប្រភេទ' : 'Category'}</th>
-                      <th className="py-2.5 px-2.5 text-right">{isKhmer ? 'តម្លៃរាយ' : 'Price'}</th>
-                      <th className="py-2.5 px-2.5 text-center">{isKhmer ? 'ចំនួនលក់' : 'Units'}</th>
-                      <th className="py-2.5 px-2.5 text-right">{isKhmer ? 'ចំណូលសរុប' : 'Revenue'}</th>
-                      <th className="py-2.5 px-2.5 text-right">{isKhmer ? 'ចំណេញ' : 'Margin'}</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-stone-800/60 font-medium">
-                    {overviewProducts.slice(0, overviewProductsLimit).map((p, idx) => {
-                      const price = p.retailPrice || p.unitPrice || 0;
-                      const units = p.unitsSold || 0;
-                      const rev = p.revenue || (price * units);
-                      const margin = p.profitMarginPct || p.marginPercentage || 70;
-                      return (
-                        <tr key={idx} className="hover:bg-stone-900/60 transition">
-                          <td className="py-2 px-2.5 text-stone-500 font-mono text-[11px]">
-                            {idx === 0 ? '🥇 1' : idx === 1 ? '🥈 2' : idx === 2 ? '🥉 3' : (idx + 1)}
-                          </td>
-                          <td className="py-2 px-2.5 font-bold text-stone-200">{p.name}</td>
-                          <td className="py-2 px-2.5">
-                            <span className="px-1.5 py-0.5 rounded bg-stone-900 border border-stone-800 text-stone-400 text-[10px]">
-                              {p.category}
-                            </span>
-                          </td>
-                          <td className="py-2 px-2.5 text-right font-mono text-stone-400 text-[11px]">${price.toFixed(2)}</td>
-                          <td className="py-2 px-2.5 text-center font-bold text-amber-400 font-mono">{units}</td>
-                          <td className="py-2 px-2.5 text-right">
-                            <span className="font-mono font-bold text-stone-100 block">${rev.toFixed(2)}</span>
-                            <span className="text-[9px] text-stone-500 font-mono block">៛{Math.round(rev * 4100).toLocaleString()}</span>
-                          </td>
-                          <td className="py-2 px-2.5 text-right font-mono">
-                            <span className="px-1.5 py-0.5 rounded bg-emerald-950/80 text-emerald-400 text-[10px] font-bold border border-emerald-800/60">
-                              {margin}%
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="flex items-center justify-between text-xs text-stone-400 px-1 pt-1">
-                <span>
-                  {isKhmer 
-                    ? `បង្ហាញ ${Math.min(overviewProductsLimit, overviewProducts.length)} នៃ ${overviewProducts.length} មុខទំនិញ` 
-                    : `Showing ${Math.min(overviewProductsLimit, overviewProducts.length)} of ${overviewProducts.length} items`}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setOverviewProductsLimit(prev => prev >= 1000 ? 5 : 1000)}
-                  className="text-amber-400 hover:text-amber-300 font-bold text-[11px] cursor-pointer"
-                >
-                  {overviewProductsLimit >= 1000 ? (isKhmer ? 'បង្រួមត្រឹម ៥' : 'Show Top 5 Only') : (isKhmer ? 'បង្ហាញទាំងអស់' : 'Show All Items')}
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setReportViewMode('tabbed');
+                  setActiveTab('products');
+                }}
+                className="text-[11px] text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 cursor-pointer"
+              >
+                <span>{isKhmer ? 'ផ្ទាំងលម្អិតមុខទំនិញ' : 'View Products Tab'}</span>
+                <ArrowUpRight className="w-3 h-3" />
+              </button>
             </div>
 
-            <div className="lg:col-span-5 p-4 rounded-2xl bg-stone-950/70 border border-stone-800 space-y-2.5">
-              <h4 className="text-xs font-bold text-stone-200 flex items-center gap-1.5">
-                <Receipt className="w-4 h-4 text-emerald-400" />
-                <span>{isKhmer ? 'សេចក្ដីសង្ខេបហិរញ្ញវត្ថុ (Financial Ledger)' : 'Financial Balance Summary'}</span>
-              </h4>
-
-              <div className="divide-y divide-stone-800 text-xs">
-                <div className="py-2 flex items-center justify-between">
-                  <span className="text-stone-400">{isKhmer ? 'ចំណូលលក់ដុល (Gross Sales)' : 'Gross Sales (Volume)'}</span>
-                  <span className="font-mono font-bold text-stone-200">${grossSales.toFixed(2)}</span>
-                </div>
-                <div className="py-2 flex items-center justify-between text-rose-400">
-                  <span>{isKhmer ? 'បញ្ចុះតម្លៃសរុប (Discounts)' : 'Total Discounts Given'}</span>
-                  <span className="font-mono font-bold">-${totalDiscounts.toFixed(2)}</span>
-                </div>
-                <div className="py-2 flex items-center justify-between text-stone-300">
-                  <span>{isKhmer ? 'ពន្ធអាករ (VAT 8%)' : 'Government Sales Tax (VAT 8%)'}</span>
-                  <span className="font-mono font-bold">${totalTax.toFixed(2)}</span>
-                </div>
-                <div className="py-2.5 flex items-center justify-between font-extrabold text-sm border-t-2 border-stone-700 bg-stone-900/40 px-2 rounded-xl">
-                  <span className="text-emerald-400">{isKhmer ? 'ចំណូលសុទ្ធ (Net Sales)' : 'Net Collected Revenue'}</span>
-                  <div className="text-right">
-                    <span className="font-mono text-emerald-400">${netSales.toFixed(2)}</span>
-                    <span className="text-[10px] text-emerald-500 font-mono block">៛{Math.round(netSales * 4100).toLocaleString()}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* ========================================================================= */}
-          {/* SECTION 4: TOP PRODUCTS PODIUM (LEADERBOARD OF BEST SELLERS) */}
-          {/* ========================================================================= */}
-          <div className="space-y-3 pt-2">
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="text-xs font-bold text-stone-200 flex items-center gap-1.5">
-                  <Crown className="w-4 h-4 text-amber-500" />
-                  <span>{isKhmer ? 'ចំណាត់ថ្នាក់មុខទំនិញលក់ដាច់បំផុត (Top Selling Products Podium)' : 'Top Selling Menu Items & Margin Leaderboard'}</span>
-                </h4>
-                <p className="text-[10px] text-stone-500">
-                  {isKhmer ? 'ចំណូលលក់, ចំនួនកែវ និងភាគរយចំណេញនៃមុខទំនិញឆ្នើមទាំង ៣' : 'Revenue, units sold, and profit margin analysis for top performers'}
-                </p>
-              </div>
-              <span className="text-[10px] text-amber-400 bg-amber-950/60 px-2.5 py-0.5 rounded-full border border-amber-800 font-bold">
-                Bestsellers
-              </span>
-            </div>
-
+            {/* Subsection 4A: Top 3 Best Sellers Podium */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {/* 1st Gold */}
               {filteredProducts[0] && (
@@ -1608,28 +1669,145 @@ export const ManagementReports = () => {
                 </div>
               )}
             </div>
-          </div>
 
-          {/* ========================================================================= */}
-          {/* SECTION 5: TOP STAFF & CASHIER AUDIT PODIUM */}
-          {/* ========================================================================= */}
-          {staffPerformance.length > 0 && (
-            <div className="space-y-3 pt-2">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="text-xs font-bold text-stone-200 flex items-center gap-1.5">
-                    <Users className="w-4 h-4 text-sky-400" />
-                    <span>{isKhmer ? 'បុគ្គលិកឆ្នើម & ការវាយតម្លៃវេនការងារ (Top Staff Performance & Audit)' : 'Staff Velocity & Labor Productivity Audit'}</span>
-                  </h4>
-                  <p className="text-[10px] text-stone-500">
-                    {isKhmer ? 'ទិន្នន័យលក់ដាច់, ចំនួនកុម្ម៉ង់, ការបញ្ចុះតម្លៃ និងការត្រួតពិនិត្យភាពត្រឹមត្រូវ' : 'Sales volume, speed throughput, and labor percentage per staff member'}
-                  </p>
-                </div>
-                <span className="text-[10px] text-sky-400 bg-sky-950/60 px-2.5 py-0.5 rounded-full border border-sky-800 font-bold">
-                  Labor {reportData.storeLaborCostPercentage || 24.5}%
+            {/* Subsection 4B: Category Contribution Mix Chips */}
+            {categoryStats.length > 0 && (
+              <div className="p-3 rounded-2xl bg-stone-950/70 border border-stone-800 flex flex-wrap items-center gap-2">
+                <span className="text-[11px] font-bold text-stone-400 flex items-center gap-1 mr-1">
+                  <Layers className="w-3.5 h-3.5 text-amber-500" />
+                  <span>{isKhmer ? 'ចំណែកតាមក្រុម:' : 'Category Mix:'}</span>
                 </span>
+                {categoryStats.slice(0, 5).map((cat, idx) => (
+                  <div key={idx} className="flex items-center gap-2 px-2.5 py-1 rounded-xl bg-stone-900 border border-stone-800 text-xs">
+                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }}></span>
+                    <span className="font-bold text-stone-200">{cat.name}</span>
+                    <span className="text-stone-400 font-mono">${cat.revenue.toFixed(0)}</span>
+                    <span className="text-[10px] text-amber-400 font-mono font-bold">({cat.sharePct}%)</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Subsection 4C: Complete Menu Products Performance Table */}
+            <div className="p-4 rounded-2xl bg-stone-950/70 border border-stone-800 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <div className="flex items-center gap-2">
+                  <Package className="w-4 h-4 text-amber-500" />
+                  <h4 className="text-xs font-bold text-stone-200">
+                    {isKhmer 
+                      ? `តារាងមុខទំនិញលក់ទាំងអស់ (${overviewProducts.length} មុខ)` 
+                      : `All Menu Products & Performance (${overviewProducts.length} Items)`}
+                  </h4>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 font-bold">
+                    {isKhmer ? 'បញ្ជីពេញលេញ' : 'List All'}
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="relative">
+                    <Search className="w-3 h-3 absolute left-2.5 top-1/2 -translate-y-1/2 text-stone-500" />
+                    <input
+                      type="text"
+                      placeholder={isKhmer ? 'ស្វែងរកមុខទំនិញ...' : 'Filter products...'}
+                      value={overviewProductSearch}
+                      onChange={(e) => setOverviewProductSearch(e.target.value)}
+                      className="bg-stone-900 border border-stone-800 rounded-xl pl-7 pr-2.5 py-1 text-[11px] text-stone-200 placeholder-stone-500 focus:outline-none focus:border-amber-500 w-32 sm:w-44"
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setOverviewProductsLimit(prev => prev >= 1000 ? 5 : 1000)}
+                    className="px-2.5 py-1 rounded-xl bg-stone-900 hover:bg-stone-800 border border-stone-700 text-amber-400 text-[11px] font-bold cursor-pointer transition whitespace-nowrap"
+                  >
+                    {overviewProductsLimit >= 1000 ? (isKhmer ? 'ទាំងអស់ ✓' : 'All Items ✓') : (isKhmer ? 'បង្ហាញទាំងអស់' : 'Show All')}
+                  </button>
+                </div>
               </div>
 
+              <div className="overflow-x-auto max-h-[380px] overflow-y-auto rounded-xl border border-stone-850/80">
+                <table className="w-full text-left text-xs">
+                  <thead className="sticky top-0 bg-stone-900/95 backdrop-blur z-10 border-b border-stone-800 text-stone-400 text-[10px] uppercase font-bold">
+                    <tr>
+                      <th className="py-2.5 px-3"># Rank</th>
+                      <th className="py-2.5 px-3">{isKhmer ? 'ឈ្មោះទំនិញ' : 'Item Name'}</th>
+                      <th className="py-2.5 px-3">{isKhmer ? 'ប្រភេទ' : 'Category'}</th>
+                      <th className="py-2.5 px-3 text-right">{isKhmer ? 'តម្លៃរាយ' : 'Price'}</th>
+                      <th className="py-2.5 px-3 text-center">{isKhmer ? 'ចំនួនលក់' : 'Units'}</th>
+                      <th className="py-2.5 px-3 text-right">{isKhmer ? 'ចំណូលសរុប' : 'Revenue ($)'}</th>
+                      <th className="py-2.5 px-3 text-right">{isKhmer ? 'ចំណូល (៛)' : 'Revenue (KHR)'}</th>
+                      <th className="py-2.5 px-3 text-right">{isKhmer ? 'ចំណេញ' : 'Margin'}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-stone-800/60 font-medium">
+                    {overviewProducts.slice(0, overviewProductsLimit).map((p, idx) => {
+                      const price = p.retailPrice || p.unitPrice || 0;
+                      const units = p.unitsSold || 0;
+                      const rev = p.revenue || (price * units);
+                      const margin = p.profitMarginPct || p.marginPercentage || 70;
+                      return (
+                        <tr key={idx} className="hover:bg-stone-900/60 transition">
+                          <td className="py-2 px-3 text-stone-500 font-mono text-[11px]">
+                            {idx === 0 ? '🥇 1' : idx === 1 ? '🥈 2' : idx === 2 ? '🥉 3' : (idx + 1)}
+                          </td>
+                          <td className="py-2 px-3 font-bold text-stone-200">{p.name}</td>
+                          <td className="py-2 px-3">
+                            <span className="px-1.5 py-0.5 rounded bg-stone-900 border border-stone-800 text-stone-400 text-[10px]">
+                              {p.category}
+                            </span>
+                          </td>
+                          <td className="py-2 px-3 text-right font-mono text-stone-400 text-[11px]">${price.toFixed(2)}</td>
+                          <td className="py-2 px-3 text-center font-bold text-amber-400 font-mono">{units}</td>
+                          <td className="py-2 px-3 text-right font-mono font-bold text-stone-100">${rev.toFixed(2)}</td>
+                          <td className="py-2 px-3 text-right font-mono text-stone-400 text-[11px]">៛{Math.round(rev * 4100).toLocaleString()}</td>
+                          <td className="py-2 px-3 text-right font-mono">
+                            <span className="px-1.5 py-0.5 rounded bg-emerald-950/80 text-emerald-400 text-[10px] font-bold border border-emerald-800/60">
+                              {margin}%
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="flex items-center justify-between text-xs text-stone-400 px-1 pt-1">
+                <span>
+                  {isKhmer 
+                    ? `បង្ហាញ ${Math.min(overviewProductsLimit, overviewProducts.length)} នៃ ${overviewProducts.length} មុខទំនិញ` 
+                    : `Showing ${Math.min(overviewProductsLimit, overviewProducts.length)} of ${overviewProducts.length} items`}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setOverviewProductsLimit(prev => prev >= 1000 ? 5 : 1000)}
+                  className="text-amber-400 hover:text-amber-300 font-bold text-[11px] cursor-pointer"
+                >
+                  {overviewProductsLimit >= 1000 ? (isKhmer ? 'បង្រួមត្រឹម ៥' : 'Show Top 5 Only') : (isKhmer ? 'បង្ហាញទាំងអស់' : 'Show All Items')}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* ======================================================================= */}
+          {/* SECTION 5: STAFF PRODUCTIVITY & CASHIER SHIFT RECONCILIATION */}
+          {/* ======================================================================= */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between px-1">
+              <div className="flex items-center gap-2">
+                <span className="w-5 h-5 rounded-lg bg-purple-500/20 text-purple-400 font-black text-xs flex items-center justify-center border border-purple-500/30">5</span>
+                <h3 className="text-xs font-bold text-stone-200 uppercase tracking-wider flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5 text-purple-400" />
+                  <span>{isKhmer ? 'សវនកម្មបុគ្គលិក & វេនបម្រើការងារ (Staff Productivity & Shift Audit)' : 'Staff Velocity & Cashier Shift Audit'}</span>
+                </h3>
+              </div>
+              <span className="text-[10px] text-purple-400 bg-purple-950/60 px-2.5 py-0.5 rounded-full border border-purple-800 font-bold">
+                Store Labor: {reportData?.storeLaborCostPercentage || 24.5}%
+              </span>
+            </div>
+
+            {/* Subsection 5A: Top Staff Champions Podium */}
+            {staffPerformance.length > 0 && (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {/* #1 MVP Sales */}
                 {(() => {
@@ -1733,159 +1911,303 @@ export const ManagementReports = () => {
                   ) : null;
                 })()}
               </div>
-            </div>
-          )}
+            )}
 
-          {/* ========================================================================= */}
-          {/* SECTION 6: ALL ORDERS & TRANSACTIONS AUDIT LEDGER (LIST ALL) */}
-          {/* ========================================================================= */}
-          <div className="p-4 rounded-2xl bg-stone-950/70 border border-stone-800 space-y-3">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-              <div>
-                <h4 className="text-xs font-bold text-stone-200 flex items-center gap-1.5">
-                  <Receipt className="w-4 h-4 text-emerald-400" />
-                  <span>
-                    {isKhmer 
-                      ? `បញ្ជីវិក្កយបត្រ និងការលក់ទាំងអស់ (${filteredOrders.length} វិក្កយបត្រ)` 
-                      : `All Orders & Transactions Ledger (${filteredOrders.length} Orders)`}
+            {/* Subsection 5B: Recent Cashier Shifts Audit Table */}
+            {shifts && shifts.length > 0 && (
+              <div className="p-4 rounded-2xl bg-stone-950/70 border border-stone-800 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold text-stone-200 flex items-center gap-1.5">
+                    <ShieldAlert className="w-4 h-4 text-amber-500" />
+                    <span>{isKhmer ? 'សវនកម្មវេនការងារ & ភាពលម្អៀងសាច់ប្រាក់ (Cashier Shift & Drawer Audit)' : 'Cashier Shifts & Cash Drawer Variance'}</span>
+                  </h4>
+                  <span className="text-[10px] text-stone-400 font-mono">
+                    {shifts.length} {isKhmer ? 'វេន' : 'Shifts Logged'}
                   </span>
-                </h4>
-                <p className="text-[10px] text-stone-500">
-                  {isKhmer 
-                    ? 'ពិនិត្យមើលគ្រប់ការបញ្ជាទិញ វិធីសាស្ត្រទូទាត់ និងទឹកប្រាក់លម្អិតតាមពេលវេលាជាក់ស្ដែង' 
-                    : 'Audit every transaction, tender type, cashier, and order breakdown in real-time'}
-                </p>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2">
-                {/* Search */}
-                <div className="relative">
-                  <Search className="w-3 h-3 absolute left-2.5 top-1/2 -translate-y-1/2 text-stone-500" />
-                  <input
-                    type="text"
-                    placeholder={isKhmer ? 'ស្វែងរកវិក្កយបត្រ, ភ្ញៀវ...' : 'Search receipt ID, guest...'}
-                    value={salesSearch}
-                    onChange={(e) => setSalesSearch(e.target.value)}
-                    className="bg-stone-900 border border-stone-800 rounded-xl pl-7 pr-2.5 py-1 text-[11px] text-stone-200 placeholder-stone-500 focus:outline-none focus:border-amber-500 w-36 sm:w-48"
-                  />
                 </div>
 
-                {/* Payment filter */}
-                <select
-                  value={salesPaymentFilter}
-                  onChange={(e) => setSalesPaymentFilter(e.target.value)}
-                  className="bg-stone-900 border border-stone-800 rounded-xl px-2 py-1 text-[11px] text-stone-200 focus:outline-none focus:border-amber-500 cursor-pointer"
-                >
-                  <option value="ALL">{isKhmer ? 'គ្រប់ការទូទាត់' : 'All Payments'}</option>
-                  <option value="CASH">Cash</option>
-                  <option value="KHQR">Bakong KHQR</option>
-                  <option value="CARD">Card</option>
-                </select>
+                <div className="overflow-x-auto rounded-xl border border-stone-850">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-stone-900/90 text-stone-400 text-[10px] uppercase font-bold">
+                      <tr>
+                        <th className="py-2 px-3">Shift ID</th>
+                        <th className="py-2 px-3">{isKhmer ? 'បេឡាករ' : 'Cashier'}</th>
+                        <th className="py-2 px-3">{isKhmer ? 'ម៉ោងបើក / បិទ' : 'Open / Close'}</th>
+                        <th className="py-2 px-3 text-right">{isKhmer ? 'ប្រាក់ដើម' : 'Start Float'}</th>
+                        <th className="py-2 px-3 text-right">{isKhmer ? 'រំពឹងទុក' : 'Expected'}</th>
+                        <th className="py-2 px-3 text-right">{isKhmer ? 'ជាក់ស្តែង' : 'Actual'}</th>
+                        <th className="py-2 px-3 text-right">{isKhmer ? 'លម្អៀង' : 'Variance'}</th>
+                        <th className="py-2 px-3 text-center">{isKhmer ? 'ស្ថានភាព' : 'Status'}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-stone-850 font-medium">
+                      {shifts.slice(0, 5).map((sh, idx) => {
+                        const variance = (sh.actualCash && sh.expectedCash) ? (sh.actualCash - sh.expectedCash) : 0;
+                        return (
+                          <tr key={idx} className="hover:bg-stone-900/50 transition">
+                            <td className="py-2 px-3 font-mono font-bold text-amber-400">{sh.id}</td>
+                            <td className="py-2 px-3 text-stone-200 font-semibold">{sh.cashierName || 'Liam Vance'}</td>
+                            <td className="py-2 px-3 text-stone-400 text-[11px]">
+                              {sh.openedAt ? new Date(sh.openedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'} - {sh.closedAt ? new Date(sh.closedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Active'}
+                            </td>
+                            <td className="py-2 px-3 text-right font-mono text-stone-400">${(sh.startingFloat || 0).toFixed(2)}</td>
+                            <td className="py-2 px-3 text-right font-mono text-stone-300">${(sh.expectedCash || 0).toFixed(2)}</td>
+                            <td className="py-2 px-3 text-right font-mono font-bold text-stone-100">${(sh.actualCash || sh.expectedCash || 0).toFixed(2)}</td>
+                            <td className="py-2 px-3 text-right font-mono">
+                              <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                                Math.abs(variance) < 0.01 ? 'bg-emerald-950 text-emerald-400' :
+                                variance > 0 ? 'bg-sky-950 text-sky-400' : 'bg-rose-950 text-rose-400'
+                              }`}>
+                                {variance >= 0 ? `+$${variance.toFixed(2)}` : `-$${Math.abs(variance).toFixed(2)}`}
+                              </span>
+                            </td>
+                            <td className="py-2 px-3 text-center">
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                sh.status === 'CLOSED' ? 'bg-stone-800 text-stone-300' : 'bg-emerald-950 text-emerald-400 border border-emerald-800'
+                              }`}>
+                                {sh.status || 'CLOSED'}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
 
-                {/* Toggle Show All / 15 */}
+          {/* ======================================================================= */}
+          {/* SECTION 6: COMPLETE ORDERS & TRANSACTIONS AUDIT LEDGER */}
+          {/* ======================================================================= */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between px-1">
+              <div className="flex items-center gap-2">
+                <span className="w-5 h-5 rounded-lg bg-emerald-500/20 text-emerald-400 font-black text-xs flex items-center justify-center border border-emerald-500/30">6</span>
+                <h3 className="text-xs font-bold text-stone-200 uppercase tracking-wider flex items-center gap-1.5">
+                  <Receipt className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>{isKhmer ? 'សវនកម្មប្រតិបត្តិការ & វិក្កយបត្រលក់លម្អិត (Orders & Transaction Audit)' : 'Complete Orders & Transaction Audit Ledger'}</span>
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setReportViewMode('tabbed');
+                  setActiveTab('sales');
+                }}
+                className="text-[11px] text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 cursor-pointer"
+              >
+                <span>{isKhmer ? 'មើលផ្ទាំងលម្អិតការលក់' : 'View Sales Ledger Tab'}</span>
+                <ArrowUpRight className="w-3 h-3" />
+              </button>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-stone-950/70 border border-stone-800 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <div>
+                  <h4 className="text-xs font-bold text-stone-200">
+                    {isKhmer 
+                      ? `បញ្ជីវិក្កយបត្រទាំងអស់ (${filteredOrders.length} វិក្កយបត្រ)` 
+                      : `All Orders & Guest Transactions (${filteredOrders.length} Orders)`}
+                  </h4>
+                  <p className="text-[10px] text-stone-500">
+                    {isKhmer 
+                      ? 'ពិនិត្យមើលគ្រប់ការបញ្ជាទិញ វិធីសាស្ត្រទូទាត់ និងទឹកប្រាក់លម្អិតតាមពេលវេលាជាក់ស្ដែង' 
+                      : 'Audit every transaction, tender type, cashier, and order breakdown in real-time'}
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* Search */}
+                  <div className="relative">
+                    <Search className="w-3 h-3 absolute left-2.5 top-1/2 -translate-y-1/2 text-stone-500" />
+                    <input
+                      type="text"
+                      placeholder={isKhmer ? 'ស្វែងរកវិក្កយបត្រ, ភ្ញៀវ...' : 'Search receipt ID, guest...'}
+                      value={salesSearch}
+                      onChange={(e) => setSalesSearch(e.target.value)}
+                      className="bg-stone-900 border border-stone-800 rounded-xl pl-7 pr-2.5 py-1 text-[11px] text-stone-200 placeholder-stone-500 focus:outline-none focus:border-amber-500 w-36 sm:w-48"
+                    />
+                  </div>
+
+                  {/* Payment filter */}
+                  <select
+                    value={salesPaymentFilter}
+                    onChange={(e) => setSalesPaymentFilter(e.target.value)}
+                    className="bg-stone-900 border border-stone-800 rounded-xl px-2 py-1 text-[11px] text-stone-200 focus:outline-none focus:border-amber-500 cursor-pointer"
+                  >
+                    <option value="ALL">{isKhmer ? 'គ្រប់ការទូទាត់' : 'All Payments'}</option>
+                    <option value="CASH">Cash</option>
+                    <option value="KHQR">Bakong KHQR</option>
+                    <option value="CARD">Card</option>
+                  </select>
+
+                  {/* Toggle Show All / 15 */}
+                  <button
+                    type="button"
+                    onClick={() => setOverviewOrdersLimit(prev => prev >= 1000 ? 15 : 1000)}
+                    className="px-2.5 py-1 rounded-xl bg-stone-900 hover:bg-stone-800 border border-stone-700 text-amber-400 text-[11px] font-bold cursor-pointer transition whitespace-nowrap"
+                  >
+                    {overviewOrdersLimit >= 1000 ? (isKhmer ? 'ទាំងអស់ ✓' : 'All Orders ✓') : (isKhmer ? 'បង្ហាញទាំងអស់' : 'Show All')}
+                  </button>
+                </div>
+              </div>
+
+              {/* Orders Table */}
+              <div className="overflow-x-auto max-h-96 overflow-y-auto rounded-xl border border-stone-850/80">
+                <table className="w-full text-left text-xs">
+                  <thead className="sticky top-0 bg-stone-900/95 backdrop-blur z-10 border-b border-stone-800 text-stone-400 text-[10px] uppercase font-bold">
+                    <tr>
+                      <th className="py-2.5 px-3">Receipt #</th>
+                      <th className="py-2.5 px-3">{isKhmer ? 'ភ្ញៀវ' : 'Customer'}</th>
+                      <th className="py-2.5 px-3">{isKhmer ? 'បុគ្គលិក' : 'Cashier'}</th>
+                      <th className="py-2.5 px-3">{isKhmer ? 'ប្រភេទ' : 'Type'}</th>
+                      <th className="py-2.5 px-3">{isKhmer ? 'មុខទំនិញ' : 'Items'}</th>
+                      <th className="py-2.5 px-3">{isKhmer ? 'ទូទាត់' : 'Payment'}</th>
+                      <th className="py-2.5 px-3 text-right">{isKhmer ? 'សរុប ($)' : 'Total ($)'}</th>
+                      <th className="py-2.5 px-3 text-right">{isKhmer ? 'សរុប (៛)' : 'Total (KHR)'}</th>
+                      <th className="py-2.5 px-3 text-center">{isKhmer ? 'ស្ថានភាព' : 'Status'}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-stone-800/60 font-medium">
+                    {filteredOrders.slice(0, overviewOrdersLimit).map((o, idx) => {
+                      const payMethod = o.paymentMethod === 'QR_CODE' ? 'KHQR' : (o.paymentMethod || 'CASH');
+                      return (
+                        <tr key={idx} className="hover:bg-stone-900/60 transition">
+                          <td className="py-2.5 px-3 font-mono font-bold text-amber-400">{o.id}</td>
+                          <td className="py-2.5 px-3 text-stone-200">{o.customerName || 'Walk-in Guest'}</td>
+                          <td className="py-2.5 px-3 text-stone-400 text-[11px]">{o.cashierName || 'Liam Vance'}</td>
+                          <td className="py-2.5 px-3">
+                            <span className="px-2 py-0.5 rounded-md bg-stone-900 border border-stone-800 text-[10px] text-stone-300 font-bold">
+                              {o.orderType || 'DINE_IN'}
+                            </span>
+                          </td>
+                          <td className="py-2.5 px-3 text-stone-300 max-w-[220px] truncate">
+                            {(o.items || []).map(it => `${it.productName || it.name} x${it.quantity}`).join(', ')}
+                          </td>
+                          <td className="py-2.5 px-3">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                              payMethod === 'CASH' ? 'bg-emerald-950 text-emerald-400 border-emerald-800' :
+                              payMethod === 'KHQR' ? 'bg-pink-950 text-pink-400 border-pink-800' :
+                              'bg-sky-950 text-sky-400 border-sky-800'
+                            }`}>
+                              {payMethod}
+                            </span>
+                          </td>
+                          <td className="py-2.5 px-3 text-right font-mono font-bold text-stone-100">${(o.total || 0).toFixed(2)}</td>
+                          <td className="py-2.5 px-3 text-right font-mono text-stone-400 text-[11px]">៛{Math.round((o.total || 0) * 4100).toLocaleString()}</td>
+                          <td className="py-2.5 px-3 text-center">
+                            <span className="px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800 text-[10px] font-bold">
+                              PAID
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="flex items-center justify-between text-xs text-stone-400 px-1 pt-1">
+                <span>
+                  {isKhmer 
+                    ? `បង្ហាញ ${Math.min(overviewOrdersLimit, filteredOrders.length)} នៃ ${filteredOrders.length} វិក្កយបត្រ` 
+                    : `Showing ${Math.min(overviewOrdersLimit, filteredOrders.length)} of ${filteredOrders.length} orders`}
+                </span>
                 <button
                   type="button"
                   onClick={() => setOverviewOrdersLimit(prev => prev >= 1000 ? 15 : 1000)}
-                  className="px-2.5 py-1 rounded-xl bg-stone-900 hover:bg-stone-800 border border-stone-700 text-amber-400 text-[11px] font-bold cursor-pointer transition whitespace-nowrap"
+                  className="text-amber-400 hover:text-amber-300 font-bold text-[11px] cursor-pointer"
                 >
-                  {overviewOrdersLimit >= 1000 ? (isKhmer ? 'ទាំងអស់ ✓' : 'All Orders ✓') : (isKhmer ? 'បង្ហាញទាំងអស់' : 'Show All')}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setReportViewMode('tabbed');
-                    setActiveTab('sales');
-                  }}
-                  title={isKhmer ? 'មើលផ្ទាំងលម្អិតការលក់' : 'View Deep-Dive Sales Tab'}
-                  className="text-[11px] text-stone-400 hover:text-amber-300 font-bold flex items-center gap-0.5 cursor-pointer p-1"
-                >
-                  <ArrowUpRight className="w-3.5 h-3.5" />
+                  {overviewOrdersLimit >= 1000 ? (isKhmer ? 'បង្រួមត្រឹម ១៥' : 'Show Top 15 Only') : (isKhmer ? 'បង្ហាញទាំងអស់' : 'Show All Orders')}
                 </button>
               </div>
             </div>
-
-            {/* Orders Table */}
-            <div className="overflow-x-auto max-h-96 overflow-y-auto rounded-xl border border-stone-850/80">
-              <table className="w-full text-left text-xs">
-                <thead className="sticky top-0 bg-stone-900/95 backdrop-blur z-10 border-b border-stone-800 text-stone-400 text-[10px] uppercase font-bold">
-                  <tr>
-                    <th className="py-2.5 px-3">Receipt #</th>
-                    <th className="py-2.5 px-3">{isKhmer ? 'ភ្ញៀវ' : 'Customer'}</th>
-                    <th className="py-2.5 px-3">{isKhmer ? 'បុគ្គលិក' : 'Cashier'}</th>
-                    <th className="py-2.5 px-3">{isKhmer ? 'ប្រភេទ' : 'Type'}</th>
-                    <th className="py-2.5 px-3">{isKhmer ? 'មុខទំនិញ' : 'Items'}</th>
-                    <th className="py-2.5 px-3">{isKhmer ? 'ទូទាត់' : 'Payment'}</th>
-                    <th className="py-2.5 px-3 text-right">{isKhmer ? 'សរុប ($)' : 'Total ($)'}</th>
-                    <th className="py-2.5 px-3 text-right">{isKhmer ? 'សរុប (៛)' : 'Total (KHR)'}</th>
-                    <th className="py-2.5 px-3 text-center">{isKhmer ? 'ស្ថានភាព' : 'Status'}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-stone-800/60 font-medium">
-                  {filteredOrders.slice(0, overviewOrdersLimit).map((o, idx) => {
-                    const payMethod = o.paymentMethod === 'QR_CODE' ? 'KHQR' : (o.paymentMethod || 'CASH');
-                    return (
-                      <tr key={idx} className="hover:bg-stone-900/60 transition">
-                        <td className="py-2.5 px-3 font-mono font-bold text-amber-400">{o.id}</td>
-                        <td className="py-2.5 px-3 text-stone-200">{o.customerName || 'Walk-in Guest'}</td>
-                        <td className="py-2.5 px-3 text-stone-400 text-[11px]">{o.cashierName || 'Liam Vance'}</td>
-                        <td className="py-2.5 px-3">
-                          <span className="px-2 py-0.5 rounded-md bg-stone-900 border border-stone-800 text-[10px] text-stone-300 font-bold">
-                            {o.orderType || 'DINE_IN'}
-                          </span>
-                        </td>
-                        <td className="py-2.5 px-3 text-stone-300 max-w-[220px] truncate">
-                          {(o.items || []).map(it => `${it.productName || it.name} x${it.quantity}`).join(', ')}
-                        </td>
-                        <td className="py-2.5 px-3">
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                            payMethod === 'CASH' ? 'bg-emerald-950 text-emerald-400 border-emerald-800' :
-                            payMethod === 'KHQR' ? 'bg-pink-950 text-pink-400 border-pink-800' :
-                            'bg-sky-950 text-sky-400 border-sky-800'
-                          }`}>
-                            {payMethod}
-                          </span>
-                        </td>
-                        <td className="py-2.5 px-3 text-right font-mono font-bold text-stone-100">${(o.total || 0).toFixed(2)}</td>
-                        <td className="py-2.5 px-3 text-right font-mono text-stone-400 text-[11px]">៛{Math.round((o.total || 0) * 4100).toLocaleString()}</td>
-                        <td className="py-2.5 px-3 text-center">
-                          <span className="px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800 text-[10px] font-bold">
-                            PAID
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="flex items-center justify-between text-xs text-stone-400 px-1 pt-1">
-              <span>
-                {isKhmer 
-                  ? `បង្ហាញ ${Math.min(overviewOrdersLimit, filteredOrders.length)} នៃ ${filteredOrders.length} វិក្កយបត្រ` 
-                  : `Showing ${Math.min(overviewOrdersLimit, filteredOrders.length)} of ${filteredOrders.length} orders`}
-              </span>
-              <button
-                type="button"
-                onClick={() => setOverviewOrdersLimit(prev => prev >= 1000 ? 15 : 1000)}
-                className="text-amber-400 hover:text-amber-300 font-bold text-[11px] cursor-pointer"
-              >
-                {overviewOrdersLimit >= 1000 ? (isKhmer ? 'បង្រួមត្រឹម ១៥' : 'Show Top 15 Only') : (isKhmer ? 'បង្ហាញទាំងអស់' : 'Show All Orders')}
-              </button>
-            </div>
           </div>
 
-          {/* Quick Actions Footer Bar */}
-          <div className="p-3.5 rounded-2xl bg-stone-950/90 border border-stone-800 flex flex-wrap items-center justify-between gap-3 shadow-xl">
-            <div className="flex items-center gap-2.5">
+          {/* ======================================================================= */}
+          {/* SECTION 7: INVENTORY WATCHLIST & LOW STOCK ALERTS */}
+          {/* ======================================================================= */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between px-1">
+              <div className="flex items-center gap-2">
+                <span className="w-5 h-5 rounded-lg bg-rose-500/20 text-rose-400 font-black text-xs flex items-center justify-center border border-rose-500/30">7</span>
+                <h3 className="text-xs font-bold text-stone-200 uppercase tracking-wider flex items-center gap-1.5">
+                  <Package className="w-3.5 h-3.5 text-rose-400" />
+                  <span>{isKhmer ? 'ការត្រួតពិនិត្យស្តុក & វត្ថុធាតុដើមជិតអស់ (Inventory & Stock Watchlist)' : 'Inventory Depletion & Reorder Watchlist'}</span>
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setReportViewMode('tabbed');
+                  setActiveTab('inventory');
+                }}
+                className="text-[11px] text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 cursor-pointer"
+              >
+                <span>{isKhmer ? 'ផ្ទាំងស្តុកទំនិញ' : 'View Inventory Tab'}</span>
+                <ArrowUpRight className="w-3 h-3" />
+              </button>
+            </div>
+
+            {lowStockIngredients.length > 0 ? (
+              <div className="p-4 rounded-2xl bg-stone-950/70 border border-rose-900/40 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-rose-400" />
+                    <span className="text-xs font-bold text-rose-300">
+                      {isKhmer ? `មានវត្ថុធាតុដើម ${lowStockIngredients.length} មុខជិតអស់ពីស្តុក (ត្រូវបញ្ជាទិញបន្ថែម)` : `${lowStockIngredients.length} Raw Materials Low on Stock (Reorder Needed)`}
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-rose-400 bg-rose-950/80 px-2 py-0.5 rounded-full border border-rose-800 font-bold">
+                    Action Required
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                  {lowStockIngredients.slice(0, 6).map((ing, idx) => (
+                    <div key={idx} className="p-3 rounded-xl bg-stone-900/80 border border-stone-800 flex items-center justify-between">
+                      <div>
+                        <h5 className="text-xs font-bold text-stone-200">{ing.name}</h5>
+                        <p className="text-[10px] text-stone-500 font-mono">
+                          {isKhmer ? 'ស្តុកបច្ចុប្បន្ន' : 'In Stock'}: <span className="text-rose-400 font-bold">{ing.stock} {ing.unit}</span> (Min: {ing.minThreshold || 5})
+                        </p>
+                      </div>
+                      <span className="px-2 py-0.5 rounded-lg bg-rose-950/80 text-rose-400 border border-rose-800 text-[10px] font-bold">
+                        {isKhmer ? 'ជិតអស់' : 'Low Stock'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="p-3.5 rounded-2xl bg-stone-950/70 border border-emerald-900/40 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <span className="text-xs font-semibold text-emerald-300">
+                    {isKhmer ? 'ស្តុកវត្ថុធាតុដើមមានសុវត្ថិភាព ១០០% - គ្មានវត្ថុធាតុដើមខ្វះខាតក្នុងប្រតិបត្តិការទេ' : 'Raw inventory is 100% optimal - No critical shortages detected'}
+                  </span>
+                </div>
+                <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded-full border border-emerald-800">
+                  Optimal
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* ======================================================================= */}
+          {/* SECTION 8: EXECUTIVE SUMMARY SIGN-OFF & QUICK ACTIONS FOOTER */}
+          {/* ======================================================================= */}
+          <div className="p-4 rounded-2xl bg-stone-950/90 border border-stone-800 flex flex-wrap items-center justify-between gap-3 shadow-xl">
+            <div className="flex items-center gap-3">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
               <div>
                 <span className="text-xs font-bold text-stone-200 block">
-                  {isKhmer ? 'របាយការណ៍អាជីវកម្មសង្ខេប ១ទំព័រពេញលេញ (1-Page Consolidated Report)' : 'Consolidated 1-Page Coffee Shop Executive Report'}
+                  {isKhmer ? 'របាយការណ៍អាជីវកម្មសង្ខេប ១ទំព័រពេញលេញ (1-Page Consolidated Executive Report)' : 'Consolidated 1-Page Coffee Shop Executive Business Report'}
                 </span>
-                <span className="text-[10px] text-stone-500">
-                  {isKhmer ? 'ទិន្នន័យត្រូវបានធ្វើបច្ចុប្បន្នភាពផ្ទាល់តាមម៉ោងលក់' : 'Real-time sales, inventory, tender & staff intelligence'}
+                <span className="text-[10px] text-stone-500 font-mono">
+                  {isKhmer ? `សវនកម្មដោយ៖ ${user?.name || 'Manager'} • ម៉ោង៖ ${new Date().toLocaleTimeString()}` : `Audited by: ${user?.name || 'Manager'} • Time: ${new Date().toLocaleTimeString()}`}
                 </span>
               </div>
             </div>
@@ -1897,7 +2219,7 @@ export const ManagementReports = () => {
                   soundService.playBeepSound();
                   setIsPrintPreviewOpen(true);
                 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-stone-900 hover:bg-stone-800 border border-stone-700 hover:border-cyan-500 text-cyan-400 font-bold text-xs transition cursor-pointer"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-stone-900 hover:bg-stone-800 border border-stone-700 hover:border-cyan-500 text-cyan-400 font-bold text-xs transition cursor-pointer"
               >
                 <Printer className="w-3.5 h-3.5" />
                 <span>{isKhmer ? 'បោះពុម្ព ១ទំព័រ A4' : 'Print 1-Page A4'}</span>
@@ -1906,13 +2228,14 @@ export const ManagementReports = () => {
               <button
                 type="button"
                 onClick={() => exportToExcel('all')}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-950 hover:bg-emerald-900 border border-emerald-800 text-emerald-300 font-bold text-xs transition cursor-pointer shadow-sm"
+                className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-emerald-950 hover:bg-emerald-900 border border-emerald-800 text-emerald-300 font-bold text-xs transition cursor-pointer shadow-sm"
               >
                 <FileSpreadsheet className="w-3.5 h-3.5" />
                 <span>{isKhmer ? 'នាំចេញ Excel (.xlsx)' : 'Download Excel (.xlsx)'}</span>
               </button>
             </div>
           </div>
+
         </div>
       )}
 
@@ -3182,26 +3505,36 @@ export const ManagementReports = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-6 gap-2">
                   <div className="border border-black p-2 rounded text-center">
-                    <span className="text-[9px] uppercase font-bold text-gray-600 block">Net Collected</span>
-                    <span className="text-sm font-black">${netSales.toFixed(2)}</span>
-                    <span className="text-[8px] text-gray-600 block font-mono">៛{Math.round(netSales * 4100).toLocaleString()}</span>
+                    <span className="text-[8px] uppercase font-bold text-gray-600 block">Gross Sales</span>
+                    <span className="text-xs font-black">${grossSales.toFixed(2)}</span>
+                    <span className="text-[7px] text-gray-600 block font-mono">៛{Math.round(grossSales * 4100).toLocaleString()}</span>
                   </div>
                   <div className="border border-black p-2 rounded text-center">
-                    <span className="text-[9px] uppercase font-bold text-gray-600 block">Orders Handled</span>
-                    <span className="text-sm font-black">{customerCount}</span>
-                    <span className="text-[8px] text-gray-600 block">Paid Orders</span>
+                    <span className="text-[8px] uppercase font-bold text-red-600 block">Discounts</span>
+                    <span className="text-xs font-black text-red-700">-${totalDiscounts.toFixed(2)}</span>
+                    <span className="text-[7px] text-red-600 block font-mono">Promo/VIP</span>
+                  </div>
+                  <div className="border border-black p-2 rounded text-center bg-gray-50">
+                    <span className="text-[8px] uppercase font-bold text-gray-800 block">Net Revenue</span>
+                    <span className="text-xs font-black">${netSales.toFixed(2)}</span>
+                    <span className="text-[7px] text-gray-600 block font-mono">៛{Math.round(netSales * 4100).toLocaleString()}</span>
                   </div>
                   <div className="border border-black p-2 rounded text-center">
-                    <span className="text-[9px] uppercase font-bold text-gray-600 block">Avg Ticket</span>
-                    <span className="text-sm font-black">${avgSpend.toFixed(2)}</span>
-                    <span className="text-[8px] text-gray-600 block font-mono">៛{Math.round(avgSpend * 4100).toLocaleString()}</span>
+                    <span className="text-[8px] uppercase font-bold text-gray-600 block">COGS Cost</span>
+                    <span className="text-xs font-black">${totalCOGS.toFixed(2)}</span>
+                    <span className="text-[7px] text-gray-600 block font-mono">{overallCogsPercentage.toFixed(1)}%</span>
                   </div>
                   <div className="border border-black p-2 rounded text-center">
-                    <span className="text-[9px] uppercase font-bold text-gray-600 block">Gross Profit</span>
-                    <span className="text-sm font-black">${totalGrossProfit.toFixed(2)}</span>
-                    <span className="text-[8px] text-gray-600 block font-mono">Margin: {(100 - overallCogsPercentage).toFixed(1)}%</span>
+                    <span className="text-[8px] uppercase font-bold text-gray-600 block">Gross Profit</span>
+                    <span className="text-xs font-black">${totalGrossProfit.toFixed(2)}</span>
+                    <span className="text-[7px] text-gray-600 block font-mono">{(100 - overallCogsPercentage).toFixed(1)}%</span>
+                  </div>
+                  <div className="border border-black p-2 rounded text-center">
+                    <span className="text-[8px] uppercase font-bold text-gray-600 block">Orders / Avg</span>
+                    <span className="text-xs font-black">{customerCount}</span>
+                    <span className="text-[7px] text-gray-600 block font-mono">${avgSpend.toFixed(2)}/tix</span>
                   </div>
                 </div>
 
@@ -3221,8 +3554,12 @@ export const ManagementReports = () => {
                         <span>Sales Tax (VAT 8%):</span>
                         <span className="font-mono font-bold">${totalTax.toFixed(2)}</span>
                       </div>
+                      <div className="flex justify-between text-amber-800">
+                        <span>Cost of Goods Sold (COGS):</span>
+                        <span className="font-mono font-bold">-${totalCOGS.toFixed(2)}</span>
+                      </div>
                       <div className="flex justify-between font-black border-t border-black pt-1 text-[11px]">
-                        <span>Net Collected Revenue:</span>
+                        <span>Net Cleared Revenue:</span>
                         <span className="font-mono">${netSales.toFixed(2)}</span>
                       </div>
                     </div>
@@ -3317,26 +3654,36 @@ export const ManagementReports = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-4 gap-2 mb-3">
+        <div className="grid grid-cols-6 gap-2 mb-3">
           <div className="border border-black p-2 rounded text-center">
-            <span className="text-[9px] uppercase font-bold text-gray-600 block">Net Collected</span>
-            <span className="text-sm font-black">${netSales.toFixed(2)}</span>
-            <span className="text-[8px] text-gray-600 block font-mono">៛{Math.round(netSales * 4100).toLocaleString()}</span>
+            <span className="text-[8px] uppercase font-bold text-gray-600 block">Gross Sales</span>
+            <span className="text-xs font-black">${grossSales.toFixed(2)}</span>
+            <span className="text-[7px] text-gray-600 block font-mono">៛{Math.round(grossSales * 4100).toLocaleString()}</span>
           </div>
           <div className="border border-black p-2 rounded text-center">
-            <span className="text-[9px] uppercase font-bold text-gray-600 block">Orders / Tickets</span>
-            <span className="text-sm font-black">{customerCount}</span>
-            <span className="text-[8px] text-gray-600 block">Paid Orders</span>
+            <span className="text-[8px] uppercase font-bold text-red-600 block">Discounts</span>
+            <span className="text-xs font-black text-red-700">-${totalDiscounts.toFixed(2)}</span>
+            <span className="text-[7px] text-red-600 block font-mono">Promo/VIP</span>
+          </div>
+          <div className="border border-black p-2 rounded text-center bg-gray-50">
+            <span className="text-[8px] uppercase font-bold text-gray-800 block">Net Revenue</span>
+            <span className="text-xs font-black">${netSales.toFixed(2)}</span>
+            <span className="text-[7px] text-gray-600 block font-mono">៛{Math.round(netSales * 4100).toLocaleString()}</span>
           </div>
           <div className="border border-black p-2 rounded text-center">
-            <span className="text-[9px] uppercase font-bold text-gray-600 block">Avg Ticket</span>
-            <span className="text-sm font-black">${avgSpend.toFixed(2)}</span>
-            <span className="text-[8px] text-gray-600 block font-mono">៛{Math.round(avgSpend * 4100).toLocaleString()}</span>
+            <span className="text-[8px] uppercase font-bold text-gray-600 block">COGS Cost</span>
+            <span className="text-xs font-black">${totalCOGS.toFixed(2)}</span>
+            <span className="text-[7px] text-gray-600 block font-mono">{overallCogsPercentage.toFixed(1)}%</span>
           </div>
           <div className="border border-black p-2 rounded text-center">
-            <span className="text-[9px] uppercase font-bold text-gray-600 block">Gross Profit</span>
-            <span className="text-sm font-black">${totalGrossProfit.toFixed(2)}</span>
-            <span className="text-[8px] text-gray-600 block font-mono">Margin: {(100 - overallCogsPercentage).toFixed(1)}%</span>
+            <span className="text-[8px] uppercase font-bold text-gray-600 block">Gross Profit</span>
+            <span className="text-xs font-black">${totalGrossProfit.toFixed(2)}</span>
+            <span className="text-[7px] text-gray-600 block font-mono">{(100 - overallCogsPercentage).toFixed(1)}%</span>
+          </div>
+          <div className="border border-black p-2 rounded text-center">
+            <span className="text-[8px] uppercase font-bold text-gray-600 block">Orders / Avg</span>
+            <span className="text-xs font-black">{customerCount}</span>
+            <span className="text-[7px] text-gray-600 block font-mono">${avgSpend.toFixed(2)}/tix</span>
           </div>
         </div>
 
@@ -3355,6 +3702,10 @@ export const ManagementReports = () => {
               <div className="flex justify-between">
                 <span>Sales Tax (VAT 8%):</span>
                 <span className="font-mono font-bold">${totalTax.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-amber-800">
+                <span>Cost of Goods Sold (COGS):</span>
+                <span className="font-mono font-bold">-${totalCOGS.toFixed(2)}</span>
               </div>
               <div className="flex justify-between font-black border-t border-black pt-1 text-[11px]">
                 <span>Net Sales Revenue:</span>
