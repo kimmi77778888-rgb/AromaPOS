@@ -15,8 +15,10 @@ import {
   Calculator,
   Layers,
   Lock,
-  BarChart3
+  BarChart3,
+  Volume2
 } from 'lucide-react';
+import { soundService } from '../../services/soundService';
 import { 
   AreaChart, 
   Area, 
@@ -123,6 +125,15 @@ export const Dashboard = () => {
         </div>
 
         <div className="flex items-center gap-2.5">
+          <button
+            onClick={() => soundService.speakKhmerWelcome()}
+            title="ស្ដាប់សំឡេងស្វាគមន៍ / Play Welcome Announcement"
+            className="px-3.5 py-2 rounded-xl bg-amber-950/40 border border-amber-600/50 hover:bg-amber-900/50 text-amber-300 hover:text-amber-200 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-sm active:scale-95"
+          >
+            <Volume2 className="w-3.5 h-3.5 text-amber-400" />
+            <span>ស្វាគមន៍ (Voice)</span>
+          </button>
+
           <button
             onClick={() => setActiveTab('reports')}
             className="px-3.5 py-2 rounded-xl bg-stone-900 border border-stone-700 hover:border-amber-500 text-stone-300 hover:text-stone-100 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"

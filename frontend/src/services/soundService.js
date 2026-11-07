@@ -4,7 +4,8 @@ import {
   KHMER_AUDIO_BAKONG_TRANSFERRED_IN,
   KHMER_AUDIO_PAYMENT_SUCCESS,
   KHMER_AUDIO_CASH_SUCCESS,
-  KHMER_AUDIO_PAYMENT_RECEIVED
+  KHMER_AUDIO_PAYMENT_RECEIVED,
+  KHMER_AUDIO_WELCOME_PHARA
 } from './khmerAudioData';
 import { formatKhmerAmountAnnouncement } from '../utils/khmerCurrencyWords';
 
@@ -253,8 +254,8 @@ class SoundService {
   }
 
   /**
-   * Play Authentic Studio-Quality Khmer Voice Clip ("ទទួលបានប្រាក់ដែលគេបានបាញ់ចូល")
-   * @param {'transferred_in'|'transferred_in_thanks'|'bakong'|'cash'|'received'|'success'} type
+   * Play Authentic Studio-Quality Khmer Voice Clip ("ទទួលបានប្រាក់ដែលគេបានបាញ់ចូល" / "ស្វាគមន៍មកកាន់ phara aroma coffee")
+   * @param {'transferred_in'|'transferred_in_thanks'|'bakong'|'cash'|'received'|'success'|'welcome'} type
    */
   playKhmerVoice(type = 'transferred_in') {
     if (!this.soundEnabled || !this.khmerVoiceEnabled) return;
@@ -272,6 +273,7 @@ class SoundService {
       else if (type === 'cash') src = KHMER_AUDIO_CASH_SUCCESS;
       else if (type === 'received') src = KHMER_AUDIO_PAYMENT_RECEIVED;
       else if (type === 'success') src = KHMER_AUDIO_PAYMENT_SUCCESS;
+      else if (type === 'welcome') src = KHMER_AUDIO_WELCOME_PHARA;
 
       const audio = new Audio(src);
       audio.volume = 1.0;
@@ -295,7 +297,8 @@ class SoundService {
     try {
       if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
         let text = 'ទទួលបានប្រាក់ដែលគេបានបាញ់ចូល';
-        if (type === 'transferred_in_thanks') text = 'ទទួលបានប្រាក់ដែលគេបានបាញ់ចូល សូមអរគុណ';
+        if (type === 'welcome') text = 'ស្វាគមន៍មកកាន់ phara aroma coffee';
+        else if (type === 'transferred_in_thanks') text = 'ទទួលបានប្រាក់ដែលគេបានបាញ់ចូល សូមអរគុណ';
         else if (type === 'bakong') text = 'បាគង ទទួលបានប្រាក់ដែលគេបានបាញ់ចូល';
         else if (type === 'cash') text = 'សាច់ប្រាក់ ទទួលបានជោគជ័យ';
         else if (type === 'received') text = 'ទទួលបានប្រាក់ហើយ';
@@ -396,6 +399,54 @@ class SoundService {
         }
       }, 220);
     }
+  }
+
+  /**
+   * Harmonious Welcome Chime Chord
+   * A warm, pleasant ascending crystal chord welcoming staff/manager.
+   */
+  playWelcomeChime() {
+    if (!this.soundEnabled) return;
+    const ctx = this.getAudioContext();
+    if (!ctx) return;
+
+    const now = ctx.currentTime;
+    // Warm crystal chord: C5 (523.25), E5 (659.25), G5 (783.99), C6 (1046.50)
+    const chord = [523.25, 659.25, 783.99, 1046.50];
+
+    chord.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now + i * 0.07);
+
+      gain.gain.setValueAtTime(0.0001, now + i * 0.07);
+      gain.gain.linearRampToValueAtTime(0.24, now + i * 0.07 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.07 + 0.6);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now + i * 0.07);
+      osc.stop(now + i * 0.07 + 0.65);
+    });
+  }
+
+  /**
+   * Welcome Voice Announcement on Login / Dashboard Entry:
+   * "ស្វាគមន៍មកកាន់ phara aroma coffee" (Welcome to Phara Aroma Coffee)
+   */
+  speakKhmerWelcome() {
+    if (!this.soundEnabled || !this.khmerVoiceEnabled) return;
+
+    // 1. Play warm welcome crystal chime
+    this.playWelcomeChime();
+
+    // 2. Play 100% offline studio-quality Khmer welcome voice after 220ms
+    setTimeout(() => {
+      this.playKhmerVoice('welcome');
+    }, 220);
   }
 
   /**

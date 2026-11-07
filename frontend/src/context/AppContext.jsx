@@ -5,6 +5,7 @@ import confetti from 'canvas-confetti';
 import { api, getStoredUser, saveStoredUser, getStoredCategories, saveStoredIngredients } from '../services/api';
 import { DEMO_USERS, DEMO_CUSTOMERS, ROLE_PERMISSIONS } from '../services/coffeeData';
 import { storage } from '../utils/storage';
+import { soundService } from '../services/soundService';
 
 const AppContext = createContext();
 
@@ -398,6 +399,7 @@ export const AppProvider = ({ children }) => {
       setUser(res.user);
       setIsAuthenticated(true);
       showToast(`Welcome back, ${res.user.name}! ☕`, 'success');
+      soundService.speakKhmerWelcome();
       return true;
     } catch (err) {
       showToast(err.message || 'Login failed', 'error');
@@ -418,6 +420,7 @@ export const AppProvider = ({ children }) => {
     setIsAuthenticated(true);
     api.shiftHandover(newUser.name);
     showToast(`Active operator switched to ${newUser.name} (${newUser.role})`, 'info');
+    soundService.speakKhmerWelcome();
   };
 
   const faceLogin = async (staffId) => {
@@ -428,6 +431,7 @@ export const AppProvider = ({ children }) => {
         setIsAuthenticated(true);
         setIsScreenLocked(false);
         showToast(`Welcome back, ${res.user.name}! (Biometric Face ID)`, 'success');
+        soundService.speakKhmerWelcome();
         return res.user;
       }
     } catch (err) {
