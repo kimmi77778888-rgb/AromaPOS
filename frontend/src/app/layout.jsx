@@ -1,6 +1,7 @@
 import './globals.css';
 import { AppProvider } from '@/context/AppContext';
 import { LanguageProvider } from '@/context/LanguageContext';
+import { AntiTamperGuard } from '@/components/security/AntiTamperGuard';
 
 export const metadata = {
   title: 'AromaPOS — Artisan Coffee POS & Inventory Management',
@@ -28,6 +29,7 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body className="bg-stone-950 text-stone-100 antialiased selection:bg-amber-600/30 selection:text-amber-200">
+        <AntiTamperGuard />
         <LanguageProvider>
           <AppProvider>
             {children}
