@@ -48,6 +48,7 @@ import {
   Gift,
   Flame,
   Activity,
+  Contrast,
   CheckCircle2,
   PieChart as PieChartIcon
 } from 'lucide-react';
@@ -82,7 +83,9 @@ export const ManagementReports = () => {
     setIsLiveMode,
     liveRefreshInterval,
     liveSyncStatus,
-    refreshDataSilently
+    refreshDataSilently,
+    isBlackWhiteMode,
+    setIsBlackWhiteMode
   } = useApp();
   const { isKhmer } = useLanguage();
 
@@ -438,10 +441,12 @@ export const ManagementReports = () => {
   // =========================================================================
   // COMPLETE 10-SHEET NATIVE EXCEL (.XLSX) EXPORT ENGINE
   // =========================================================================
-  const exportToExcel = (mode = 'all') => {
+  const exportToExcel = (mode = 'all', forceBw = null) => {
     setIsExportMenuOpen(false);
     soundService.playPaymentSuccessSound();
     if (!reportData) return;
+
+    const isBw = forceBw !== null ? Boolean(forceBw) : Boolean(isBlackWhiteMode);
 
     const wb = XLSX.utils.book_new();
     const dateScope = (filters.startDate && filters.endDate)
@@ -489,7 +494,8 @@ export const ManagementReports = () => {
           { s: { r: 2, c: 0 }, e: { r: 2, c: 3 } },
         ],
         colWidths: [40, 24, 24, 46],
-        totalCols: 4
+        totalCols: 4,
+        isBlackWhite: isBw
       });
       XLSX.utils.book_append_sheet(wb, wsOverview, '1_Executive_Overview');
     }
@@ -534,7 +540,8 @@ export const ManagementReports = () => {
           { s: { r: 2, c: 0 }, e: { r: 2, c: 11 } }
         ],
         colWidths: [16, 22, 18, 14, 40, 14, 16, 16, 14, 16, 18, 14],
-        totalCols: 12
+        totalCols: 12,
+        isBlackWhite: isBw
       });
       XLSX.utils.book_append_sheet(wb, wsSales, '2_Sales_Ledger');
     }
@@ -583,7 +590,8 @@ export const ManagementReports = () => {
           { s: { r: 2, c: 0 }, e: { r: 2, c: 10 } }
         ],
         colWidths: [10, 32, 18, 16, 16, 14, 18, 18, 16, 18, 14],
-        totalCols: 11
+        totalCols: 11,
+        isBlackWhite: isBw
       });
       XLSX.utils.book_append_sheet(wb, wsProducts, '3_Product_Performance');
     }
@@ -623,7 +631,8 @@ export const ManagementReports = () => {
           { s: { r: 2, c: 0 }, e: { r: 2, c: 7 } }
         ],
         colWidths: [26, 16, 16, 20, 20, 18, 18, 30],
-        totalCols: 8
+        totalCols: 8,
+        isBlackWhite: isBw
       });
       XLSX.utils.book_append_sheet(wb, wsCat, '4_Category_Breakdown');
     }
@@ -664,7 +673,8 @@ export const ManagementReports = () => {
           { s: { r: 2, c: 0 }, e: { r: 2, c: 8 } }
         ],
         colWidths: [16, 20, 22, 22, 18, 18, 18, 16, 16],
-        totalCols: 9
+        totalCols: 9,
+        isBlackWhite: isBw
       });
       XLSX.utils.book_append_sheet(wb, wsPay, '5_Payment_Tenders');
     }
@@ -704,7 +714,8 @@ export const ManagementReports = () => {
           { s: { r: 2, c: 0 }, e: { r: 2, c: 5 } }
         ],
         colWidths: [18, 18, 18, 20, 18, 26],
-        totalCols: 6
+        totalCols: 6,
+        isBlackWhite: isBw
       });
       XLSX.utils.book_append_sheet(wb, wsHourly, '6_Hourly_Rush');
     }
@@ -745,7 +756,8 @@ export const ManagementReports = () => {
           { s: { r: 2, c: 0 }, e: { r: 2, c: 7 } }
         ],
         colWidths: [30, 18, 18, 18, 18, 16, 16, 20],
-        totalCols: 8
+        totalCols: 8,
+        isBlackWhite: isBw
       });
       XLSX.utils.book_append_sheet(wb, wsCogs, '7_COGS_Recipe_Margins');
     }
@@ -786,7 +798,8 @@ export const ManagementReports = () => {
           { s: { r: 2, c: 0 }, e: { r: 2, c: 8 } }
         ],
         colWidths: [26, 16, 12, 18, 16, 18, 20, 20, 24],
-        totalCols: 9
+        totalCols: 9,
+        isBlackWhite: isBw
       });
       XLSX.utils.book_append_sheet(wb, wsInv, '8_Inventory_Depletion');
     }
@@ -829,7 +842,8 @@ export const ManagementReports = () => {
           { s: { r: 2, c: 0 }, e: { r: 2, c: 10 } }
         ],
         colWidths: [22, 18, 18, 18, 18, 16, 14, 16, 12, 18, 14],
-        totalCols: 11
+        totalCols: 11,
+        isBlackWhite: isBw
       });
       XLSX.utils.book_append_sheet(wb, wsStaff, '9_Staff_Performance');
     }
@@ -869,19 +883,22 @@ export const ManagementReports = () => {
           { s: { r: 2, c: 0 }, e: { r: 2, c: 7 } }
         ],
         colWidths: [10, 26, 20, 18, 18, 22, 22, 16],
-        totalCols: 8
+        totalCols: 8,
+        isBlackWhite: isBw
       });
       XLSX.utils.book_append_sheet(wb, wsLoyalty, '10_Loyalty_Discounts');
     }
 
     // Write file to download
-    const filename = `AromaPOS_10_Report_Workbook_${getTodayISO()}.xlsx`;
+    const filename = isBw
+      ? `AromaPOS_10_Report_Workbook_BW_${getTodayISO()}.xlsx`
+      : `AromaPOS_10_Report_Workbook_${getTodayISO()}.xlsx`;
     XLSX.writeFile(wb, filename);
 
     showToast(
       isKhmer 
-        ? `បានទាញយកកញ្ចប់ Excel ពេញលេញទាំង ១០ របាយការណ៍: ${filename}` 
-        : `Downloaded complete 10-report Excel package: ${filename}`, 
+        ? `បានទាញយកកញ្ចប់ Excel ពេញលេញ ${isBw ? '(ម៉ូដស-ខ្មៅ Print-Friendly)' : '(ម៉ូដពណ៌ស្តង់ដា)'}: ${filename}` 
+        : `Downloaded complete 10-report Excel package ${isBw ? '(Black & White Mode)' : '(Full Color Mode)'}: ${filename}`, 
       'success'
     );
   };
@@ -1081,6 +1098,33 @@ export const ManagementReports = () => {
             <span>{isKhmer ? 'បោះពុម្ព ១ទំព័រ' : 'Print 1-Page'}</span>
           </button>
 
+          {/* Black & White Mode Toggle in Reports toolbar */}
+          <button
+            type="button"
+            onClick={() => {
+              soundService.playBeepSound();
+              const next = !isBlackWhiteMode;
+              setIsBlackWhiteMode(next);
+              if (showToast) {
+                showToast(
+                  next 
+                    ? (isKhmer ? '🖤 បានបើករបៀប ស-ខ្មៅ (B&W Mode Active)' : '🖤 Black & White Mode Active') 
+                    : (isKhmer ? '🎨 បានប្តូរទៅរបៀប ពណ៌ធម្មជាតិ (Color Mode Active)' : '🎨 Color Mode Active'),
+                  'info'
+                );
+              }
+            }}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-bold transition cursor-pointer shadow-sm ${
+              isBlackWhiteMode
+                ? 'bg-zinc-100 border-white text-zinc-950 ring-2 ring-zinc-300'
+                : 'bg-stone-900 border-stone-700 text-stone-300 hover:text-stone-100 hover:bg-stone-850'
+            }`}
+            title={isBlackWhiteMode ? 'B&W Mode Active (Click to switch to Full Color)' : 'Color Mode Active (Click to switch to B&W)'}
+          >
+            <Contrast className={`w-3.5 h-3.5 ${isBlackWhiteMode ? 'text-zinc-950' : 'text-stone-400'}`} />
+            <span>{isBlackWhiteMode ? (isKhmer ? 'ម៉ូដស-ខ្មៅ' : 'B&W Mode') : (isKhmer ? 'ម៉ូដពណ៌' : 'Color Mode')}</span>
+          </button>
+
           {/* Export Native Excel (.xlsx) Dropdown */}
           <div className="relative" ref={exportMenuRef}>
             <button
@@ -1094,44 +1138,83 @@ export const ManagementReports = () => {
             </button>
 
             {isExportMenuOpen && (
-              <div className="absolute right-0 mt-2 w-72 rounded-2xl bg-stone-900 border border-stone-700 shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
-                <div className="px-3 py-2 border-b border-stone-800 text-[11px] font-bold text-stone-400 uppercase tracking-wider">
-                  {isKhmer ? 'ជម្រើសនាំចេញ Excel' : 'Choose Export Format'}
+              <div className="absolute right-0 mt-2 w-80 rounded-2xl bg-stone-900 border border-stone-700 shadow-2xl p-2.5 z-50 animate-in fade-in zoom-in-95 duration-150">
+                <div className="px-3 py-2 border-b border-stone-800 text-[11px] font-bold text-stone-400 uppercase tracking-wider flex items-center justify-between">
+                  <span>{isKhmer ? 'ជម្រើសនាំចេញ Excel' : 'Choose Export Format'}</span>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${isBlackWhiteMode ? 'bg-zinc-200 text-zinc-900' : 'bg-amber-500/20 text-amber-400'}`}>
+                    {isBlackWhiteMode ? (isKhmer ? 'ស-ខ្មៅ' : 'B&W') : (isKhmer ? 'មានពណ៌' : 'Color')}
+                  </span>
                 </div>
 
-                <div className="space-y-1 pt-1">
+                <div className="space-y-1 pt-1.5">
+                  {/* Complete 10-Sheet Color */}
                   <button
                     type="button"
-                    onClick={() => exportToExcel('all')}
+                    onClick={() => exportToExcel('all', false)}
                     className="w-full p-2.5 rounded-xl hover:bg-emerald-950/40 text-left transition flex items-start gap-2.5 group cursor-pointer"
                   >
                     <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
                       <FileSpreadsheet className="w-4 h-4" />
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-stone-100 group-hover:text-emerald-300">
-                        {isKhmer ? 'កញ្ចប់ Excel ពេញលេញ (១០ សន្លឹក)' : 'Complete 10-Sheet Workbook (.xlsx)'}
+                      <p className="text-xs font-bold text-stone-100 group-hover:text-emerald-300 flex items-center gap-1.5">
+                        <span>{isKhmer ? 'កញ្ចប់ Excel ពេញលេញ (ពណ៌ស្តង់ដា)' : 'Complete 10-Sheet Workbook (Color)'}</span>
+                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-400 font-mono">10 Sheets</span>
                       </p>
                       <p className="text-[10px] text-stone-400 leading-tight">
-                        {isKhmer ? 'គ្រប់ ១០ របាយការណ៍ទាំងអស់ក្នុងឯកសារតែមួយ' : 'All 10 structured reports in one workbook'}
+                        {isKhmer ? 'ពណ៌ Espresso, Amber & ផ្នែកសញ្ញេរផ្លូវការ' : 'Rich Coffee & Amber Palette with sign-off'}
                       </p>
                     </div>
                   </button>
 
+                  {/* Complete 10-Sheet Black & White */}
                   <button
                     type="button"
-                    onClick={() => exportToExcel(activeTab)}
-                    className="w-full p-2.5 rounded-xl hover:bg-stone-800 text-left transition flex items-start gap-2.5 group cursor-pointer"
+                    onClick={() => exportToExcel('all', true)}
+                    className="w-full p-2.5 rounded-xl hover:bg-stone-800/80 text-left transition flex items-start gap-2.5 group cursor-pointer border border-zinc-700/60 bg-stone-950/40"
                   >
-                    <div className="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
-                      <Download className="w-4 h-4" />
+                    <div className="w-7 h-7 rounded-lg bg-zinc-200 text-zinc-950 flex items-center justify-center shrink-0 mt-0.5 font-bold shadow-sm">
+                      <Contrast className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-zinc-100 group-hover:text-white flex items-center gap-1.5">
+                        <span>{isKhmer ? 'កញ្ចប់ Excel ពេញលេញ (ស-ខ្មៅ សន្សំថ្នាំព្រីន)' : 'Complete 10-Sheet Workbook (B&W)'}</span>
+                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-zinc-700 text-zinc-200 font-mono">Print-Ready</span>
+                      </p>
+                      <p className="text-[10px] text-stone-400 leading-tight">
+                        {isKhmer ? 'ម៉ូដស-ខ្មៅ គ្មានពណ៌ខ្ជះខ្ជាយថ្នាំព្រីន ងាយស្រួលព្រីនក្រដាស A4' : 'Pure B&W high-contrast lines for laser printers & photocopying'}
+                      </p>
+                    </div>
+                  </button>
+
+                  {/* Active Sheet Color */}
+                  <button
+                    type="button"
+                    onClick={() => exportToExcel(activeTab, false)}
+                    className="w-full p-2 rounded-xl hover:bg-stone-800 text-left transition flex items-start gap-2.5 group cursor-pointer"
+                  >
+                    <div className="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
+                      <Download className="w-3.5 h-3.5" />
                     </div>
                     <div>
                       <p className="text-xs font-bold text-stone-200 group-hover:text-amber-300">
-                        {isKhmer ? 'នាំចេញរបាយការណ៍បច្ចុប្បន្ន (.xlsx)' : 'Export Current Active Report (.xlsx)'}
+                        {isKhmer ? 'នាំចេញរបាយការណ៍បច្ចុប្បន្ន (ពណ៌)' : 'Export Current Active Report (Color)'}
                       </p>
-                      <p className="text-[10px] text-stone-400 leading-tight">
-                        {isKhmer ? 'នាំចេញតែរបាយការណ៍ដែលកំពុងមើល' : 'Download active sheet only'}
+                    </div>
+                  </button>
+
+                  {/* Active Sheet B&W */}
+                  <button
+                    type="button"
+                    onClick={() => exportToExcel(activeTab, true)}
+                    className="w-full p-2 rounded-xl hover:bg-stone-800 text-left transition flex items-start gap-2.5 group cursor-pointer"
+                  >
+                    <div className="w-6 h-6 rounded-lg bg-zinc-800 text-zinc-300 flex items-center justify-center shrink-0 mt-0.5">
+                      <Contrast className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-stone-200 group-hover:text-white">
+                        {isKhmer ? 'នាំចេញរបាយការណ៍បច្ចុប្បន្ន (ស-ខ្មៅ)' : 'Export Current Active Report (B&W)'}
                       </p>
                     </div>
                   </button>

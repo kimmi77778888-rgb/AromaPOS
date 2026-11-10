@@ -44,13 +44,50 @@ export const EXCEL_PALETTE = {
 };
 
 /**
- * Standard Cell Borders
+ * Clean Black & White / Printer-Friendly Monochrome Accounting Palette for Excel
+ * Ideal for physical laser printouts, photocopying, official tax filing, and toner ink saving
  */
-const borderThin = { style: 'thin', color: { rgb: EXCEL_PALETTE.GRID_BORDER } };
-const borderHeader = { style: 'thin', color: { rgb: EXCEL_PALETTE.TABLE_HEADER_BORDER } };
-const borderTotalTop = { style: 'thin', color: { rgb: EXCEL_PALETTE.TOTAL_BORDER } };
-const borderTotalBottom = { style: 'double', color: { rgb: EXCEL_PALETTE.TOTAL_BORDER } };
-const borderSign = { style: 'thin', color: { rgb: EXCEL_PALETTE.SIGN_BORDER } };
+export const EXCEL_BW_PALETTE = {
+  // Brand Header
+  BRAND_DARK: '000000',      // Solid Pure Black (#000000)
+  BRAND_AMBER: '1F1F1F',     // Deep Charcoal (#1F1F1F)
+  BRAND_GOLD: '333333',      // Dark Neutral (#333333)
+  
+  // Section Headers
+  SECTION_BG: 'F5F5F5',      // Clean Neutral Light Gray (#F5F5F5)
+  SECTION_TEXT: '000000',    // Pitch Black Bold Text
+  SECTION_BORDER: '000000',  // Sharp Solid Black Border
+  
+  // Table Headers
+  TABLE_HEADER_BG: '000000', // Pitch Black (#000000)
+  TABLE_HEADER_TEXT: 'FFFFFF',// Pure White Text
+  TABLE_HEADER_BORDER: '000000',
+  
+  // Summary / Total Rows
+  TOTAL_BG: 'FFFFFF',        // Pure White (Paper Friendly)
+  TOTAL_TEXT: '000000',      // Pitch Black Bold
+  TOTAL_BORDER: '000000',    // Solid Black Accent Border
+  
+  // Zebra Striping
+  ZEBRA_EVEN: 'FFFFFF',      // Pure White
+  ZEBRA_ODD: 'F9F9F9',       // Clean Paper Off-White
+  GRID_BORDER: 'BDBDBD',     // Crisp Clear Monochrome Border (#BDBDBD)
+  
+  // Status Colors (Monochrome high readability)
+  STATUS_GREEN_BG: 'F5F5F5',
+  STATUS_GREEN_TEXT: '000000',
+  STATUS_RED_BG: 'EBEBEB',
+  STATUS_RED_TEXT: '000000',
+  STATUS_AMBER_BG: 'F0F0F0',
+  STATUS_AMBER_TEXT: '000000',
+  
+  // Signature Box
+  SIGN_CARD_BG: 'F5F5F5',    // Light Neutral Gray Header
+  SIGN_BORDER: '000000',     // Pitch Black Solid Frame
+  SIGN_DOTTED: '737373'      // Crisp Dotted Gray
+};
+
+
 
 /**
  * Calculate column bounds for 3 signature cards based on total columns in sheet
@@ -204,8 +241,16 @@ export const styleCambodianWorksheet = (ws, {
   merges = [],
   colWidths = [],
   rowHeights = [],
-  totalCols = 4
+  totalCols = 4,
+  isBlackWhite = false
 } = {}) => {
+  const palette = isBlackWhite ? EXCEL_BW_PALETTE : EXCEL_PALETTE;
+  const borderThin = { style: 'thin', color: { rgb: palette.GRID_BORDER } };
+  const borderHeader = { style: 'thin', color: { rgb: palette.TABLE_HEADER_BORDER } };
+  const borderTotalTop = { style: 'thin', color: { rgb: palette.TOTAL_BORDER } };
+  const borderTotalBottom = { style: 'double', color: { rgb: palette.TOTAL_BORDER } };
+  const borderSign = { style: 'thin', color: { rgb: palette.SIGN_BORDER } };
+
   // Find range of cells in sheet
   const range = XLSX.utils.decode_range(ws['!ref'] || 'A1:A1');
   const maxRow = range.e.r;
@@ -278,8 +323,8 @@ export const styleCambodianWorksheet = (ws, {
       // 1. TOP BRAND BANNER (Row 0)
       if (isTopBrandBanner) {
         cell.s = {
-          fill: { patternType: 'solid', fgColor: { rgb: EXCEL_PALETTE.BRAND_DARK } },
-          font: { name: 'Segoe UI', sz: 14, bold: true, color: { rgb: EXCEL_PALETTE.TABLE_HEADER_TEXT } },
+          fill: { patternType: 'solid', fgColor: { rgb: palette.BRAND_DARK } },
+          font: { name: 'Segoe UI', sz: 14, bold: true, color: { rgb: palette.TABLE_HEADER_TEXT } },
           alignment: { horizontal: 'center', vertical: 'center' }
         };
         continue;
@@ -288,8 +333,8 @@ export const styleCambodianWorksheet = (ws, {
       // 2. REPORT TITLE BANNER (Row 1)
       if (isReportTitleBanner) {
         cell.s = {
-          fill: { patternType: 'solid', fgColor: { rgb: EXCEL_PALETTE.BRAND_AMBER } },
-          font: { name: 'Segoe UI', sz: 11, bold: true, color: { rgb: EXCEL_PALETTE.TABLE_HEADER_TEXT } },
+          fill: { patternType: 'solid', fgColor: { rgb: palette.BRAND_AMBER } },
+          font: { name: 'Segoe UI', sz: 11, bold: true, color: { rgb: palette.TABLE_HEADER_TEXT } },
           alignment: { horizontal: 'center', vertical: 'center' }
         };
         continue;
@@ -298,10 +343,10 @@ export const styleCambodianWorksheet = (ws, {
       // 3. METADATA SUBTITLE BANNER (Row 2)
       if (isMetaBanner) {
         cell.s = {
-          fill: { patternType: 'solid', fgColor: { rgb: 'F5F5F4' } },
-          font: { name: 'Segoe UI', sz: 9.5, italic: true, color: { rgb: '44403C' } },
+          fill: { patternType: 'solid', fgColor: { rgb: isBlackWhite ? 'FFFFFF' : 'F5F5F4' } },
+          font: { name: 'Segoe UI', sz: 9.5, italic: true, color: { rgb: isBlackWhite ? '000000' : '44403C' } },
           alignment: { horizontal: 'center', vertical: 'center' },
-          border: { bottom: { style: 'thin', color: { rgb: EXCEL_PALETTE.GRID_BORDER } } }
+          border: { bottom: { style: 'thin', color: { rgb: palette.GRID_BORDER } } }
         };
         continue;
       }
@@ -312,12 +357,12 @@ export const styleCambodianWorksheet = (ws, {
         if (offset === 1) {
           // Banner for Sign-off section
           cell.s = {
-            fill: { patternType: 'solid', fgColor: { rgb: EXCEL_PALETTE.SECTION_BG } },
-            font: { name: 'Segoe UI', sz: 11, bold: true, color: { rgb: EXCEL_PALETTE.SECTION_TEXT } },
+            fill: { patternType: 'solid', fgColor: { rgb: palette.SECTION_BG } },
+            font: { name: 'Segoe UI', sz: 11, bold: true, color: { rgb: palette.SECTION_TEXT } },
             alignment: { horizontal: 'center', vertical: 'center' },
             border: {
-              top: { style: 'medium', color: { rgb: EXCEL_PALETTE.SECTION_BORDER } },
-              bottom: { style: 'medium', color: { rgb: EXCEL_PALETTE.SECTION_BORDER } }
+              top: { style: 'medium', color: { rgb: palette.SECTION_BORDER } },
+              bottom: { style: 'medium', color: { rgb: palette.SECTION_BORDER } }
             }
           };
           continue;
@@ -343,8 +388,8 @@ export const styleCambodianWorksheet = (ws, {
         if (offset === 3) {
           // Role header (PREPARED BY / CHECKED BY / APPROVED BY)
           cell.s = {
-            fill: { patternType: 'solid', fgColor: { rgb: 'E7E5E4' } },
-            font: { name: 'Segoe UI', sz: 10, bold: true, color: { rgb: '1C1917' } },
+            fill: { patternType: 'solid', fgColor: { rgb: isBlackWhite ? 'E5E5E5' : 'E7E5E4' } },
+            font: { name: 'Segoe UI', sz: 10, bold: true, color: { rgb: isBlackWhite ? '000000' : '1C1917' } },
             alignment: { horizontal: 'center', vertical: 'center' },
             border: {
               top: borderSign,
@@ -356,8 +401,8 @@ export const styleCambodianWorksheet = (ws, {
         } else if (offset === 4) {
           // Subtitle (Cashier / Store Manager / Director)
           cell.s = {
-            fill: { patternType: 'solid', fgColor: { rgb: 'F5F5F4' } },
-            font: { name: 'Segoe UI', sz: 9, bold: true, color: { rgb: '44403C' } },
+            fill: { patternType: 'solid', fgColor: { rgb: isBlackWhite ? 'F5F5F5' : 'F5F5F4' } },
+            font: { name: 'Segoe UI', sz: 9, bold: true, color: { rgb: isBlackWhite ? '000000' : '44403C' } },
             alignment: { horizontal: 'center', vertical: 'center' },
             border: {
               left: isLeftEdge ? borderSign : undefined,
@@ -367,13 +412,13 @@ export const styleCambodianWorksheet = (ws, {
         } else if (offset === 5) {
           // Action hint (Signature & Name / Stamp)
           cell.s = {
-            fill: { patternType: 'solid', fgColor: { rgb: 'F5F5F4' } },
-            font: { name: 'Segoe UI', sz: 8.5, italic: true, color: { rgb: '78716C' } },
+            fill: { patternType: 'solid', fgColor: { rgb: isBlackWhite ? 'F5F5F5' : 'F5F5F4' } },
+            font: { name: 'Segoe UI', sz: 8.5, italic: true, color: { rgb: isBlackWhite ? '525252' : '78716C' } },
             alignment: { horizontal: 'center', vertical: 'center' },
             border: {
               left: isLeftEdge ? borderSign : undefined,
               right: isRightEdge ? borderSign : undefined,
-              bottom: { style: 'dashed', color: { rgb: EXCEL_PALETTE.SIGN_DOTTED } }
+              bottom: { style: 'dashed', color: { rgb: palette.SIGN_DOTTED } }
             }
           };
         } else if (offset >= 6 && offset <= 8) {
@@ -389,8 +434,8 @@ export const styleCambodianWorksheet = (ws, {
         } else if (offset >= 9 && offset <= 11) {
           // Bottom metadata lines: Name, Title, Date
           cell.s = {
-            fill: { patternType: 'solid', fgColor: { rgb: 'FAFAF9' } },
-            font: { name: 'Segoe UI', sz: 9, bold: offset === 9, color: { rgb: '1C1917' } },
+            fill: { patternType: 'solid', fgColor: { rgb: isBlackWhite ? 'FFFFFF' : 'FAFAF9' } },
+            font: { name: 'Segoe UI', sz: 9, bold: offset === 9, color: { rgb: isBlackWhite ? '000000' : '1C1917' } },
             alignment: { horizontal: 'center', vertical: 'center' },
             border: {
               left: isLeftEdge ? borderSign : undefined,
@@ -405,12 +450,12 @@ export const styleCambodianWorksheet = (ws, {
       // 5. SECTION HEADER BANDS (e.g. "1. CORE FINANCIAL PERFORMANCE METRICS")
       if (isSectionHeader) {
         cell.s = {
-          fill: { patternType: 'solid', fgColor: { rgb: EXCEL_PALETTE.SECTION_BG } },
-          font: { name: 'Segoe UI', sz: 10.5, bold: true, color: { rgb: EXCEL_PALETTE.SECTION_TEXT } },
+          fill: { patternType: 'solid', fgColor: { rgb: palette.SECTION_BG } },
+          font: { name: 'Segoe UI', sz: 10.5, bold: true, color: { rgb: palette.SECTION_TEXT } },
           alignment: { horizontal: C === 0 ? 'left' : 'right', vertical: 'center' },
           border: {
-            top: { style: 'thin', color: { rgb: EXCEL_PALETTE.SECTION_BORDER } },
-            bottom: { style: 'thin', color: { rgb: EXCEL_PALETTE.SECTION_BORDER } }
+            top: { style: 'thin', color: { rgb: palette.SECTION_BORDER } },
+            bottom: { style: 'thin', color: { rgb: palette.SECTION_BORDER } }
           }
         };
         continue;
@@ -420,8 +465,8 @@ export const styleCambodianWorksheet = (ws, {
       if (isTotalRow) {
         const isNum = typeof val === 'number';
         cell.s = {
-          fill: { patternType: 'solid', fgColor: { rgb: EXCEL_PALETTE.TOTAL_BG } },
-          font: { name: 'Segoe UI', sz: 10, bold: true, color: { rgb: EXCEL_PALETTE.TOTAL_TEXT } },
+          fill: { patternType: 'solid', fgColor: { rgb: palette.TOTAL_BG } },
+          font: { name: 'Segoe UI', sz: 10, bold: true, color: { rgb: palette.TOTAL_TEXT } },
           alignment: { horizontal: isNum ? 'right' : (C === 0 ? 'left' : 'center'), vertical: 'center' },
           border: {
             top: borderTotalTop,
@@ -464,8 +509,8 @@ export const styleCambodianWorksheet = (ws, {
 
       if (isHeaderRow && typeof val === 'string') {
         cell.s = {
-          fill: { patternType: 'solid', fgColor: { rgb: EXCEL_PALETTE.TABLE_HEADER_BG } },
-          font: { name: 'Segoe UI', sz: 9.5, bold: true, color: { rgb: EXCEL_PALETTE.TABLE_HEADER_TEXT } },
+          fill: { patternType: 'solid', fgColor: { rgb: palette.TABLE_HEADER_BG } },
+          font: { name: 'Segoe UI', sz: 9.5, bold: true, color: { rgb: palette.TABLE_HEADER_TEXT } },
           alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
           border: {
             top: borderHeader,
@@ -505,9 +550,9 @@ export const styleCambodianWorksheet = (ws, {
       cell.s = {
         fill: {
           patternType: 'solid',
-          fgColor: { rgb: isEvenRow ? EXCEL_PALETTE.ZEBRA_EVEN : EXCEL_PALETTE.ZEBRA_ODD }
+          fgColor: { rgb: isEvenRow ? palette.ZEBRA_EVEN : palette.ZEBRA_ODD }
         },
-        font: { name: 'Segoe UI', sz: 9.5, color: { rgb: '1C1917' } },
+        font: { name: 'Segoe UI', sz: 9.5, color: { rgb: isBlackWhite ? '000000' : '1C1917' } },
         alignment: { horizontal: alignH, vertical: 'center' },
         border: {
           top: borderThin,
@@ -519,12 +564,12 @@ export const styleCambodianWorksheet = (ws, {
 
       // Status pill coloring
       if (strVal.includes('In Stock') || strVal.includes('គ្រប់គ្រាន់') || strVal.includes('PAID') || strVal.includes('COMPLETED') || strVal.includes('STAR_MARGIN')) {
-        cell.s.fill = { patternType: 'solid', fgColor: { rgb: EXCEL_PALETTE.STATUS_GREEN_BG } };
-        cell.s.font = { name: 'Segoe UI', sz: 9, bold: true, color: { rgb: EXCEL_PALETTE.STATUS_GREEN_TEXT } };
+        cell.s.fill = { patternType: 'solid', fgColor: { rgb: palette.STATUS_GREEN_BG } };
+        cell.s.font = { name: 'Segoe UI', sz: 9, bold: true, color: { rgb: palette.STATUS_GREEN_TEXT } };
         cell.s.alignment = { horizontal: 'center', vertical: 'center' };
       } else if (strVal.includes('Low Stock') || strVal.includes('ស្តុកទាប') || strVal.includes('HIGH_COGS') || strVal.includes('Disabled') || strVal.includes('Out of Stock') || strVal.includes('DEPLETED')) {
-        cell.s.fill = { patternType: 'solid', fgColor: { rgb: EXCEL_PALETTE.STATUS_RED_BG } };
-        cell.s.font = { name: 'Segoe UI', sz: 9, bold: true, color: { rgb: EXCEL_PALETTE.STATUS_RED_TEXT } };
+        cell.s.fill = { patternType: 'solid', fgColor: { rgb: palette.STATUS_RED_BG } };
+        cell.s.font = { name: 'Segoe UI', sz: 9, bold: true, color: { rgb: palette.STATUS_RED_TEXT } };
         cell.s.alignment = { horizontal: 'center', vertical: 'center' };
       }
     }
@@ -544,6 +589,7 @@ export const styleCambodianWorksheet = (ws, {
 
 export default {
   EXCEL_PALETTE,
+  EXCEL_BW_PALETTE,
   getSignatureLayout,
   generateSignatureBlock,
   getSignatureMerges,

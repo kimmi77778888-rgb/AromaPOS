@@ -24,7 +24,8 @@ import {
   Sparkles,
   Store,
   FileSpreadsheet,
-  X
+  X,
+  Contrast
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { ROLE_PERMISSIONS } from '../services/coffeeData';
@@ -53,7 +54,9 @@ export const Sidebar = () => {
     activeShift,
     openShiftModal,
     storeInfo,
-    setIsStoreSettingsOpen
+    setIsStoreSettingsOpen,
+    isBlackWhiteMode,
+    setIsBlackWhiteMode
   } = useApp();
 
   const { isKhmer } = useLanguage();
@@ -272,6 +275,21 @@ export const Sidebar = () => {
                 >
                   {isSoundOn ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
                 </button>
+                {/* Black & White Mode Toggle */}
+                <button
+                  onClick={() => {
+                    soundService.playBeepSound();
+                    setIsBlackWhiteMode(!isBlackWhiteMode);
+                  }}
+                  className={`p-1.5 rounded-lg border text-xs transition cursor-pointer ${
+                    isBlackWhiteMode 
+                      ? 'bg-zinc-100 border-white text-zinc-950 font-bold' 
+                      : 'bg-stone-850 border-stone-700 text-stone-400 hover:text-stone-200'
+                  }`}
+                  title={isBlackWhiteMode ? (isKhmer ? 'របៀបស-ខ្មៅ (បើក)' : 'B&W Mode: ON') : (isKhmer ? 'របៀបស-ខ្មៅ (បិទ)' : 'B&W Mode: OFF')}
+                >
+                  <Contrast className="w-3.5 h-3.5" />
+                </button>
                 {/* Station Lock */}
                 <button
                   onClick={lockScreen}
@@ -308,6 +326,22 @@ export const Sidebar = () => {
               title={isSoundOn ? 'Audio: ON' : 'Audio: MUTED'}
             >
               {isSoundOn ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+            </button>
+
+            {/* Black & White Toggle in mini mode */}
+            <button
+              onClick={() => {
+                soundService.playBeepSound();
+                setIsBlackWhiteMode(!isBlackWhiteMode);
+              }}
+              className={`w-9 h-9 rounded-xl border flex items-center justify-center transition cursor-pointer ${
+                isBlackWhiteMode 
+                  ? 'bg-zinc-100 border-white text-zinc-950 font-bold' 
+                  : 'bg-stone-900 border-stone-800 text-stone-500'
+              }`}
+              title={isBlackWhiteMode ? 'B&W Mode: ON' : 'B&W Mode: OFF'}
+            >
+              <Contrast className="w-4 h-4" />
             </button>
 
             {/* Clean Mini Language Switcher in collapsed mode */}

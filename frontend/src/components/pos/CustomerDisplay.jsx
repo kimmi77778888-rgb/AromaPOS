@@ -44,10 +44,24 @@ export const CustomerDisplay = ({ standalone = false, onClose = null }) => {
 
   // Listen for BroadcastChannel synchronization from cashier terminal
   useEffect(() => {
+    // Check initial B&W mode from storage
+    try {
+      if (localStorage.getItem('aroma_black_white_mode') === 'true') {
+        document.documentElement.classList.add('mode-black-white');
+      }
+    } catch (e) {}
+
     const bc = new BroadcastChannel('aroma_customer_channel');
     bc.onmessage = (event) => {
       if (event.data?.type === 'SYNC_STATE' && event.data.payload) {
         setDisplayState(event.data.payload);
+      }
+      if (event.data?.type === 'BW_MODE_SYNC') {
+        if (event.data.isBlackWhiteMode) {
+          document.documentElement.classList.add('mode-black-white');
+        } else {
+          document.documentElement.classList.remove('mode-black-white');
+        }
       }
     };
 
@@ -57,6 +71,13 @@ export const CustomerDisplay = ({ standalone = false, onClose = null }) => {
         try {
           setDisplayState(JSON.parse(e.newValue));
         } catch (err) {}
+      }
+      if (e.key === 'aroma_black_white_mode') {
+        if (e.newValue === 'true') {
+          document.documentElement.classList.add('mode-black-white');
+        } else {
+          document.documentElement.classList.remove('mode-black-white');
+        }
       }
     };
     window.addEventListener('storage', handleStorage);

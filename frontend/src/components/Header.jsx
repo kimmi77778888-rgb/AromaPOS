@@ -23,7 +23,8 @@ import {
   Menu,
   X,
   RefreshCw,
-  Radio
+  Radio,
+  Contrast
 } from 'lucide-react';
 import { StoreLogo } from './common/StoreLogo';
 import { soundService } from '../services/soundService';
@@ -46,7 +47,10 @@ export const Header = ({ onOpenAddProduct }) => {
     isLiveMode,
     setIsLiveMode,
     liveSyncStatus,
-    refreshDataSilently
+    refreshDataSilently,
+    isBlackWhiteMode,
+    setIsBlackWhiteMode,
+    showToast
   } = useApp();
 
   const { isKhmer } = useLanguage();
@@ -197,6 +201,39 @@ export const Header = ({ onOpenAddProduct }) => {
             <RefreshCw className={`w-3 h-3 ${liveSyncStatus === 'syncing' ? 'animate-spin text-emerald-300' : ''}`} />
           </button>
         </div>
+
+        {/* Black & White / High-Contrast Monochrome Mode Toggle (របៀប ស-ខ្មៅ) */}
+        <button
+          type="button"
+          onClick={() => {
+            soundService.playBeepSound();
+            const next = !isBlackWhiteMode;
+            setIsBlackWhiteMode(next);
+            if (showToast) {
+              showToast(
+                next
+                  ? (isKhmer ? '🖤 បានបើករបៀប ស-ខ្មៅ (Black & White Mode)' : '🖤 Black & White Mode Enabled')
+                  : (isKhmer ? '🎨 បានប្តូរទៅរបៀប ពណ៌ធម្មជាតិ (Full Color Mode)' : '🎨 Color Mode Enabled'),
+                'info'
+              );
+            }
+          }}
+          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold transition border cursor-pointer ${
+            isBlackWhiteMode
+              ? 'bg-zinc-100 text-zinc-950 border-white shadow-md ring-2 ring-zinc-300'
+              : 'bg-stone-900 border-stone-800 text-stone-300 hover:text-stone-100 hover:bg-stone-850'
+          }`}
+          title={
+            isBlackWhiteMode
+              ? (isKhmer ? 'របៀប ស-ខ្មៅ កំពុងដំណើរការ (ចុចដើម្បីប្តូរទៅពណ៌)' : 'Black & White Mode Active (Click for Color)')
+              : (isKhmer ? 'ចុចដើម្បីបើករបៀប ស-ខ្មៅ (Black & White Mode)' : 'Switch to Black & White Mode')
+          }
+        >
+          <Contrast className={`w-3.5 h-3.5 ${isBlackWhiteMode ? 'text-zinc-950' : 'text-stone-400'}`} />
+          <span className="hidden sm:inline font-mono uppercase tracking-wider text-[11px]">
+            {isBlackWhiteMode ? (isKhmer ? 'ស-ខ្មៅ' : 'B&W') : (isKhmer ? 'ពណ៌' : 'COLOR')}
+          </span>
+        </button>
 
         {/* Global Register Drawer / Shift Status Pill */}
         <button
