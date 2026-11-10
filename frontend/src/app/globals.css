@@ -80,17 +80,6 @@
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-/* Black & White / High-Contrast Monochrome Mode (របៀប ស-ខ្មៅ) */
-html.mode-black-white {
-  filter: grayscale(100%) contrast(108%);
-}
-
-html.mode-black-white img,
-html.mode-black-white video,
-html.mode-black-white canvas {
-  filter: grayscale(100%);
-}
-
 /* Universal Print Styling for Receipts, Shift Slips & 1-Page A4 Reports */
 @media print {
   body * {

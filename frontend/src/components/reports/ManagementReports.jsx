@@ -48,7 +48,6 @@ import {
   Gift,
   Flame,
   Activity,
-  Contrast,
   CheckCircle2,
   PieChart as PieChartIcon
 } from 'lucide-react';
@@ -83,9 +82,7 @@ export const ManagementReports = () => {
     setIsLiveMode,
     liveRefreshInterval,
     liveSyncStatus,
-    refreshDataSilently,
-    isBlackWhiteMode,
-    setIsBlackWhiteMode
+    refreshDataSilently
   } = useApp();
   const { isKhmer } = useLanguage();
 
@@ -441,12 +438,12 @@ export const ManagementReports = () => {
   // =========================================================================
   // COMPLETE 10-SHEET NATIVE EXCEL (.XLSX) EXPORT ENGINE
   // =========================================================================
-  const exportToExcel = (mode = 'all', forceBw = null) => {
+  const exportToExcel = (mode = 'all', isPrintFriendlyBw = false) => {
     setIsExportMenuOpen(false);
     soundService.playPaymentSuccessSound();
     if (!reportData) return;
 
-    const isBw = forceBw !== null ? Boolean(forceBw) : Boolean(isBlackWhiteMode);
+    const isBw = Boolean(isPrintFriendlyBw);
 
     const wb = XLSX.utils.book_new();
     const dateScope = (filters.startDate && filters.endDate)
@@ -1098,33 +1095,6 @@ export const ManagementReports = () => {
             <span>{isKhmer ? 'បោះពុម្ព ១ទំព័រ' : 'Print 1-Page'}</span>
           </button>
 
-          {/* Black & White Mode Toggle in Reports toolbar */}
-          <button
-            type="button"
-            onClick={() => {
-              soundService.playBeepSound();
-              const next = !isBlackWhiteMode;
-              setIsBlackWhiteMode(next);
-              if (showToast) {
-                showToast(
-                  next 
-                    ? (isKhmer ? '🖤 បានបើករបៀប ស-ខ្មៅ (B&W Mode Active)' : '🖤 Black & White Mode Active') 
-                    : (isKhmer ? '🎨 បានប្តូរទៅរបៀប ពណ៌ធម្មជាតិ (Color Mode Active)' : '🎨 Color Mode Active'),
-                  'info'
-                );
-              }
-            }}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-bold transition cursor-pointer shadow-sm ${
-              isBlackWhiteMode
-                ? 'bg-zinc-100 border-white text-zinc-950 ring-2 ring-zinc-300'
-                : 'bg-stone-900 border-stone-700 text-stone-300 hover:text-stone-100 hover:bg-stone-850'
-            }`}
-            title={isBlackWhiteMode ? 'B&W Mode Active (Click to switch to Full Color)' : 'Color Mode Active (Click to switch to B&W)'}
-          >
-            <Contrast className={`w-3.5 h-3.5 ${isBlackWhiteMode ? 'text-zinc-950' : 'text-stone-400'}`} />
-            <span>{isBlackWhiteMode ? (isKhmer ? 'ម៉ូដស-ខ្មៅ' : 'B&W Mode') : (isKhmer ? 'ម៉ូដពណ៌' : 'Color Mode')}</span>
-          </button>
-
           {/* Export Native Excel (.xlsx) Dropdown */}
           <div className="relative" ref={exportMenuRef}>
             <button
@@ -1139,11 +1109,8 @@ export const ManagementReports = () => {
 
             {isExportMenuOpen && (
               <div className="absolute right-0 mt-2 w-80 rounded-2xl bg-stone-900 border border-stone-700 shadow-2xl p-2.5 z-50 animate-in fade-in zoom-in-95 duration-150">
-                <div className="px-3 py-2 border-b border-stone-800 text-[11px] font-bold text-stone-400 uppercase tracking-wider flex items-center justify-between">
-                  <span>{isKhmer ? 'ជម្រើសនាំចេញ Excel' : 'Choose Export Format'}</span>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${isBlackWhiteMode ? 'bg-zinc-200 text-zinc-900' : 'bg-amber-500/20 text-amber-400'}`}>
-                    {isBlackWhiteMode ? (isKhmer ? 'ស-ខ្មៅ' : 'B&W') : (isKhmer ? 'មានពណ៌' : 'Color')}
-                  </span>
+                <div className="px-3 py-2 border-b border-stone-800 text-[11px] font-bold text-stone-400 uppercase tracking-wider">
+                  {isKhmer ? 'ជម្រើសនាំចេញ Excel (.xlsx)' : 'Choose Export Format (.xlsx)'}
                 </div>
 
                 <div className="space-y-1 pt-1.5">
@@ -1174,7 +1141,7 @@ export const ManagementReports = () => {
                     className="w-full p-2.5 rounded-xl hover:bg-stone-800/80 text-left transition flex items-start gap-2.5 group cursor-pointer border border-zinc-700/60 bg-stone-950/40"
                   >
                     <div className="w-7 h-7 rounded-lg bg-zinc-200 text-zinc-950 flex items-center justify-center shrink-0 mt-0.5 font-bold shadow-sm">
-                      <Contrast className="w-4 h-4" />
+                      <Printer className="w-4 h-4" />
                     </div>
                     <div>
                       <p className="text-xs font-bold text-zinc-100 group-hover:text-white flex items-center gap-1.5">
@@ -1210,7 +1177,7 @@ export const ManagementReports = () => {
                     className="w-full p-2 rounded-xl hover:bg-stone-800 text-left transition flex items-start gap-2.5 group cursor-pointer"
                   >
                     <div className="w-6 h-6 rounded-lg bg-zinc-800 text-zinc-300 flex items-center justify-center shrink-0 mt-0.5">
-                      <Contrast className="w-3.5 h-3.5" />
+                      <Printer className="w-3.5 h-3.5" />
                     </div>
                     <div>
                       <p className="text-xs font-bold text-stone-200 group-hover:text-white">

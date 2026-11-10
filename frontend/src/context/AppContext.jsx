@@ -273,38 +273,14 @@ export const AppProvider = ({ children }) => {
     }
   }, [isLiveMode]);
 
-  // Black & White / High-Contrast Monochrome Mode (របៀប ស-ខ្មៅ)
-  const [isBlackWhiteMode, setIsBlackWhiteMode] = useState(() => {
-    try {
-      const saved = storage.getItem('aroma_black_white_mode');
-      return saved === 'true';
-    } catch {
-      return false;
-    }
-  });
-
+  // Clean up any legacy black-and-white mode classes
   useEffect(() => {
     try {
-      storage.setItem('aroma_black_white_mode', String(isBlackWhiteMode));
+      storage.removeItem('aroma_black_white_mode');
     } catch {}
     if (typeof document !== 'undefined') {
-      if (isBlackWhiteMode) {
-        document.documentElement.classList.add('mode-black-white');
-      } else {
-        document.documentElement.classList.remove('mode-black-white');
-      }
+      document.documentElement.classList.remove('mode-black-white');
     }
-    if (typeof BroadcastChannel !== 'undefined') {
-      try {
-        const bc = new BroadcastChannel('aroma_customer_channel');
-        bc.postMessage({ type: 'BW_MODE_SYNC', isBlackWhiteMode });
-        bc.close();
-      } catch (e) {}
-    }
-  }, [isBlackWhiteMode]);
-
-  const toggleBlackWhiteMode = useCallback(() => {
-    setIsBlackWhiteMode((prev) => !prev);
   }, []);
 
   // Toast Notification
@@ -1643,10 +1619,7 @@ export const AppProvider = ({ children }) => {
         lastSyncTime,
         liveRefreshInterval,
         setLiveRefreshInterval,
-        refreshDataSilently,
-        isBlackWhiteMode,
-        setIsBlackWhiteMode,
-        toggleBlackWhiteMode
+        refreshDataSilently
       }}
     >
       {children}
