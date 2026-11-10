@@ -1,18 +1,18 @@
 // High-fidelity Coffee Shop data with recipe mappings, raw ingredients, modifiers, and staff PINs
 
 export const INITIAL_INGREDIENTS = [
-  { id: "ing-1", name: "House Espresso Blend Beans", unit: "g", stock: 3200, minThreshold: 500, costPerUnit: 0.03 },
-  { id: "ing-2", name: "Ethiopian Guji Heirloom Beans", unit: "g", stock: 2400, minThreshold: 400, costPerUnit: 0.04 },
-  { id: "ing-3", name: "Organic Whole Milk", unit: "ml", stock: 6000, minThreshold: 1000, costPerUnit: 0.003 },
-  { id: "ing-4", name: "Barista Edition Oat Milk", unit: "ml", stock: 5000, minThreshold: 800, costPerUnit: 0.005 },
-  { id: "ing-5", name: "Artisan Almond Frangipane", unit: "pcs", stock: 14, minThreshold: 4, costPerUnit: 1.80 },
-  { id: "ing-6", name: "Cardamom Brioche Knots", unit: "pcs", stock: 12, minThreshold: 4, costPerUnit: 1.50 },
-  { id: "ing-7", name: "Dark Brown Sugar Syrup", unit: "ml", stock: 1800, minThreshold: 300, costPerUnit: 0.015 },
-  { id: "ing-8", name: "Madagascar Vanilla Syrup", unit: "ml", stock: 1400, minThreshold: 250, costPerUnit: 0.018 },
-  { id: "ing-9", name: "Salted Caramel Sauce", unit: "ml", stock: 950, minThreshold: 200, costPerUnit: 0.02 },
-  { id: "ing-10", name: "Ceremonial Uji Matcha Powder", unit: "g", stock: 650, minThreshold: 120, costPerUnit: 0.12 },
-  { id: "ing-11", name: "Compostable Hot Cups (12oz)", unit: "cups", stock: 180, minThreshold: 30, costPerUnit: 0.08 },
-  { id: "ing-12", name: "Cold Beverage Cups (16oz)", unit: "cups", stock: 160, minThreshold: 30, costPerUnit: 0.10 }
+  { id: "ing-1", name: "House Espresso Blend Beans", nameKm: "គ្រាប់កាហ្វេ House Blend", unit: "g", stock: 3200, minThreshold: 500, costPerUnit: 0.03 },
+  { id: "ing-2", name: "Ethiopian Guji Heirloom Beans", nameKm: "គ្រាប់កាហ្វេ Ethiopian Guji", unit: "g", stock: 2400, minThreshold: 400, costPerUnit: 0.04 },
+  { id: "ing-3", name: "Organic Whole Milk", nameKm: "ទឹកដោះគោសុទ្ធ Organic", unit: "ml", stock: 6000, minThreshold: 1000, costPerUnit: 0.003 },
+  { id: "ing-4", name: "Barista Edition Oat Milk", nameKm: "ទឹកដោះគោ Oat Milk Barista", unit: "ml", stock: 5000, minThreshold: 800, costPerUnit: 0.005 },
+  { id: "ing-5", name: "Artisan Almond Frangipane", nameKm: "នំ Almond Frangipane", unit: "pcs", stock: 14, minThreshold: 4, costPerUnit: 1.80 },
+  { id: "ing-6", name: "Cardamom Brioche Knots", nameKm: "នំ Cardamom Brioche", unit: "pcs", stock: 12, minThreshold: 4, costPerUnit: 1.50 },
+  { id: "ing-7", name: "Dark Brown Sugar Syrup", nameKm: "ទឹកស្ករត្នោត Dark Brown Sugar", unit: "ml", stock: 1800, minThreshold: 300, costPerUnit: 0.015 },
+  { id: "ing-8", name: "Madagascar Vanilla Syrup", nameKm: "ទឹកស៊ីរ៉ូវ៉ានីឡា Madagascar", unit: "ml", stock: 1400, minThreshold: 250, costPerUnit: 0.018 },
+  { id: "ing-9", name: "Salted Caramel Sauce", nameKm: "ទឹកជ្រលក់ Salted Caramel", unit: "ml", stock: 950, minThreshold: 200, costPerUnit: 0.02 },
+  { id: "ing-10", name: "Ceremonial Uji Matcha Powder", nameKm: "ម្សៅតែបៃតង Ceremonial Uji Matcha", unit: "g", stock: 650, minThreshold: 120, costPerUnit: 0.12 },
+  { id: "ing-11", name: "Compostable Hot Cups (12oz)", nameKm: "កែវក្រដាសក្តៅ (12oz)", unit: "cups", stock: 180, minThreshold: 30, costPerUnit: 0.08 },
+  { id: "ing-12", name: "Cold Beverage Cups (16oz)", nameKm: "កែវភេសជ្ជៈត្រជាក់ (16oz)", unit: "cups", stock: 160, minThreshold: 30, costPerUnit: 0.10 }
 ];
 
 export const INITIAL_PRODUCTS = [
@@ -328,67 +328,73 @@ export const MODIFIER_GROUPS = [
   {
     id: "size",
     name: "Cup Size",
+    nameKm: "ទំហំកែវ",
     required: true,
     options: [
-      { id: "sz-sm", name: "Small (8oz)", price: 0.00 },
-      { id: "sz-reg", name: "Medium (12oz)", price: 0.50 },
-      { id: "sz-lrg", name: "Large (16oz)", price: 1.00 }
+      { id: "sz-sm", name: "Small (8oz)", nameKm: "តូច (8oz)", price: 0.00 },
+      { id: "sz-reg", name: "Medium (12oz)", nameKm: "កណ្តាល (12oz)", price: 0.50 },
+      { id: "sz-lrg", name: "Large (16oz)", nameKm: "ធំ (16oz)", price: 1.00 }
     ]
   },
   {
     id: "sweetness",
     name: "Sweetness Score",
+    nameKm: "កម្រិតជាតិស្ករ",
     required: false,
     options: [
-      { id: "sw-100", name: "100% Regular Sweet", price: 0.00 },
-      { id: "sw-50", name: "50% Half Sweet", price: 0.00 },
-      { id: "sw-0", name: "0% Sugar Free", price: 0.00 },
-      { id: "sw-120", name: "120% Extra Sweet", price: 0.00 }
+      { id: "sw-100", name: "100% Regular Sweet", nameKm: "100% ផ្អែមធម្មតា", price: 0.00 },
+      { id: "sw-50", name: "50% Half Sweet", nameKm: "50% ផ្អែមពាក់កណ្តាល", price: 0.00 },
+      { id: "sw-0", name: "0% Sugar Free", nameKm: "0% គ្មានស្ករ", price: 0.00 },
+      { id: "sw-120", name: "120% Extra Sweet", nameKm: "120% ផ្អែមខ្លាំង", price: 0.00 }
     ]
   },
   {
     id: "ice",
     name: "Ice Level Score",
+    nameKm: "កម្រិតទឹកកក",
     required: false,
     options: [
-      { id: "ice-100", name: "100% Regular Ice", price: 0.00 },
-      { id: "ice-50", name: "50% Less Ice", price: 0.00 },
-      { id: "ice-0", name: "0% No Ice", price: 0.00 },
-      { id: "ice-extra", name: "Extra Ice", price: 0.00 }
+      { id: "ice-100", name: "100% Regular Ice", nameKm: "100% ទឹកកកធម្មតា", price: 0.00 },
+      { id: "ice-50", name: "50% Less Ice", nameKm: "50% ទឹកកកតិច", price: 0.00 },
+      { id: "ice-0", name: "0% No Ice", nameKm: "0% គ្មានទឹកកក", price: 0.00 },
+      { id: "ice-extra", name: "Extra Ice", nameKm: "ទឹកកកច្រើន", price: 0.00 }
     ]
   },
   {
     id: "milk",
     name: "Milk Selection",
+    nameKm: "ប្រភេទទឹកដោះគោ",
     required: false,
     options: [
-      { id: "m-whole", name: "Organic Whole Milk", price: 0.00 },
-      { id: "m-oat", name: "Barista Edition Oat Milk", price: 0.75 },
-      { id: "m-almond", name: "Artisan Almond Milk", price: 0.75 },
-      { id: "m-breve", name: "Half & Half Breve", price: 0.80 },
-      { id: "m-none", name: "No Milk (Black)", price: 0.00 }
+      { id: "m-whole", name: "Organic Whole Milk", nameKm: "ទឹកដោះគោសុទ្ធ Whole Milk", price: 0.00 },
+      { id: "m-oat", name: "Barista Edition Oat Milk", nameKm: "ទឹកដោះគោ Oat Milk Barista", price: 0.75 },
+      { id: "m-almond", name: "Artisan Almond Milk", nameKm: "ទឹកដោះគោ Almond Milk", price: 0.75 },
+      { id: "m-breve", name: "Half & Half Breve", nameKm: "ទឹកដោះគោ Breve (Half & Half)", price: 0.80 },
+      { id: "m-none", name: "No Milk (Black)", nameKm: "មិនដាក់ទឹកដោះគោ (កាហ្វេខ្មៅ)", price: 0.00 }
     ]
   },
   {
     id: "shots",
     name: "Espresso Intensity",
+    nameKm: "កម្រិតកាហ្វេ Espresso",
     required: false,
     options: [
-      { id: "s-standard", name: "Standard Shot(s)", price: 0.00 },
-      { id: "s-extra1", name: "+1 Extra Ristretto Shot", price: 0.95 },
-      { id: "s-extra2", name: "+2 Extra Double Shot", price: 1.80 }
+      { id: "s-standard", name: "Standard Shot(s)", nameKm: "កម្រិតធម្មតា Standard Shot", price: 0.00 },
+      { id: "s-extra1", name: "+1 Extra Ristretto Shot", nameKm: "+1 បន្ថែម Ristretto Shot", price: 0.95 },
+      { id: "s-extra2", name: "+2 Extra Double Shot", nameKm: "+2 បន្ថែម Double Shot", price: 1.80 }
     ]
   },
   {
     id: "syrup",
     name: "Artisan Syrup Infusion",
+    nameKm: "រសជាតិទឹកស៊ីរ៉ូបន្ថែម",
     required: false,
     options: [
-      { id: "syr-none", name: "No Syrup", price: 0.00 },
-      { id: "syr-vanilla", name: "Madagascar Vanilla", price: 0.60 },
-      { id: "syr-caramel", name: "Salted Caramel", price: 0.60 },
-      { id: "syr-brownsugar", name: "Dark Brown Sugar", price: 0.60 },
-      { id: "syr-hazelnut", name: "Roasted Hazelnut", price: 0.60 }
+      { id: "syr-none", name: "No Syrup", nameKm: "មិនបន្ថែមស៊ីរ៉ូ", price: 0.00 },
+      { id: "syr-vanilla", name: "Madagascar Vanilla", nameKm: "វ៉ានីឡា Madagascar", price: 0.60 },
+      { id: "syr-caramel", name: "Salted Caramel", nameKm: "ខារ៉ាមែល Salted Caramel", price: 0.60 },
+      { id: "syr-brownsugar", name: "Dark Brown Sugar", nameKm: "ស្ករត្នោត Dark Brown Sugar", price: 0.60 },
+      { id: "syr-hazelnut", name: "Roasted Hazelnut", nameKm: "គ្រាប់ហេស៊ែលណាត់ Hazelnut", price: 0.60 }
     ]
   }
 ];
@@ -445,25 +451,27 @@ export const DEMO_CUSTOMERS = [
 ];
 
 export const SYSTEM_PERMISSIONS = [
-  { id: 'canAccessPos', label: 'POS Terminal & Register', category: 'Sales & POS', description: 'Take orders, apply discounts, and tender checkout' },
-  { id: 'canAccessKds', label: 'Kitchen Display System (KDS)', category: 'Kitchen & Bar', description: 'View and mark drinks as completed in preparation queue' },
-  { id: 'canAccessDashboard', label: 'Live Executive Dashboard', category: 'Analytics', description: 'View real-time sales revenue, charts, and metrics' },
-  { id: 'canAccessInventory', label: 'Inventory & BOM Recipes', category: 'Operations', description: 'Inspect stock levels, manage recipes, and receive supplies' },
-  { id: 'canAccessOrders', label: 'Order History & Receipts', category: 'Sales & POS', description: 'View transaction ledger, receipts, re-print, and void' },
-  { id: 'canAccessReports', label: 'Management Reports & BI', category: 'Financials', description: 'View COGS, peak heatmaps, spoilage, and Z-reports' },
-  { id: 'canPerformOverrides', label: 'POS Manager Overrides', category: 'Authorizations', description: 'Authorize item voids, refunds, and discounts > 15%' },
-  { id: 'canSeeExpectedCash', label: 'Expected Cash Reconciliation', category: 'Financials', description: 'View expected drawer balance (Disable for Blind Drop)' },
-  { id: 'canManageStaff', label: 'User & Permission Management', category: 'Administration', description: 'Add/edit staff, set wages, PINs, and grant permissions' },
-  { id: 'canEditInventory', label: 'Modify Stock & Supplies', category: 'Operations', description: 'Adjust stock quantities, write off damaged goods' },
-  { id: 'canEditMenu', label: 'Menu Catalog Management', category: 'Operations', description: 'Add, edit, or delete beverages, prices, and categories' }
+  { id: 'canAccessPos', label: 'POS Terminal & Register', labelKm: 'ស្ថានីយគិតប្រាក់ (POS)', category: 'Sales & POS', categoryKm: 'ការលក់ & បញ្ជរគិតប្រាក់', description: 'Take orders, apply discounts, and tender checkout', descriptionKm: 'ទទួលការកម្ម៉ង់ បញ្ចុះតម្លៃ និងគិតប្រាក់' },
+  { id: 'canAccessKds', label: 'Kitchen Display System (KDS)', labelKm: 'ប្រព័ន្ធបង្ហាញផ្ទះបាយ (KDS)', category: 'Kitchen & Bar', categoryKm: 'ផ្ទះបាយ & អ្នកឆុង', description: 'View and mark drinks as completed in preparation queue', descriptionKm: 'មើលជួររៀបចំភេសជ្ជៈ និងបញ្ជាក់ការឆុងរួចរាល់' },
+  { id: 'canAccessDashboard', label: 'Live Executive Dashboard', labelKm: 'ផ្ទាំងគ្រប់គ្រងទូទៅផ្ទាល់', category: 'Analytics', categoryKm: 'ការវិភាគ & ស្ថិតិ', description: 'View real-time sales revenue, charts, and metrics', descriptionKm: 'មើលចំណូលលក់ផ្ទាល់ ក្រាហ្វិក និងស្ថិតិ' },
+  { id: 'canAccessInventory', label: 'Inventory & BOM Recipes', labelKm: 'ស្តុក & រូបមន្តផ្សំ', category: 'Operations', categoryKm: 'ប្រតិបត្តិការ & ស្តុក', description: 'Inspect stock levels, manage recipes, and receive supplies', descriptionKm: 'ត្រួតពិនិត្យស្តុក គ្រប់គ្រងរូបមន្ត និងទទួលទំនិញចូល' },
+  { id: 'canAccessOrders', label: 'Order History & Receipts', labelKm: 'ប្រវត្តិការកម្ម៉ង់ & វិក្កយបត្រ', category: 'Sales & POS', categoryKm: 'ការលក់ & បញ្ជរគិតប្រាក់', description: 'View transaction ledger, receipts, re-print, and void', descriptionKm: 'មើលបញ្ជីប្រតិបត្តិការ បោះពុម្ពឡើងវិញ និងលុបវិក្កយបត្រ' },
+  { id: 'canAccessReports', label: 'Management Reports & BI', labelKm: 'របាយការណ៍គ្រប់គ្រង & ហិរញ្ញវត្ថុ', category: 'Financials', categoryKm: 'ហិរញ្ញវត្ថុ & សាច់ប្រាក់', description: 'View COGS, peak heatmaps, spoilage, and Z-reports', descriptionKm: 'មើលថ្លៃដើមទំនិញ ម៉ោងលក់ដាច់ខ្លាំង និងរបាយការណ៍បិទវេន' },
+  { id: 'canPerformOverrides', label: 'POS Manager Overrides', labelKm: 'ការអនុញ្ញាតពិសេសពីប្រធានហាង', category: 'Authorizations', categoryKm: 'ការអនុញ្ញាត & សិទ្ធិពិសេស', description: 'Authorize item voids, refunds, and discounts > 15%', descriptionKm: 'អនុញ្ញាតការលុបទំនិញ សងប្រាក់ និងបញ្ចុះតម្លៃលើស 15%' },
+  { id: 'canSeeExpectedCash', label: 'Expected Cash Reconciliation', labelKm: 'ការផ្ទៀងផ្ទាត់សាច់ប្រាក់រំពឹងទុក', category: 'Financials', categoryKm: 'ហិរញ្ញវត្ថុ & សាច់ប្រាក់', description: 'View expected drawer balance (Disable for Blind Drop)', descriptionKm: 'មើលចំនួនសាច់ប្រាក់រំពឹងទុកក្នុងថត (បិទសម្រាប់ Blind Drop)' },
+  { id: 'canManageStaff', label: 'User & Permission Management', labelKm: 'ការគ្រប់គ្រងបុគ្គលិក & សិទ្ធិ', category: 'Administration', categoryKm: 'ការគ្រប់គ្រងប្រព័ន្ធ', description: 'Add/edit staff, set wages, PINs, and grant permissions', descriptionKm: 'បន្ថែម/កែប្រែបុគ្គលិក កំណត់ប្រាក់ខែ លេខកូដ PIN និងសិទ្ធិ' },
+  { id: 'canEditInventory', label: 'Modify Stock & Supplies', labelKm: 'កែប្រែស្តុក & វត្ថុធាតុដើម', category: 'Operations', categoryKm: 'ប្រតិបត្តិការ & ស្តុក', description: 'Adjust stock quantities, write off damaged goods', descriptionKm: 'កែតម្រូវបរិមាណស្តុក កត់ត្រាទំនិញខូចខាត' },
+  { id: 'canEditMenu', label: 'Menu Catalog Management', labelKm: 'គ្រប់គ្រងបញ្ជីមុខម្ហូប & តម្លៃ', category: 'Operations', categoryKm: 'ប្រតិបត្តិការ & ស្តុក', description: 'Add, edit, or delete beverages, prices, and categories', descriptionKm: 'បន្ថែម កែប្រែ ឬលុបមុខភេសជ្ជៈ តម្លៃ និងប្រភេទ' }
 ];
 
 export const ROLE_PERMISSIONS = {
   ADMIN: {
     role: "ADMIN",
     title: "Admin / Owner",
+    titleKm: "ម្ចាស់ហាង / អ្នកគ្រប់គ្រងជាន់ខ្ពស់",
     badgeColor: "bg-purple-950/80 text-purple-300 border-purple-800",
     description: "Unrestricted access. Manages staff, financial reports, system configuration, menus, and inventory.",
+    descriptionKm: "សិទ្ធិពេញលេញគ្រប់គ្រងបុគ្គលិក របាយការណ៍ហិរញ្ញវត្ថុ ការកំណត់ប្រព័ន្ធ មុខម្ហូប និងស្តុក។",
     allowedTabs: ['pos', 'dashboard', 'inventory', 'orders', 'reports', 'kds', 'staff'],
     canPerformOverrides: true,
     canSeeExpectedCash: true,
@@ -479,8 +487,10 @@ export const ROLE_PERMISSIONS = {
   MANAGER: {
     role: "MANAGER",
     title: "Store Manager",
+    titleKm: "ប្រធានគ្រប់គ្រងហាង",
     badgeColor: "bg-amber-950/80 text-amber-300 border-amber-800",
     description: "Access to daily reports, inventory receiving, KDS, staff shift roster, and manager authorization overrides.",
+    descriptionKm: "សិទ្ធិមើលរបាយការណ៍ប្រចាំថ្ងៃ ទទួលស្តុក ផ្ទះបាយ KDS បញ្ជីបុគ្គលិក និងអនុញ្ញាតការកែប្រែពិសេស។",
     allowedTabs: ['pos', 'dashboard', 'inventory', 'orders', 'reports', 'kds', 'staff'],
     canPerformOverrides: true,
     canSeeExpectedCash: true,
@@ -496,8 +506,10 @@ export const ROLE_PERMISSIONS = {
   CASHIER: {
     role: "CASHIER",
     title: "Cashier",
+    titleKm: "បេឡាធិការ (គិតប្រាក់)",
     badgeColor: "bg-sky-950/80 text-sky-300 border-sky-800",
     description: "Restricted strictly to POS ordering screen and shift reconciliation. Cannot access backend reports.",
+    descriptionKm: "សិទ្ធិលើអេក្រង់គិតប្រាក់ POS និងផ្ទៀងផ្ទាត់សាច់ប្រាក់បិទវេន មិនអាចចូលមើលរបាយការណ៍ទូទៅបានឡើយ។",
     allowedTabs: ['pos', 'orders'],
     canPerformOverrides: false,
     canSeeExpectedCash: false, // Blind cash drop
@@ -511,8 +523,10 @@ export const ROLE_PERMISSIONS = {
   BARISTA: {
     role: "BARISTA",
     title: "Barista / Kitchen",
+    titleKm: "អ្នកឆុងកាហ្វេ / ផ្ទះបាយ",
     badgeColor: "bg-emerald-950/80 text-emerald-300 border-emerald-800",
     description: "Restricted to Kitchen Display System (KDS) drink preparation queue and order fulfillment.",
+    descriptionKm: "សិទ្ធិលើអេក្រង់ផ្ទះបាយ KDS ដើម្បីមើលជួររៀបចំភេសជ្ជៈ និងបញ្ជាក់ការឆុងរួចរាល់។",
     allowedTabs: ['kds', 'orders'],
     canPerformOverrides: false,
     canSeeExpectedCash: false,
@@ -526,8 +540,10 @@ export const ROLE_PERMISSIONS = {
   SECURITY: {
     role: "SECURITY",
     title: "Security & Compliance Officer",
+    titleKm: "មន្ត្រីសុវត្ថិភាព & អនុលោមភាព",
     badgeColor: "bg-blue-950/80 text-blue-300 border-blue-800",
     description: "Monitors security audit trails, cashier voids, manager overrides, shift discrepancies, and user access.",
+    descriptionKm: "ត្រួតពិនិត្យកំណត់ហេតុសុវត្ថិភាព ការលុបវិក្កយបត្រ គម្លាតសាច់ប្រាក់ និងការចូលប្រើប្រាស់របស់បុគ្គលិក។",
     allowedTabs: ['pos', 'dashboard', 'orders', 'reports', 'staff'],
     canPerformOverrides: true,
     canSeeExpectedCash: true,

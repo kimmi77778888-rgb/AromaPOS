@@ -454,7 +454,7 @@ export const Sidebar = () => {
 
             {isCollapsed && (
               <div className="opacity-0 group-hover:opacity-100 pointer-events-none scale-95 group-hover:scale-100 transition-all duration-200 absolute left-full top-1/2 -translate-y-1/2 ml-3 px-3 py-1.5 bg-stone-900 border border-stone-700 text-stone-100 text-xs font-bold rounded-xl shadow-2xl whitespace-nowrap z-50">
-                <span>{activeShift ? 'Shift Z-Report' : 'Open Store'}</span>
+                <span>{activeShift ? (isKhmer ? 'របាយការណ៍បិទវេន' : 'Shift Z-Report') : (isKhmer ? 'បើកហាង/វេន' : 'Open Store')}</span>
               </div>
             )}
           </button>
@@ -482,7 +482,7 @@ export const Sidebar = () => {
             className={`flex items-center ${
               isCollapsed ? 'justify-center p-1.5' : 'justify-between p-2'
             } rounded-xl bg-stone-900/80 border border-stone-800/80 hover:border-amber-600/40 cursor-pointer transition`}
-            title={isCollapsed ? `${user?.name || 'Staff'} (${permissions.title}) - Click for options` : undefined}
+            title={isCollapsed ? `${user?.name || 'Staff'} (${isKhmer && permissions.titleKm ? permissions.titleKm : permissions.title}) - Click for options` : undefined}
           >
             <div className="flex items-center gap-2.5 overflow-hidden">
               <UserAvatar
@@ -497,7 +497,7 @@ export const Sidebar = () => {
                   <p className="text-xs font-bold text-stone-200 truncate">{user?.name || 'Staff'}</p>
                   <div className="flex items-center gap-1 mt-0.5">
                     <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.2 rounded border ${permissions.badgeColor}`}>
-                      {permissions.title}
+                      {isKhmer && permissions.titleKm ? permissions.titleKm : permissions.title}
                     </span>
                   </div>
                 </div>
@@ -538,7 +538,7 @@ export const Sidebar = () => {
                 </div>
                 <div className="mt-2.5 pt-2 border-t border-stone-800/60 flex items-center justify-between">
                   <span className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-md border ${permissions.badgeColor}`}>
-                    {userRole} • {permissions.title}
+                    {userRole} • {isKhmer && permissions.titleKm ? permissions.titleKm : permissions.title}
                   </span>
                   <span className="text-[10px] text-emerald-400 font-medium flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>

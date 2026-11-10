@@ -418,7 +418,7 @@ export const PosTerminal = () => {
                     onClick={() => setSearchQuery('')}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-500 hover:text-stone-300 text-xs"
                   >
-                    Clear
+                    {isKhmer ? 'លុប' : 'Clear'}
                   </button>
                 )}
               </div>
@@ -787,9 +787,9 @@ export const PosTerminal = () => {
                 {/* 10-Cup Stamp Card Visual */}
                 <div className="pt-1.5 border-t border-amber-900/50">
                   <div className="flex items-center justify-between text-[10px] font-bold text-amber-200/90 mb-1">
-                    <span>☕ Coffee Stamp Club (Buy 9 Get 1 Free)</span>
+                    <span>{isKhmer ? '☕ សន្សំពិន្ទុត្រាកាហ្វេ (ទិញ 9 ថែម 1)' : '☕ Coffee Stamp Club (Buy 9 Get 1 Free)'}</span>
                     <span className="font-mono text-amber-400 font-black">
-                      {linkedCustomer.stamps || 0}/10 Stamps
+                      {linkedCustomer.stamps || 0}/10 {isKhmer ? 'ត្រា' : 'Stamps'}
                     </span>
                   </div>
                   <div className="grid grid-cols-10 gap-1 text-center select-none">
@@ -825,8 +825,8 @@ export const PosTerminal = () => {
                           : 'bg-gradient-to-r from-amber-500 to-amber-600 text-stone-950 hover:from-amber-400 hover:to-amber-500 shadow animate-pulse'
                       }`}
                     >
-                      <span>🎉 {isRedeemingFreeStampDrink ? 'Free Drink Applied (-100%)' : '1 Free Drink Available!'}</span>
-                      <span className="underline font-bold text-[11px]">{isRedeemingFreeStampDrink ? 'Cancel' : 'Redeem Free Coffee'}</span>
+                      <span>🎉 {isRedeemingFreeStampDrink ? (isKhmer ? 'បានប្រើសិទ្ធិថែមភេសជ្ជៈ (-100%)' : 'Free Drink Applied (-100%)') : (isKhmer ? 'មានកាដូថែមភេសជ្ជៈ ១ កែវឥតគិតថ្លៃ!' : '1 Free Drink Available!')}</span>
+                      <span className="underline font-bold text-[11px]">{isRedeemingFreeStampDrink ? (isKhmer ? 'បោះបង់' : 'Cancel') : (isKhmer ? 'ប្តូរយកកាហ្វេឥតគិតថ្លៃ' : 'Redeem Free Coffee')}</span>
                     </button>
                   )}
                 </div>
@@ -930,7 +930,7 @@ export const PosTerminal = () => {
                               type="button"
                               onClick={() => voidCartItem(item.cartItemId)}
                               className="text-stone-500 hover:text-rose-400 p-0.5 transition cursor-pointer"
-                              title="Void item"
+                              title={isKhmer ? "លុបមុខទំនិញ" : "Void item"}
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -1023,7 +1023,7 @@ export const PosTerminal = () => {
                         : 'bg-stone-900 text-stone-400 hover:text-stone-200 border border-stone-800'
                     }`}
                   >
-                    {disc === 0 ? 'None' : `${disc}%`}
+                    {disc === 0 ? (isKhmer ? 'គ្មាន' : 'None') : `${disc}%`}
                   </button>
                 ))}
               </div>
@@ -1039,9 +1039,9 @@ export const PosTerminal = () => {
                     ? 'bg-amber-500 text-stone-950 border-amber-400 shadow-sm'
                     : 'bg-stone-900 text-stone-400 hover:text-stone-200 border-stone-800'
                 }`}
-                title="15% discount on all coffee beverages"
+                title={isKhmer ? "បញ្ចុះតម្លៃ 15% លើភេសជ្ជៈកាហ្វេទាំងអស់" : "15% discount on all coffee beverages"}
               >
-                <span>⚡ Happy Hour 15%</span>
+                <span>⚡ {isKhmer ? 'ម៉ោងពិសេស 15%' : 'Happy Hour 15%'}</span>
                 {isHappyHourActive && <span>✓</span>}
               </button>
 
@@ -1053,9 +1053,9 @@ export const PosTerminal = () => {
                     ? 'bg-amber-950/80 text-amber-300 border-amber-700/80'
                     : 'bg-stone-900 text-stone-500 border-stone-800'
                 }`}
-                title="Morning bundle: $1.50 off Coffee + Pastry"
+                title={isKhmer ? "ឈុតពេលព្រឹក: បញ្ចុះ $1.50 កាហ្វេ + នំបុ័ង" : "Morning bundle: $1.50 off Coffee + Pastry"}
               >
-                <span>🥐 Coffee+Pastry Combo</span>
+                <span>🥐 {isKhmer ? 'ឈុតកាហ្វេ+នំ' : 'Coffee+Pastry Combo'}</span>
                 {isMorningComboActive && <span>✓</span>}
               </button>
             </div>
@@ -1063,13 +1063,13 @@ export const PosTerminal = () => {
             {/* Active Combo / Free Drink Notification Banner */}
             {cartTotals.comboDiscount > 0 && (
               <div className="flex items-center justify-between text-xs text-amber-300 font-bold bg-amber-950/50 p-2 rounded-xl border border-amber-800/60">
-                <span>🥐 Morning Combo Applied:</span>
+                <span>🥐 {isKhmer ? 'បានបញ្ចុះតម្លៃឈុតពេលព្រឹក:' : 'Morning Combo Applied:'}</span>
                 <span className="font-mono">-$1.50</span>
               </div>
             )}
             {cartTotals.freeDrinkDiscount > 0 && (
               <div className="flex items-center justify-between text-xs text-emerald-300 font-bold bg-emerald-950/50 p-2 rounded-xl border border-emerald-800/60">
-                <span>🎁 10th Cup Free Stamp Reward:</span>
+                <span>🎁 {isKhmer ? 'រង្វាន់ត្រាកាហ្វេទី 10 ឥតគិតថ្លៃ:' : '10th Cup Free Stamp Reward:'}</span>
                 <span className="font-mono">-${cartTotals.freeDrinkDiscount.toFixed(2)}</span>
               </div>
             )}

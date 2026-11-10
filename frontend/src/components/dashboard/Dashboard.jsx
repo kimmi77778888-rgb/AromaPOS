@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { 
   DollarSign, 
   ShoppingBag, 
@@ -48,6 +49,8 @@ export const Dashboard = () => {
     activeShift,
     openShiftModal
   } = useApp();
+
+  const { isKhmer, formatKHR, formatUSD } = useLanguage();
 
   // Metrics computation
   const metrics = useMemo(() => {
@@ -102,11 +105,20 @@ export const Dashboard = () => {
       });
     });
 
+    const categoryTranslations = {
+      'Hot Coffee': isKhmer ? 'កាហ្វេក្តៅ' : 'Hot Coffee',
+      'Iced Coffee': isKhmer ? 'កាហ្វេទឹកកក' : 'Iced Coffee',
+      'Pastries': isKhmer ? 'នំបុ័ង & នំ' : 'Pastries',
+      'Beans': isKhmer ? 'គ្រាប់កាហ្វេ' : 'Beans',
+      'Specialty': isKhmer ? 'ភេសជ្ជៈពិសេស' : 'Specialty'
+    };
+
     return Object.entries(counts).map(([name, value]) => ({
-      name,
+      name: categoryTranslations[name] || name,
+      rawName: name,
       sales: Math.round(value * 100) / 100
     }));
-  }, [orders, products]);
+  }, [orders, products, isKhmer]);
 
   const CATEGORY_COLORS = ['#D97706', '#F59E0B', '#B45309', '#78350F', '#92400E'];
 
@@ -119,19 +131,25 @@ export const Dashboard = () => {
             <Zap className="w-5 h-5" />
           </div>
           <div>
-            <h4 className="text-sm font-bold text-stone-100">Live POS Shift Session</h4>
-            <p className="text-xs text-stone-400">All metrics and recipe deductions update live with every transaction</p>
+            <h4 className="text-sm font-bold text-stone-100">
+              {isKhmer ? 'វេនគិតប្រាក់ POS ផ្ទាល់' : 'Live POS Shift Session'}
+            </h4>
+            <p className="text-xs text-stone-400">
+              {isKhmer 
+                ? 'រាល់ស្ថិតិ និងការកាត់ស្តុកគ្រឿងផ្សំធ្វើបច្ចុប្បន្នភាពផ្ទាល់តាមប្រតិបត្តិការ'
+                : 'All metrics and recipe deductions update live with every transaction'}
+            </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2.5">
           <button
             onClick={() => soundService.speakKhmerWelcome()}
-            title="ស្ដាប់សំឡេងស្វាគមន៍ / Play Welcome Announcement"
+            title={isKhmer ? 'ស្ដាប់សំឡេងស្វាគមន៍ជាភាសាខ្មែរ' : 'Play Welcome Announcement'}
             className="px-3.5 py-2 rounded-xl bg-amber-950/40 border border-amber-600/50 hover:bg-amber-900/50 text-amber-300 hover:text-amber-200 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-sm active:scale-95"
           >
             <Volume2 className="w-3.5 h-3.5 text-amber-400" />
-            <span>ស្វាគមន៍ (Voice)</span>
+            <span>{isKhmer ? 'ស្វាគមន៍ (Voice)' : 'Welcome (Voice)'}</span>
           </button>
 
           <button
@@ -139,7 +157,7 @@ export const Dashboard = () => {
             className="px-3.5 py-2 rounded-xl bg-stone-900 border border-stone-700 hover:border-amber-500 text-stone-300 hover:text-stone-100 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
           >
             <BarChart3 className="w-3.5 h-3.5 text-amber-500" />
-            <span>Management Analytics</span>
+            <span>{isKhmer ? 'វិភាគស្ថិតិ & របាយការណ៍' : 'Management Analytics'}</span>
           </button>
 
           <button
@@ -147,7 +165,7 @@ export const Dashboard = () => {
             className="px-3.5 py-2 rounded-xl bg-stone-900 border border-stone-700 hover:border-amber-500 text-stone-300 hover:text-stone-100 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
           >
             <Lock className="w-3.5 h-3.5 text-amber-500" />
-            <span>Lock & Handover</span>
+            <span>{isKhmer ? 'ចាក់សោ & ប្តូរវេន' : 'Lock & Handover'}</span>
           </button>
 
           <button
@@ -159,7 +177,11 @@ export const Dashboard = () => {
             }`}
           >
             <Calculator className="w-4 h-4" />
-            <span>{activeShift ? 'Run Z-Report (End Shift)' : 'Open Register Shift'}</span>
+            <span>
+              {activeShift 
+                ? (isKhmer ? 'របាយការណ៍បិទវេន (Z-Report)' : 'Run Z-Report (End Shift)') 
+                : (isKhmer ? 'បើកវេនគិតប្រាក់ថ្មី' : 'Open Register Shift')}
+            </span>
           </button>
         </div>
       </div>
@@ -169,7 +191,7 @@ export const Dashboard = () => {
         <div className="p-6 rounded-2xl bg-stone-900/80 border border-stone-800/80 shadow-lg relative overflow-hidden group hover:border-amber-500/40 transition">
           <div className="flex items-center justify-between mb-4">
             <span className="text-xs font-semibold uppercase tracking-wider text-stone-400">
-              Today's Gross Sales
+              {isKhmer ? 'ចំណូលសរុបប្រចាំថ្ងៃ' : "Today's Gross Sales"}
             </span>
             <div className="w-10 h-10 rounded-xl bg-amber-600/20 border border-amber-500/30 flex items-center justify-center text-amber-500 group-hover:scale-110 transition">
               <DollarSign className="w-5 h-5" />
@@ -179,9 +201,12 @@ export const Dashboard = () => {
             <h3 className="text-3xl font-extrabold text-stone-100 font-mono tracking-tight">
               ${metrics.revenue.toFixed(2)}
             </h3>
-            <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-semibold">
-              <ArrowUpRight className="w-4 h-4" />
-              <span>Live updated across register</span>
+            <div className="flex items-center justify-between text-xs pt-0.5">
+              <span className="text-amber-400 font-semibold font-mono">{formatKHR(metrics.revenue)}</span>
+              <div className="flex items-center gap-1 text-emerald-400 font-semibold">
+                <ArrowUpRight className="w-3.5 h-3.5" />
+                <span>{isKhmer ? 'ផ្ទាល់' : 'Live'}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -189,7 +214,7 @@ export const Dashboard = () => {
         <div className="p-6 rounded-2xl bg-stone-900/80 border border-stone-800/80 shadow-lg relative overflow-hidden group hover:border-amber-500/40 transition">
           <div className="flex items-center justify-between mb-4">
             <span className="text-xs font-semibold uppercase tracking-wider text-stone-400">
-              Completed Orders
+              {isKhmer ? 'ការកម្ម៉ង់ដែលបានបញ្ចប់' : 'Completed Orders'}
             </span>
             <div className="w-10 h-10 rounded-xl bg-amber-600/20 border border-amber-500/30 flex items-center justify-center text-amber-500 group-hover:scale-110 transition">
               <ShoppingBag className="w-5 h-5" />
@@ -200,7 +225,7 @@ export const Dashboard = () => {
               {metrics.orders}
             </h3>
             <div className="flex items-center gap-1.5 text-xs text-stone-400">
-              <span>Average Ticket:</span>
+              <span>{isKhmer ? 'មធ្យមភាគក្នុង ១ វិក្កយបត្រ:' : 'Average Ticket:'}</span>
               <span className="font-bold text-amber-400 font-mono">${metrics.avgOrder.toFixed(2)}</span>
             </div>
           </div>
@@ -216,7 +241,7 @@ export const Dashboard = () => {
         >
           <div className="flex items-center justify-between mb-4">
             <span className="text-xs font-semibold uppercase tracking-wider text-stone-400">
-              Low Stock & Materials
+              {isKhmer ? 'ស្តុក & គ្រឿងផ្សំជិតអស់' : 'Low Stock & Materials'}
             </span>
             <div className="w-10 h-10 rounded-xl bg-rose-600/20 border border-rose-500/40 flex items-center justify-center text-rose-400 animate-pulse">
               <AlertTriangle className="w-5 h-5" />
@@ -227,7 +252,9 @@ export const Dashboard = () => {
               {lowStockProducts.length + lowStockIngredients.length}
             </h3>
             <p className="text-xs text-stone-400">
-              {lowStockIngredients.length} raw ingredients • {lowStockProducts.length} menu items
+              {isKhmer 
+                ? `${lowStockIngredients.length} គ្រឿងផ្សំជិតអស់ • ${lowStockProducts.length} មុខទំនិញ`
+                : `${lowStockIngredients.length} raw ingredients • ${lowStockProducts.length} menu items`}
             </p>
           </div>
         </div>
@@ -235,7 +262,7 @@ export const Dashboard = () => {
         <div className="p-6 rounded-2xl bg-stone-900/80 border border-stone-800/80 shadow-lg relative overflow-hidden group hover:border-amber-500/40 transition">
           <div className="flex items-center justify-between mb-4">
             <span className="text-xs font-semibold uppercase tracking-wider text-stone-400">
-              Auto-Disabled Items
+              {isKhmer ? 'មុខទំនិញផ្អាកលក់ស្វ័យប្រវត្តិ' : 'Auto-Disabled Items'}
             </span>
             <div className="w-10 h-10 rounded-xl bg-amber-600/20 border border-amber-500/30 flex items-center justify-center text-amber-500 group-hover:scale-110 transition">
               <Coffee className="w-5 h-5" />
@@ -245,7 +272,9 @@ export const Dashboard = () => {
             <h3 className="text-3xl font-extrabold text-stone-100 font-mono tracking-tight">
               {products.filter((p) => p.isAutoDisabled).length}
             </h3>
-            <p className="text-xs text-stone-400">Preventing impossible orders on POS</p>
+            <p className="text-xs text-stone-400">
+              {isKhmer ? 'ទប់ស្កាត់ការកុម្ម៉ង់មុខទំនិញដែលអស់គ្រឿងផ្សំ' : 'Preventing impossible orders on POS'}
+            </p>
           </div>
         </div>
       </div>
@@ -255,8 +284,12 @@ export const Dashboard = () => {
         <div className="lg:col-span-2 p-6 rounded-2xl bg-stone-900/80 border border-stone-800/80 shadow-lg space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-base font-bold text-stone-100">Live Hourly Sales Velocity</h3>
-              <p className="text-xs text-stone-400">Real-time revenue progression with live transaction feed</p>
+              <h3 className="text-base font-bold text-stone-100">
+                {isKhmer ? 'ល្បឿនលក់ប្រចាំម៉ោងផ្ទាល់' : 'Live Hourly Sales Velocity'}
+              </h3>
+              <p className="text-xs text-stone-400">
+                {isKhmer ? 'ដំណើរការចំណូលជាក់ស្តែងតាមប្រតិបត្តិការថ្មីៗ' : 'Real-time revenue progression with live transaction feed'}
+              </p>
             </div>
             <span className="text-xs font-mono text-amber-400 bg-amber-950/40 px-2.5 py-1 rounded-lg border border-amber-800/40">
               8:00 AM – 6:00 PM
@@ -282,9 +315,11 @@ export const Dashboard = () => {
                         <div className="p-3 bg-stone-950 border border-amber-600/50 rounded-xl shadow-xl text-xs space-y-1">
                           <p className="font-bold text-stone-200">{label}</p>
                           <p className="text-amber-400 font-mono font-bold">
-                            Revenue: ${payload[0].value.toFixed(2)}
+                            {isKhmer ? 'ចំណូល:' : 'Revenue:'} ${payload[0].value.toFixed(2)} ({formatKHR(payload[0].value)})
                           </p>
-                          <p className="text-stone-400">Tickets: {payload[0].payload.tickets}</p>
+                          <p className="text-stone-400">
+                            {isKhmer ? 'វិក្កយបត្រ:' : 'Tickets:'} {payload[0].payload.tickets}
+                          </p>
                         </div>
                       );
                     }
@@ -306,8 +341,12 @@ export const Dashboard = () => {
 
         <div className="p-6 rounded-2xl bg-stone-900/80 border border-stone-800/80 shadow-lg space-y-4">
           <div>
-            <h3 className="text-base font-bold text-stone-100">Category Share</h3>
-            <p className="text-xs text-stone-400">Revenue split across drinks & merchandise</p>
+            <h3 className="text-base font-bold text-stone-100">
+              {isKhmer ? 'ចំណែកតាមប្រភេទមុខទំនិញ' : 'Category Share'}
+            </h3>
+            <p className="text-xs text-stone-400">
+              {isKhmer ? 'ការបែងចែកចំណូលតាមប្រភេទភេសជ្ជៈ & ទំនិញ' : 'Revenue split across drinks & merchandise'}
+            </p>
           </div>
 
           <div className="h-72 w-full pt-2">
@@ -315,14 +354,14 @@ export const Dashboard = () => {
               <BarChart data={categoryChartData} layout="vertical" margin={{ top: 10, right: 20, left: 20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#2e2a27" horizontal={false} />
                 <XAxis type="number" stroke="#78716c" fontSize={11} tickLine={false} tickFormatter={(val) => `$${val}`} />
-                <YAxis dataKey="name" type="category" stroke="#78716c" fontSize={11} tickLine={false} width={80} />
+                <YAxis dataKey="name" type="category" stroke="#78716c" fontSize={11} tickLine={false} width={95} />
                 <Tooltip
                   content={({ active, payload }) => {
                     if (active && payload && payload.length) {
                       return (
                         <div className="p-2.5 bg-stone-950 border border-amber-600/50 rounded-xl shadow-xl text-xs">
                           <p className="font-bold text-stone-200">{payload[0].payload.name}</p>
-                          <p className="text-amber-400 font-mono font-bold">${payload[0].value.toFixed(2)}</p>
+                          <p className="text-amber-400 font-mono font-bold">${payload[0].value.toFixed(2)} ({formatKHR(payload[0].value)})</p>
                         </div>
                       );
                     }
@@ -348,15 +387,19 @@ export const Dashboard = () => {
             <div className="flex items-center gap-2">
               <Layers className="w-5 h-5 text-amber-500" />
               <div>
-                <h3 className="text-base font-bold text-stone-100">Raw Ingredients & Recipe Health</h3>
-                <p className="text-xs text-stone-400">Live monitoring of beans, milk, and cup stocks</p>
+                <h3 className="text-base font-bold text-stone-100">
+                  {isKhmer ? 'សុខភាពគ្រឿងផ្សំ & រូបមន្ត' : 'Raw Ingredients & Recipe Health'}
+                </h3>
+                <p className="text-xs text-stone-400">
+                  {isKhmer ? 'តាមដានស្តុកគ្រាប់កាហ្វេ ទឹកដោះគោ និងកែវផ្ទាល់' : 'Live monitoring of beans, milk, and cup stocks'}
+                </p>
               </div>
             </div>
             <button
               onClick={() => setActiveTab('inventory')}
-              className="text-xs text-amber-500 hover:text-amber-400 font-semibold flex items-center gap-1"
+              className="text-xs text-amber-500 hover:text-amber-400 font-semibold flex items-center gap-1 cursor-pointer"
             >
-              <span>Manage BOM</span>
+              <span>{isKhmer ? 'គ្រប់គ្រងរូបមន្ត' : 'Manage BOM'}</span>
               <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -364,15 +407,16 @@ export const Dashboard = () => {
           <div className="space-y-2">
             {ingredients.slice(0, 5).map((ing) => {
               const isLow = ing.stock <= ing.minThreshold;
+              const ingName = isKhmer && ing.nameKm ? ing.nameKm : ing.name;
               return (
                 <div
                   key={ing.id}
                   className="p-3 rounded-xl bg-stone-950/60 border border-stone-800 flex items-center justify-between"
                 >
                   <div>
-                    <h5 className="text-xs font-bold text-stone-200">{ing.name}</h5>
+                    <h5 className="text-xs font-bold text-stone-200">{ingName}</h5>
                     <span className="text-[10px] text-stone-400">
-                      Threshold: {ing.minThreshold} {ing.unit}
+                      {isKhmer ? 'កម្រិតកំណត់:' : 'Threshold:'} {ing.minThreshold} {ing.unit}
                     </span>
                   </div>
 
@@ -386,9 +430,9 @@ export const Dashboard = () => {
                     </span>
                     <button
                       onClick={() => restockIngredient(ing.id, ing.unit === 'g' ? 500 : ing.unit === 'ml' ? 1000 : 50)}
-                      className="px-2.5 py-1 rounded bg-amber-600/20 hover:bg-amber-600 text-amber-400 hover:text-stone-950 text-[10px] font-bold transition"
+                      className="px-2.5 py-1 rounded bg-amber-600/20 hover:bg-amber-600 text-amber-400 hover:text-stone-950 text-[10px] font-bold transition cursor-pointer"
                     >
-                      +Restock
+                      {isKhmer ? '+ថែមស្តុក' : '+Restock'}
                     </button>
                   </div>
                 </div>
@@ -403,15 +447,19 @@ export const Dashboard = () => {
             <div className="flex items-center gap-2">
               <Receipt className="w-5 h-5 text-amber-500" />
               <div>
-                <h3 className="text-base font-bold text-stone-100">Live Register Feed</h3>
-                <p className="text-xs text-stone-400">Recent customer transactions and operator stamps</p>
+                <h3 className="text-base font-bold text-stone-100">
+                  {isKhmer ? 'ប្រតិបត្តិការលក់ផ្ទាល់' : 'Live Register Feed'}
+                </h3>
+                <p className="text-xs text-stone-400">
+                  {isKhmer ? 'ប្រតិបត្តិការអតិថិជនថ្មីៗ និងកំណត់ត្រាបេឡាធិការ' : 'Recent customer transactions and operator stamps'}
+                </p>
               </div>
             </div>
             <button
               onClick={() => setActiveTab('orders')}
-              className="text-xs text-amber-500 hover:text-amber-400 font-semibold flex items-center gap-1"
+              className="text-xs text-amber-500 hover:text-amber-400 font-semibold flex items-center gap-1 cursor-pointer"
             >
-              <span>View All Tickets</span>
+              <span>{isKhmer ? 'មើលវិក្កយបត្រទាំងអស់' : 'View All Tickets'}</span>
               <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -431,7 +479,7 @@ export const Dashboard = () => {
                     </span>
                   </div>
                   <p className="text-[11px] text-stone-300 mt-0.5">
-                    {order.customerName || 'Walk-in'} • {order.items.length} item(s) • {order.paymentMethod}
+                    {order.customerName || (isKhmer ? 'ភ្ញៀវទូទៅ' : 'Walk-in')} • {order.items.length} {isKhmer ? 'មុខ' : 'item(s)'} • {order.paymentMethod}
                   </p>
                 </div>
 
@@ -439,7 +487,9 @@ export const Dashboard = () => {
                   <span className="text-xs font-extrabold text-stone-100 font-mono block">
                     ${order.total.toFixed(2)}
                   </span>
-                  <span className="text-[10px] text-emerald-400">Settled</span>
+                  <span className="text-[10px] text-emerald-400 font-medium">
+                    {isKhmer ? 'ទូទាត់រួចរាល់' : 'Settled'}
+                  </span>
                 </div>
               </div>
             ))}
