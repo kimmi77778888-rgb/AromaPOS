@@ -2,7 +2,8 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { api } from '../../services/api';
-import * as XLSX from 'xlsx';
+import XLSX from 'xlsx-js-style';
+import { generateSignatureBlock, styleCambodianWorksheet } from '../../services/excelReportStyler';
 import { 
   BarChart3, 
   TrendingUp, 
@@ -421,32 +422,16 @@ export const ManagementReports = () => {
       ? `${filters.startDate} to ${filters.endDate}`
       : filters.datePreset.toUpperCase();
     const generatedAt = new Date().toLocaleString('en-GB');
-    const operatorName = `${user?.name || 'Liam Vance'} (${user?.role || 'ADMIN'})`;
+    const operatorName = user?.name || 'Marcus Thorne';
+    const operatorRole = user?.role || 'ADMIN';
+    const auditDateStr = new Date().toLocaleDateString('en-GB');
 
-    const formatWorksheet = (ws, merges = [], colWidths = []) => {
-      if (merges.length > 0) ws['!merges'] = merges;
-      if (colWidths.length > 0) ws['!cols'] = colWidths.map(w => ({ wch: w }));
-      Object.keys(ws).forEach(ref => {
-        if (ref.startsWith('!')) return;
-        const cell = ws[ref];
-        if (cell && typeof cell.v === 'number') {
-          cell.t = 'n';
-          if (cell.v % 1 !== 0) {
-            cell.z = '"$"#,##0.00';
-          } else {
-            cell.z = '#,##0';
-          }
-        }
-      });
-      return ws;
-    };
-
-    // 1. Sheet: Executive Overview
+    // 1. Sheet: Executive Overview (4 columns: A to D)
     if (mode === 'all' || mode === 'overview') {
       const overviewRows = [
         ['☕ AROMA COFFEE & ARTISAN BAKERY POS'],
         ['REPORT 1: EXECUTIVE MANAGEMENT FINANCIAL OVERVIEW'],
-        [`Scope: ${dateScope}   |   Generated: ${generatedAt}   |   Audited By: ${operatorName}`],
+        [`Scope: ${dateScope}   |   Generated: ${generatedAt}   |   Audited By: ${operatorName} (${operatorRole})`],
         [],
         ['1. CORE FINANCIAL PERFORMANCE METRICS', 'AMOUNT (USD)', 'AMOUNT (KHR)', 'DESCRIPTION'],
         ['Gross Sales Volume', grossSales, Math.round(grossSales * 4100), 'Total gross revenue prior to deductions'],
@@ -464,21 +449,31 @@ export const ManagementReports = () => {
         ['Credit / Debit Cards', cardTotal, Math.round(cardTotal * 4100), `${cardPct}%`],
         ['Total Tenders Audited', cashTotal + khqrTotal + cardTotal, Math.round((cashTotal + khqrTotal + cardTotal) * 4100), '100.0%']
       ];
+      overviewRows.push(...generateSignatureBlock({
+        totalCols: 4,
+        operatorName,
+        role: operatorRole,
+        dateStr: auditDateStr
+      }));
       const wsOverview = XLSX.utils.aoa_to_sheet(overviewRows);
-      formatWorksheet(wsOverview, [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } },
-        { s: { r: 1, c: 0 }, e: { r: 1, c: 3 } },
-        { s: { r: 2, c: 0 }, e: { r: 2, c: 3 } },
-      ], [32, 20, 20, 38]);
+      styleCambodianWorksheet(wsOverview, {
+        merges: [
+          { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } },
+          { s: { r: 1, c: 0 }, e: { r: 1, c: 3 } },
+          { s: { r: 2, c: 0 }, e: { r: 2, c: 3 } },
+        ],
+        colWidths: [40, 24, 24, 46],
+        totalCols: 4
+      });
       XLSX.utils.book_append_sheet(wb, wsOverview, '1_Executive_Overview');
     }
 
-    // 2. Sheet: Sales & Daily Ledger
+    // 2. Sheet: Sales & Daily Ledger (12 columns: A to L)
     if (mode === 'all' || mode === 'sales') {
       const salesRows = [
         ['☕ AROMA COFFEE & ARTISAN BAKERY POS'],
         ['REPORT 2: SALES & DAILY ORDERS AUDIT LEDGER'],
-        [`Scope: ${dateScope}   |   Total Orders: ${orders?.length || 0}   |   Audited By: ${operatorName}`],
+        [`Scope: ${dateScope}   |   Total Orders: ${orders?.length || 0}   |   Audited By: ${operatorName} (${operatorRole})`],
         [],
         ['Receipt ID', 'Customer', 'Cashier', 'Order Type', 'Items Summary', 'Payment', 'Subtotal ($)', 'Discount ($)', 'Tax ($)', 'Total ($)', 'Total (KHR)', 'Status']
       ];
@@ -499,20 +494,31 @@ export const ManagementReports = () => {
           o.status || 'PAID'
         ]);
       });
+      salesRows.push(...generateSignatureBlock({
+        totalCols: 12,
+        operatorName,
+        role: operatorRole,
+        dateStr: auditDateStr
+      }));
       const wsSales = XLSX.utils.aoa_to_sheet(salesRows);
-      formatWorksheet(wsSales, [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 11 } },
-        { s: { r: 1, c: 0 }, e: { r: 1, c: 11 } }
-      ], [14, 18, 16, 12, 36, 12, 14, 14, 12, 14, 16, 12]);
+      styleCambodianWorksheet(wsSales, {
+        merges: [
+          { s: { r: 0, c: 0 }, e: { r: 0, c: 11 } },
+          { s: { r: 1, c: 0 }, e: { r: 1, c: 11 } },
+          { s: { r: 2, c: 0 }, e: { r: 2, c: 11 } }
+        ],
+        colWidths: [16, 22, 18, 14, 40, 14, 16, 16, 14, 16, 18, 14],
+        totalCols: 12
+      });
       XLSX.utils.book_append_sheet(wb, wsSales, '2_Sales_Ledger');
     }
 
-    // 3. Sheet: Product Performance
+    // 3. Sheet: Product Performance (11 columns: A to K)
     if (mode === 'all' || mode === 'products') {
       const productRows = [
         ['☕ AROMA COFFEE & ARTISAN BAKERY POS'],
         ['REPORT 3: PRODUCT SALES & MENU MIX AUDIT'],
-        [`Scope: ${dateScope}   |   Menu Items: ${(reportData.allProductPerformance || []).length}`],
+        [`Scope: ${dateScope}   |   Menu Items: ${(reportData.allProductPerformance || []).length}   |   Audited By: ${operatorName}`],
         [],
         ['Rank', 'Item Name', 'Category', 'Price ($)', 'Price (KHR)', 'Units Sold', 'Revenue ($)', 'Revenue (KHR)', 'Cost ($)', 'Gross Profit ($)', 'Margin %']
       ];
@@ -537,20 +543,31 @@ export const ManagementReports = () => {
           `${margin}%`
         ]);
       });
+      productRows.push(...generateSignatureBlock({
+        totalCols: 11,
+        operatorName,
+        role: operatorRole,
+        dateStr: auditDateStr
+      }));
       const wsProducts = XLSX.utils.aoa_to_sheet(productRows);
-      formatWorksheet(wsProducts, [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 10 } },
-        { s: { r: 1, c: 0 }, e: { r: 1, c: 10 } }
-      ], [8, 30, 16, 14, 14, 12, 16, 16, 14, 16, 12]);
+      styleCambodianWorksheet(wsProducts, {
+        merges: [
+          { s: { r: 0, c: 0 }, e: { r: 0, c: 10 } },
+          { s: { r: 1, c: 0 }, e: { r: 1, c: 10 } },
+          { s: { r: 2, c: 0 }, e: { r: 2, c: 10 } }
+        ],
+        colWidths: [10, 32, 18, 16, 16, 14, 18, 18, 16, 18, 14],
+        totalCols: 11
+      });
       XLSX.utils.book_append_sheet(wb, wsProducts, '3_Product_Performance');
     }
 
-    // 4. Sheet: Category Breakdown
+    // 4. Sheet: Category Breakdown (8 columns: A to H)
     if (mode === 'all' || mode === 'categories') {
       const categoryRows = [
         ['☕ AROMA COFFEE & ARTISAN BAKERY POS'],
         ['REPORT 4: CATEGORY & DEPARTMENT BREAKDOWN'],
-        [`Scope: ${dateScope}   |   Audited By: ${operatorName}`],
+        [`Scope: ${dateScope}   |   Audited By: ${operatorName} (${operatorRole})`],
         [],
         ['Category Name', 'Items in Menu', 'Units Sold', 'Gross Revenue ($)', 'Revenue (KHR)', 'Share of Sales %', 'Avg Item Price ($)', 'Top Selling Hero Item']
       ];
@@ -566,20 +583,31 @@ export const ManagementReports = () => {
           c.topItem || 'N/A'
         ]);
       });
+      categoryRows.push(...generateSignatureBlock({
+        totalCols: 8,
+        operatorName,
+        role: operatorRole,
+        dateStr: auditDateStr
+      }));
       const wsCat = XLSX.utils.aoa_to_sheet(categoryRows);
-      formatWorksheet(wsCat, [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 7 } },
-        { s: { r: 1, c: 0 }, e: { r: 1, c: 7 } }
-      ], [22, 14, 14, 18, 18, 16, 16, 28]);
+      styleCambodianWorksheet(wsCat, {
+        merges: [
+          { s: { r: 0, c: 0 }, e: { r: 0, c: 7 } },
+          { s: { r: 1, c: 0 }, e: { r: 1, c: 7 } },
+          { s: { r: 2, c: 0 }, e: { r: 2, c: 7 } }
+        ],
+        colWidths: [26, 16, 16, 20, 20, 18, 18, 30],
+        totalCols: 8
+      });
       XLSX.utils.book_append_sheet(wb, wsCat, '4_Category_Breakdown');
     }
 
-    // 5. Sheet: Payment Tenders & Shift Reconciliation
+    // 5. Sheet: Payment Tenders & Shift Reconciliation (9 columns: A to I)
     if (mode === 'all' || mode === 'payments') {
       const paymentRows = [
         ['☕ AROMA COFFEE & ARTISAN BAKERY POS'],
         ['REPORT 5: PAYMENT TENDERS & SHIFT CASH RECONCILIATION'],
-        [`Scope: ${dateScope}   |   Cashless Adoption: ${cashlessRate}%`],
+        [`Scope: ${dateScope}   |   Cashless Adoption: ${cashlessRate}%   |   Audited By: ${operatorName}`],
         [],
         ['Shift ID', 'Cashier', 'Opened At', 'Closed At', 'Starting Float ($)', 'Expected Cash ($)', 'Actual Cash ($)', 'Variance ($)', 'Status']
       ];
@@ -596,20 +624,31 @@ export const ManagementReports = () => {
           sh.status || 'CLOSED'
         ]);
       });
+      paymentRows.push(...generateSignatureBlock({
+        totalCols: 9,
+        operatorName,
+        role: operatorRole,
+        dateStr: auditDateStr
+      }));
       const wsPay = XLSX.utils.aoa_to_sheet(paymentRows);
-      formatWorksheet(wsPay, [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 8 } },
-        { s: { r: 1, c: 0 }, e: { r: 1, c: 8 } }
-      ], [14, 18, 20, 20, 16, 16, 16, 14, 14]);
+      styleCambodianWorksheet(wsPay, {
+        merges: [
+          { s: { r: 0, c: 0 }, e: { r: 0, c: 8 } },
+          { s: { r: 1, c: 0 }, e: { r: 1, c: 8 } },
+          { s: { r: 2, c: 0 }, e: { r: 2, c: 8 } }
+        ],
+        colWidths: [16, 20, 22, 22, 18, 18, 18, 16, 16],
+        totalCols: 9
+      });
       XLSX.utils.book_append_sheet(wb, wsPay, '5_Payment_Tenders');
     }
 
-    // 6. Sheet: Hourly Rush Demand
+    // 6. Sheet: Hourly Rush Demand (6 columns: A to F)
     if (mode === 'all' || mode === 'peak-hours') {
       const hourlyRows = [
         ['☕ AROMA COFFEE & ARTISAN BAKERY POS'],
         ['REPORT 6: HOURLY SALES VELOCITY & RUSH DEMAND'],
-        [`Scope: ${dateScope}   |   Generated: ${generatedAt}`],
+        [`Scope: ${dateScope}   |   Generated: ${generatedAt}   |   Audited By: ${operatorName}`],
         [],
         ['Hour Slot', 'Sales ($)', 'Sales (KHR)', 'Customer Tickets', 'Avg Ticket ($)', 'Recommended Staffing']
       ];
@@ -625,20 +664,31 @@ export const ManagementReports = () => {
           h.recommendedStaff || (tickets > 30 ? 3 : 2)
         ]);
       });
+      hourlyRows.push(...generateSignatureBlock({
+        totalCols: 6,
+        operatorName,
+        role: operatorRole,
+        dateStr: auditDateStr
+      }));
       const wsHourly = XLSX.utils.aoa_to_sheet(hourlyRows);
-      formatWorksheet(wsHourly, [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } },
-        { s: { r: 1, c: 0 }, e: { r: 1, c: 5 } }
-      ], [16, 16, 16, 18, 16, 24]);
+      styleCambodianWorksheet(wsHourly, {
+        merges: [
+          { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } },
+          { s: { r: 1, c: 0 }, e: { r: 1, c: 5 } },
+          { s: { r: 2, c: 0 }, e: { r: 2, c: 5 } }
+        ],
+        colWidths: [18, 18, 18, 20, 18, 26],
+        totalCols: 6
+      });
       XLSX.utils.book_append_sheet(wb, wsHourly, '6_Hourly_Rush');
     }
 
-    // 7. Sheet: COGS & Recipe Profitability
+    // 7. Sheet: COGS & Recipe Profitability (8 columns: A to H)
     if (mode === 'all' || mode === 'cogs') {
       const cogsRows = [
         ['☕ AROMA COFFEE & ARTISAN BAKERY POS'],
         ['REPORT 7: COGS & RECIPE PROFITABILITY AUDIT'],
-        [`Store-wide COGS Ratio: ${overallCogsPercentage}%   |   Target Benchmark: < 28%`],
+        [`Store-wide COGS Ratio: ${overallCogsPercentage}%   |   Target Benchmark: < 28%   |   Auditor: ${operatorName}`],
         [],
         ['Item Name', 'Category', 'Retail Price ($)', 'BOM Cost ($)', 'Gross Margin ($)', 'Margin %', 'COGS %', 'Health Status']
       ];
@@ -655,20 +705,31 @@ export const ManagementReports = () => {
           status
         ]);
       });
+      cogsRows.push(...generateSignatureBlock({
+        totalCols: 8,
+        operatorName,
+        role: operatorRole,
+        dateStr: auditDateStr
+      }));
       const wsCogs = XLSX.utils.aoa_to_sheet(cogsRows);
-      formatWorksheet(wsCogs, [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 7 } },
-        { s: { r: 1, c: 0 }, e: { r: 1, c: 7 } }
-      ], [28, 16, 16, 16, 16, 14, 14, 18]);
+      styleCambodianWorksheet(wsCogs, {
+        merges: [
+          { s: { r: 0, c: 0 }, e: { r: 0, c: 7 } },
+          { s: { r: 1, c: 0 }, e: { r: 1, c: 7 } },
+          { s: { r: 2, c: 0 }, e: { r: 2, c: 7 } }
+        ],
+        colWidths: [30, 18, 18, 18, 18, 16, 16, 20],
+        totalCols: 8
+      });
       XLSX.utils.book_append_sheet(wb, wsCogs, '7_COGS_Recipe_Margins');
     }
 
-    // 8. Sheet: Raw Inventory Depletion
+    // 8. Sheet: Raw Inventory Depletion (9 columns: A to I)
     if (mode === 'all' || mode === 'inventory') {
       const inventoryRows = [
         ['☕ AROMA COFFEE & ARTISAN BAKERY POS'],
         ['REPORT 8: RAW MATERIALS & STOCK DEPLETION'],
-        [`Scope: ${dateScope}   |   Total Raw Ingredients: ${(ingredients || []).length}`],
+        [`Scope: ${dateScope}   |   Total Raw Ingredients: ${(ingredients || []).length}   |   Audited By: ${operatorName}`],
         [],
         ['Ingredient Name', 'Current Stock', 'Unit', 'Safety Threshold', 'Unit Cost ($)', 'Stock Value ($)', 'Depletion Status', 'Suggested Reorder', 'Estimated Restock Cost ($)']
       ];
@@ -685,20 +746,31 @@ export const ManagementReports = () => {
           ing.reorderCost
         ]);
       });
+      inventoryRows.push(...generateSignatureBlock({
+        totalCols: 9,
+        operatorName,
+        role: operatorRole,
+        dateStr: auditDateStr
+      }));
       const wsInv = XLSX.utils.aoa_to_sheet(inventoryRows);
-      formatWorksheet(wsInv, [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 8 } },
-        { s: { r: 1, c: 0 }, e: { r: 1, c: 8 } }
-      ], [24, 14, 10, 16, 14, 16, 18, 18, 22]);
+      styleCambodianWorksheet(wsInv, {
+        merges: [
+          { s: { r: 0, c: 0 }, e: { r: 0, c: 8 } },
+          { s: { r: 1, c: 0 }, e: { r: 1, c: 8 } },
+          { s: { r: 2, c: 0 }, e: { r: 2, c: 8 } }
+        ],
+        colWidths: [26, 16, 12, 18, 16, 18, 20, 20, 24],
+        totalCols: 9
+      });
       XLSX.utils.book_append_sheet(wb, wsInv, '8_Inventory_Depletion');
     }
 
-    // 9. Sheet: Staff Performance & Labor Audit
+    // 9. Sheet: Staff Performance & Labor Audit (11 columns: A to K)
     if (mode === 'all' || mode === 'staff') {
       const staffRows = [
         ['☕ AROMA COFFEE & ARTISAN BAKERY POS'],
         ['REPORT 9: STAFF PERFORMANCE & LABOR AUDIT'],
-        [`Scope: ${dateScope}   |   Store Labor Ratio: ${reportData.storeLaborCostPercentage || 24}%`],
+        [`Scope: ${dateScope}   |   Store Labor Ratio: ${reportData.storeLaborCostPercentage || 24}%   |   Auditor: ${operatorName}`],
         [],
         ['Staff Name', 'Role', 'Tickets Handled', 'Sales ($)', 'Sales (KHR)', 'Avg Ticket ($)', 'Void Count', 'Discounts ($)', 'Hours', 'Labor Cost ($)', 'Labor %']
       ];
@@ -717,20 +789,31 @@ export const ManagementReports = () => {
           `${st.laborCostPct || 0}%`
         ]);
       });
+      staffRows.push(...generateSignatureBlock({
+        totalCols: 11,
+        operatorName,
+        role: operatorRole,
+        dateStr: auditDateStr
+      }));
       const wsStaff = XLSX.utils.aoa_to_sheet(staffRows);
-      formatWorksheet(wsStaff, [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 10 } },
-        { s: { r: 1, c: 0 }, e: { r: 1, c: 10 } }
-      ], [20, 16, 16, 16, 16, 14, 12, 14, 10, 16, 12]);
+      styleCambodianWorksheet(wsStaff, {
+        merges: [
+          { s: { r: 0, c: 0 }, e: { r: 0, c: 10 } },
+          { s: { r: 1, c: 0 }, e: { r: 1, c: 10 } },
+          { s: { r: 2, c: 0 }, e: { r: 2, c: 10 } }
+        ],
+        colWidths: [22, 18, 18, 18, 18, 16, 14, 16, 12, 18, 14],
+        totalCols: 11
+      });
       XLSX.utils.book_append_sheet(wb, wsStaff, '9_Staff_Performance');
     }
 
-    // 10. Sheet: Loyalty & Discounts Audit
+    // 10. Sheet: Loyalty & Discounts Audit (8 columns: A to H)
     if (mode === 'all' || mode === 'loyalty-discounts') {
       const loyaltyRows = [
         ['☕ AROMA COFFEE & ARTISAN BAKERY POS'],
         ['REPORT 10: DISCOUNTS, VOIDS & CUSTOMER LOYALTY AUDIT'],
-        [`Total Discounts: $${totalDiscounts.toFixed(2)}   |   VIP Customers: ${(customers || []).length}`],
+        [`Total Discounts: $${totalDiscounts.toFixed(2)}   |   VIP Customers: ${(customers || []).length}   |   Auditor: ${operatorName}`],
         [],
         ['Rank', 'Customer Name', 'Phone Number', 'Loyalty Tier', 'Points Balance', 'Total Lifetime Spend ($)', 'Spend (KHR)', 'Visits Count']
       ];
@@ -746,11 +829,22 @@ export const ManagementReports = () => {
           c.visitCount || 1
         ]);
       });
+      loyaltyRows.push(...generateSignatureBlock({
+        totalCols: 8,
+        operatorName,
+        role: operatorRole,
+        dateStr: auditDateStr
+      }));
       const wsLoyalty = XLSX.utils.aoa_to_sheet(loyaltyRows);
-      formatWorksheet(wsLoyalty, [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 7 } },
-        { s: { r: 1, c: 0 }, e: { r: 1, c: 7 } }
-      ], [8, 24, 18, 16, 16, 20, 20, 14]);
+      styleCambodianWorksheet(wsLoyalty, {
+        merges: [
+          { s: { r: 0, c: 0 }, e: { r: 0, c: 7 } },
+          { s: { r: 1, c: 0 }, e: { r: 1, c: 7 } },
+          { s: { r: 2, c: 0 }, e: { r: 2, c: 7 } }
+        ],
+        colWidths: [10, 26, 20, 18, 18, 22, 22, 16],
+        totalCols: 8
+      });
       XLSX.utils.book_append_sheet(wb, wsLoyalty, '10_Loyalty_Discounts');
     }
 

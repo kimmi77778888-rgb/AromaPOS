@@ -1,4 +1,5 @@
-import * as XLSX from 'xlsx';
+import XLSX from 'xlsx-js-style';
+import { generateSignatureBlock, styleCambodianWorksheet } from './excelReportStyler';
 
 /**
  * Calculate BOM recipe unit cost for a given product
@@ -172,34 +173,24 @@ export const exportCambodiaStandardCatalog = ({
       'បានផ្ទៀងផ្ទាត់ / AUDITED'
     ]);
 
+    catalogRows.push(...generateSignatureBlock({
+      totalCols: 15,
+      operatorName: user?.name || operatorName,
+      role: user?.role || 'Store Manager',
+      dateStr: dateISO
+    }));
+
     const wsCatalog = XLSX.utils.aoa_to_sheet(catalogRows);
-    formatCambodianWorksheet(
-      wsCatalog,
-      [
+    styleCambodianWorksheet(wsCatalog, {
+      merges: [
         { s: { r: 0, c: 0 }, e: { r: 0, c: 14 } },
         { s: { r: 1, c: 0 }, e: { r: 1, c: 14 } },
         { s: { r: 2, c: 0 }, e: { r: 2, c: 14 } },
         { s: { r: 3, c: 0 }, e: { r: 3, c: 14 } }
       ],
-      [
-        8,  // No.
-        16, // SKU
-        30, // Name Khmer
-        26, // Name English
-        20, // Category
-        16, // Price USD
-        18, // Price KHR
-        18, // Cost USD
-        18, // Cost KHR
-        16, // Margin USD
-        14, // Margin %
-        15, // Stock
-        18, // Stock Val USD
-        20, // Stock Val KHR
-        28  // Status
-      ],
-      [{ hpt: 26 }, { hpt: 20 }, { hpt: 16 }, { hpt: 16 }, { hpt: 10 }, { hpt: 28 }]
-    );
+      colWidths: [8, 16, 30, 26, 20, 16, 18, 18, 18, 16, 14, 15, 18, 20, 28],
+      totalCols: 15
+    });
     XLSX.utils.book_append_sheet(wb, wsCatalog, '1_Menu_Catalog_បញ្ជីទំនិញ');
   }
 
@@ -298,33 +289,24 @@ export const exportCambodiaStandardCatalog = ({
       Math.round(sumReorderCostUSD * rate)
     ]);
 
+    inventoryRows.push(...generateSignatureBlock({
+      totalCols: 14,
+      operatorName: user?.name || operatorName,
+      role: user?.role || 'Store Manager',
+      dateStr: dateISO
+    }));
+
     const wsInventory = XLSX.utils.aoa_to_sheet(inventoryRows);
-    formatCambodianWorksheet(
-      wsInventory,
-      [
+    styleCambodianWorksheet(wsInventory, {
+      merges: [
         { s: { r: 0, c: 0 }, e: { r: 0, c: 13 } },
         { s: { r: 1, c: 0 }, e: { r: 1, c: 13 } },
         { s: { r: 2, c: 0 }, e: { r: 2, c: 13 } },
         { s: { r: 3, c: 0 }, e: { r: 3, c: 13 } }
       ],
-      [
-        8,  // No.
-        16, // Material ID
-        32, // Name
-        12, // Unit
-        16, // Current Stock
-        16, // Safety Min
-        16, // Unit Cost USD
-        18, // Unit Cost KHR
-        18, // Total Asset USD
-        20, // Total Asset KHR
-        28, // Status
-        18, // Reorder
-        18, // Reorder Cost USD
-        20  // Reorder Cost KHR
-      ],
-      [{ hpt: 26 }, { hpt: 20 }, { hpt: 16 }, { hpt: 16 }, { hpt: 10 }, { hpt: 28 }]
-    );
+      colWidths: [8, 16, 32, 12, 16, 16, 16, 18, 18, 20, 28, 18, 18, 20],
+      totalCols: 14
+    });
     XLSX.utils.book_append_sheet(wb, wsInventory, '2_Raw_Inventory_វត្ថុធាតុដើម');
   }
 
@@ -426,35 +408,24 @@ export const exportCambodiaStandardCatalog = ({
       operatorName
     ]);
 
+    movementRows.push(...generateSignatureBlock({
+      totalCols: 16,
+      operatorName: user?.name || operatorName,
+      role: user?.role || 'Store Manager',
+      dateStr: dateISO
+    }));
+
     const wsMovements = XLSX.utils.aoa_to_sheet(movementRows);
-    formatCambodianWorksheet(
-      wsMovements,
-      [
+    styleCambodianWorksheet(wsMovements, {
+      merges: [
         { s: { r: 0, c: 0 }, e: { r: 0, c: 15 } },
         { s: { r: 1, c: 0 }, e: { r: 1, c: 15 } },
         { s: { r: 2, c: 0 }, e: { r: 2, c: 15 } },
         { s: { r: 3, c: 0 }, e: { r: 3, c: 15 } }
       ],
-      [
-        8,  // No.
-        16, // Ref ID
-        20, // Timestamp
-        24, // Type
-        24, // Name Khmer
-        22, // Name English
-        16, // SKU
-        16, // Qty Change
-        12, // UOM
-        14, // New Balance
-        16, // Unit Cost USD
-        18, // Unit Cost KHR
-        18, // Total Cost USD
-        20, // Total Cost KHR
-        32, // Reason/Notes
-        20  // Operator
-      ],
-      [{ hpt: 26 }, { hpt: 20 }, { hpt: 16 }, { hpt: 16 }, { hpt: 10 }, { hpt: 28 }]
-    );
+      colWidths: [8, 16, 20, 24, 24, 22, 16, 16, 12, 14, 16, 18, 18, 20, 32, 20],
+      totalCols: 16
+    });
     const movementSheetName = mode === 'movements' ? 'Stock_Movements_ចលនាស្តុក' : '3_Stock_Movements_ចលនាស្តុក';
     XLSX.utils.book_append_sheet(wb, wsMovements, movementSheetName);
   }
