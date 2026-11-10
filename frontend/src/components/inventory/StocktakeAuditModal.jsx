@@ -86,8 +86,6 @@ export const StocktakeAuditModal = ({ isOpen, onClose }) => {
     setCounts(initialCounts);
   }, [isOpen, allAuditItems]);
 
-  if (!isOpen) return null;
-
   // Filtered Items for Display
   const filteredAuditItems = allAuditItems.filter(item => {
     if (itemTypeFilter === 'ingredients' && item.type !== 'ingredient') return false;
@@ -331,6 +329,8 @@ export const StocktakeAuditModal = ({ isOpen, onClose }) => {
       if (showToast) showToast('Failed to export audit Excel file', 'error');
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-6 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
