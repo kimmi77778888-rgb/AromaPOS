@@ -17,7 +17,8 @@ import {
   Layers,
   Lock,
   BarChart3,
-  Volume2
+  Volume2,
+  RefreshCw
 } from 'lucide-react';
 import { soundService } from '../../services/soundService';
 import { 
@@ -47,7 +48,11 @@ export const Dashboard = () => {
     setIsZReportOpen,
     lockScreen,
     activeShift,
-    openShiftModal
+    openShiftModal,
+    isLiveMode,
+    setIsLiveMode,
+    liveSyncStatus,
+    refreshDataSilently
   } = useApp();
 
   const { isKhmer, formatKHR, formatUSD } = useLanguage();
@@ -143,6 +148,46 @@ export const Dashboard = () => {
         </div>
 
         <div className="flex items-center gap-2.5">
+          {/* Live Mode Indicator & Quick Sync */}
+          <div className="flex items-center">
+            <button
+              onClick={() => {
+                soundService.playBeepSound();
+                setIsLiveMode(!isLiveMode);
+              }}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-l-xl text-xs font-bold transition border cursor-pointer ${
+                isLiveMode
+                  ? 'bg-emerald-950/70 border-emerald-600/70 text-emerald-300 hover:bg-emerald-900/80 shadow-sm'
+                  : 'bg-stone-900 border-stone-700 text-stone-400 hover:text-stone-200'
+              }`}
+              title={isLiveMode ? 'Live Mode Active: Auto-syncing orders every 5s' : 'Live Mode Paused'}
+            >
+              <span className="relative flex h-2 w-2">
+                {isLiveMode && (
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                )}
+                <span className={`relative inline-flex rounded-full h-2 w-2 ${isLiveMode ? 'bg-emerald-400' : 'bg-stone-500'}`}></span>
+              </span>
+              <span className="font-mono text-[11px] uppercase">
+                {isLiveMode ? (isKhmer ? 'ផ្ទាល់ (5s)' : 'LIVE (5s)') : (isKhmer ? 'ផ្អាក' : 'PAUSED')}
+              </span>
+            </button>
+            <button
+              onClick={() => {
+                soundService.playBeepSound();
+                refreshDataSilently(false);
+              }}
+              className={`px-2 py-2 rounded-r-xl border-y border-r transition text-xs cursor-pointer ${
+                isLiveMode
+                  ? 'bg-emerald-950/60 border-emerald-600/70 text-emerald-400 hover:text-emerald-200 hover:bg-emerald-900/60'
+                  : 'bg-stone-900 border-stone-700 text-stone-400 hover:text-stone-200'
+              }`}
+              title={isKhmer ? 'ទាញទិន្នន័យថ្មីភ្លាមៗ' : 'Sync Now'}
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${liveSyncStatus === 'syncing' ? 'animate-spin text-emerald-300' : ''}`} />
+            </button>
+          </div>
+
           <button
             onClick={() => soundService.speakKhmerWelcome()}
             title={isKhmer ? 'ស្ដាប់សំឡេងស្វាគមន៍ជាភាសាខ្មែរ' : 'Play Welcome Announcement'}

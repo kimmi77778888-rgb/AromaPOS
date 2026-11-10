@@ -21,9 +21,12 @@ import {
   Store,
   FileSpreadsheet,
   Menu,
-  X
+  X,
+  RefreshCw,
+  Radio
 } from 'lucide-react';
 import { StoreLogo } from './common/StoreLogo';
+import { soundService } from '../services/soundService';
 
 export const Header = ({ onOpenAddProduct }) => {
   const { 
@@ -39,7 +42,11 @@ export const Header = ({ onOpenAddProduct }) => {
     activeShift,
     openShiftModal,
     storeInfo,
-    setIsStoreSettingsOpen
+    setIsStoreSettingsOpen,
+    isLiveMode,
+    setIsLiveMode,
+    liveSyncStatus,
+    refreshDataSilently
   } = useApp();
 
   const { isKhmer } = useLanguage();
@@ -148,6 +155,48 @@ export const Header = ({ onOpenAddProduct }) => {
             <span className="hidden md:inline">{isKhmer ? 'អេក្រង់ POS ពេញ' : 'Focus POS'}</span>
           </button>
         )}
+
+        {/* Real-time Live Mode Toggle & Refresh Pill */}
+        <div className="flex items-center">
+          <button
+            type="button"
+            onClick={() => {
+              soundService.playBeepSound();
+              setIsLiveMode(!isLiveMode);
+            }}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-l-xl text-xs font-bold transition border cursor-pointer ${
+              isLiveMode
+                ? 'bg-emerald-950/70 border-emerald-700/70 text-emerald-300 hover:bg-emerald-900/80 shadow-sm'
+                : 'bg-stone-900 border-stone-800 text-stone-400 hover:text-stone-200'
+            }`}
+            title={isLiveMode ? (isKhmer ? 'របៀបផ្ទាល់កំពុងដំណើរការ (ចុចដើម្បីផ្អាក)' : 'Live Mode Active: Real-time sync (Click to pause)') : (isKhmer ? 'របៀបផ្ទាល់ត្រូវបានផ្អាក (ចុចដើម្បីបើក)' : 'Live Mode Paused (Click to activate)')}
+          >
+            <span className="relative flex h-2 w-2">
+              {isLiveMode && (
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              )}
+              <span className={`relative inline-flex rounded-full h-2 w-2 ${isLiveMode ? 'bg-emerald-400' : 'bg-stone-500'}`}></span>
+            </span>
+            <span className="hidden sm:inline font-mono uppercase tracking-wider text-[11px]">
+              {isLiveMode ? (isKhmer ? 'ផ្ទាល់' : 'LIVE') : (isKhmer ? 'ផ្អាក' : 'PAUSED')}
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              soundService.playBeepSound();
+              refreshDataSilently(false);
+            }}
+            className={`px-2 py-1.5 rounded-r-xl border-y border-r transition text-xs cursor-pointer ${
+              isLiveMode
+                ? 'bg-emerald-950/60 border-emerald-700/70 text-emerald-400 hover:text-emerald-200 hover:bg-emerald-900/60'
+                : 'bg-stone-900 border-stone-800 text-stone-400 hover:text-stone-200'
+            }`}
+            title={isKhmer ? 'ទាញទិន្នន័យថ្មីភ្លាមៗ (Sync Now)' : 'Sync Now (Force Refresh)'}
+          >
+            <RefreshCw className={`w-3 h-3 ${liveSyncStatus === 'syncing' ? 'animate-spin text-emerald-300' : ''}`} />
+          </button>
+        </div>
 
         {/* Global Register Drawer / Shift Status Pill */}
         <button

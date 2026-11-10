@@ -248,6 +248,31 @@ export const AppProvider = ({ children }) => {
     } catch (e) {}
   }, [stockMovements]);
 
+  // Live Mode & Real-time Auto-Sync State
+  const [isLiveMode, setIsLiveMode] = useState(() => {
+    try {
+      const saved = storage.getItem('aroma_live_mode');
+      return saved !== null ? saved === 'true' : true;
+    } catch {
+      return true;
+    }
+  });
+  const [liveRefreshInterval, setLiveRefreshInterval] = useState(5000); // 5 seconds
+  const [liveSyncStatus, setLiveSyncStatus] = useState('connected'); // 'connected' | 'syncing' | 'paused' | 'error'
+  const [lastSyncTime, setLastSyncTime] = useState(new Date());
+
+  // Save isLiveMode preference
+  useEffect(() => {
+    try {
+      storage.setItem('aroma_live_mode', String(isLiveMode));
+    } catch {}
+    if (!isLiveMode) {
+      setLiveSyncStatus('paused');
+    } else {
+      setLiveSyncStatus('connected');
+    }
+  }, [isLiveMode]);
+
   // Toast Notification
   const [toast, setToast] = useState(null);
 
@@ -257,6 +282,76 @@ export const AppProvider = ({ children }) => {
       setToast((prev) => (prev?.message === message ? null : prev));
     }, 3800);
   }, []);
+
+  // Silent Background Data Synchronizer (Live Mode)
+  const refreshDataSilently = useCallback(async (notifyNewOrders = false) => {
+    setLiveSyncStatus('syncing');
+    try {
+      const [prods, ings, ords, shiftData] = await Promise.all([
+        api.fetchProducts(),
+        api.fetchIngredients(),
+        api.fetchOrders(),
+        api.fetchShifts().catch(() => [])
+      ]);
+
+      if (Array.isArray(ords)) {
+        setOrders((prev) => {
+          if (notifyNewOrders && prev.length > 0 && ords.length > prev.length) {
+            const newCount = ords.length - prev.length;
+            soundService.playBeepSound();
+            showToast(
+              `🔔 ${newCount} ការកម្ម៉ង់ថ្មីបានទទួល! / ${newCount} new order(s) received!`,
+              'info'
+            );
+          }
+          return ords;
+        });
+      }
+
+      if (Array.isArray(prods) && prods.length > 0) setProducts(prods);
+      if (Array.isArray(ings) && ings.length > 0) setIngredients(ings);
+      if (Array.isArray(shiftData) && shiftData.length > 0) {
+        setShifts(shiftData);
+        const act = shiftData.find((s) => s.status === 'OPEN') || null;
+        setActiveShift(act);
+      }
+
+      setLastSyncTime(new Date());
+      setLiveSyncStatus('connected');
+    } catch (err) {
+      console.warn('Live sync warning:', err);
+      setLiveSyncStatus('error');
+    }
+  }, [showToast]);
+
+  // Live Auto-Refresh Interval
+  useEffect(() => {
+    if (!isLiveMode) return;
+
+    const intervalId = setInterval(() => {
+      refreshDataSilently(true);
+    }, liveRefreshInterval);
+
+    return () => clearInterval(intervalId);
+  }, [isLiveMode, liveRefreshInterval, refreshDataSilently]);
+
+  // Real-time Cross-Tab Broadcast Channel Listener
+  useEffect(() => {
+    if (typeof BroadcastChannel === 'undefined') return;
+
+    const bc = new BroadcastChannel('aroma_pos_live_channel');
+    bc.onmessage = (event) => {
+      if (event.data?.type === 'ORDER_PLACED') {
+        refreshDataSilently(true);
+      } else if (event.data?.type === 'SYNC_REFRESH') {
+        refreshDataSilently(false);
+      }
+    };
+
+    return () => {
+      bc.close();
+    };
+  }, [refreshDataSilently]);
 
   // Initialize data
   const loadInitialData = useCallback(async () => {
@@ -948,6 +1043,15 @@ export const AppProvider = ({ children }) => {
       // Add to orders
       setOrders((prev) => [orderWithLoyalty, ...prev]);
 
+      // Cross-tab real-time sync broadcast
+      try {
+        if (typeof BroadcastChannel !== 'undefined') {
+          const liveBc = new BroadcastChannel('aroma_pos_live_channel');
+          liveBc.postMessage({ type: 'ORDER_PLACED', order: orderWithLoyalty, timestamp: Date.now() });
+          liveBc.close();
+        }
+      } catch (e) {}
+
       try {
         confetti({
           particleCount: 50,
@@ -1498,7 +1602,14 @@ export const AppProvider = ({ children }) => {
         lowStockProducts,
         lowStockIngredients,
         toast,
-        showToast
+        showToast,
+        isLiveMode,
+        setIsLiveMode,
+        liveSyncStatus,
+        lastSyncTime,
+        liveRefreshInterval,
+        setLiveRefreshInterval,
+        refreshDataSilently
       }}
     >
       {children}

@@ -25,6 +25,8 @@ import {
   RotateCcw, 
   Check, 
   X, 
+  RefreshCw,
+  Radio, 
   Coffee, 
   ChevronDown, 
   ChevronLeft,
@@ -75,7 +77,12 @@ export const ManagementReports = () => {
     customers, 
     showToast, 
     user,
-    storeInfo
+    storeInfo,
+    isLiveMode,
+    setIsLiveMode,
+    liveRefreshInterval,
+    liveSyncStatus,
+    refreshDataSilently
   } = useApp();
   const { isKhmer } = useLanguage();
 
@@ -214,6 +221,25 @@ export const ManagementReports = () => {
   useEffect(() => {
     loadReport();
   }, [filters, orders, products, ingredients]);
+
+  // Live Mode Real-time Polling for Management Reports
+  useEffect(() => {
+    if (!isLiveMode) return;
+
+    const timer = setInterval(() => {
+      // Background silent update without isFiltering spinner flash
+      api.fetchManagementReport({
+        startDate: filters.startDate,
+        endDate: filters.endDate,
+        cashier: filters.cashier,
+        category: filters.category
+      }).then(data => {
+        if (data) setReportData(data);
+      }).catch(() => {});
+    }, liveRefreshInterval || 5000);
+
+    return () => clearInterval(timer);
+  }, [isLiveMode, liveRefreshInterval, filters]);
 
   // =========================================================================
   // DYNAMIC COMPUTED VALUES & KPI AGGREGATIONS
@@ -984,6 +1010,52 @@ export const ManagementReports = () => {
             >
               <Layers className="w-3.5 h-3.5" />
               <span>{isKhmer ? 'ផ្ទាំងលម្អិត (10 Tabs)' : '10-Tabs View'}</span>
+            </button>
+          </div>
+
+          {/* Live Mode Real-Time Indicator & Manual Refresh */}
+          <div className="flex items-center">
+            <button
+              type="button"
+              onClick={() => {
+                soundService.playBeepSound();
+                setIsLiveMode(!isLiveMode);
+              }}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-l-xl text-xs font-bold transition border cursor-pointer ${
+                isLiveMode
+                  ? 'bg-emerald-950/80 border-emerald-600/80 text-emerald-300 shadow-md shadow-emerald-950/40 hover:bg-emerald-900/80 ring-1 ring-emerald-500/30'
+                  : 'bg-stone-900 border-stone-700 text-stone-400 hover:text-stone-200'
+              }`}
+              title={isLiveMode ? (isKhmer ? 'របៀបផ្ទាល់ (Live) កំពុងធ្វើបច្ចុប្បន្នភាពរៀងរាល់ ៥ វិនាទី' : 'Live Mode Active: Auto-refreshing every 5s') : (isKhmer ? 'របៀបផ្ទាល់ត្រូវបានផ្អាក' : 'Live Mode Paused')}
+            >
+              <span className="relative flex h-2.5 w-2.5">
+                {isLiveMode && (
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                )}
+                <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${isLiveMode ? 'bg-emerald-500' : 'bg-stone-500'}`}></span>
+              </span>
+              <span className="font-extrabold tracking-wide">
+                {isKhmer 
+                  ? (isLiveMode ? 'ទិន្នន័យផ្ទាល់ (LIVE)' : 'ផ្អាកផ្ទាល់') 
+                  : (isLiveMode ? 'LIVE (5s)' : 'LIVE (PAUSED)')}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                soundService.playBeepSound();
+                loadReport();
+                refreshDataSilently(false);
+              }}
+              className={`px-2.5 py-1.5 rounded-r-xl border-y border-r transition text-xs cursor-pointer ${
+                isLiveMode
+                  ? 'bg-emerald-950/60 border-emerald-600/70 text-emerald-400 hover:text-emerald-200 hover:bg-emerald-900/60'
+                  : 'bg-stone-900 border-stone-700 text-stone-400 hover:text-stone-200'
+              }`}
+              title={isKhmer ? 'ទាញទិន្នន័យរបាយការណ៍ថ្មីភ្លាមៗ (Refresh Now)' : 'Refresh Report Now'}
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isFiltering ? 'animate-spin text-amber-400' : ''}`} />
             </button>
           </div>
 
