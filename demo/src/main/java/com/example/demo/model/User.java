@@ -23,6 +23,10 @@ public class User {
     private String faceHash;
     private String faceBiometrics;
     private java.util.List<String> permissions = new java.util.ArrayList<>();
+    private String lastLoginIp;
+    private String lastLoginDevice;
+    private String lastLoginAt;
+    private String lastLoginMethod;
 
     public User() {
         this.status = "ACTIVE";
@@ -190,5 +194,37 @@ public class User {
 
     public void setPermissions(java.util.List<String> permissions) {
         this.permissions = permissions;
+    }
+
+    public String getLastLoginIp() {
+        return lastLoginIp;
+    }
+
+    public void setLastLoginIp(String lastLoginIp) {
+        this.lastLoginIp = lastLoginIp;
+    }
+
+    public String getLastLoginDevice() {
+        return lastLoginDevice;
+    }
+
+    public void setLastLoginDevice(String lastLoginDevice) {
+        this.lastLoginDevice = lastLoginDevice;
+    }
+
+    public String getLastLoginAt() {
+        return lastLoginAt;
+    }
+
+    public void setLastLoginAt(String lastLoginAt) {
+        this.lastLoginAt = lastLoginAt;
+    }
+
+    public String getLastLoginMethod() {
+        return lastLoginMethod;
+    }
+
+    public void setLastLoginMethod(String lastLoginMethod) {
+        this.lastLoginMethod = lastLoginMethod;
     }
 }

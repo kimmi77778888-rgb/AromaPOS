@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import confetti from 'canvas-confetti';
-import { api, getStoredUser, saveStoredUser, getStoredCategories, saveStoredIngredients } from '../services/api';
+import { api, getStoredUser, saveStoredUser, getStoredCategories, saveStoredIngredients, getStoredLoginSessions, recordLoginSession } from '../services/api';
 import { DEMO_USERS, DEMO_CUSTOMERS, ROLE_PERMISSIONS } from '../services/coffeeData';
 import { storage } from '../utils/storage';
 import { soundService } from '../services/soundService';
@@ -74,6 +74,7 @@ export const AppProvider = ({ children }) => {
   // Staff Roster & Audit Ledger State
   const [staffList, setStaffList] = useState([]);
   const [auditLogs, setAuditLogs] = useState([]);
+  const [loginSessions, setLoginSessions] = useState(() => getStoredLoginSessions());
 
   // Manager Override Modal State
   const [overrideModal, setOverrideModal] = useState({
@@ -385,12 +386,14 @@ export const AppProvider = ({ children }) => {
   // Staff Roster & Audit Ledger Loader
   const loadStaffAndAudits = useCallback(async () => {
     try {
-      const [staff, logs] = await Promise.all([
+      const [staff, logs, sessions] = await Promise.all([
         api.fetchStaff(),
-        api.fetchAuditLogs()
+        api.fetchAuditLogs(),
+        api.fetchLoginSessions().catch(() => getStoredLoginSessions())
       ]);
       setStaffList(staff);
       setAuditLogs(logs);
+      if (Array.isArray(sessions)) setLoginSessions(sessions);
 
       // Keep active user synchronized if their permissions or details were updated
       const currentStored = getStoredUser();
@@ -503,6 +506,7 @@ export const AppProvider = ({ children }) => {
       const res = await api.login(email, password);
       setUser(res.user);
       setIsAuthenticated(true);
+      setLoginSessions(getStoredLoginSessions());
       showToast(`Welcome back, ${res.user.name}! ☕`, 'success');
       soundService.speakKhmerWelcome();
       return true;
@@ -519,10 +523,12 @@ export const AppProvider = ({ children }) => {
     showToast('Signed out successfully', 'info');
   };
 
-  const switchUser = (newUser) => {
+  const switchUser = async (newUser) => {
     saveStoredUser(newUser);
     setUser(newUser);
     setIsAuthenticated(true);
+    await recordLoginSession(newUser, 'SCREEN_HANDOVER');
+    setLoginSessions(getStoredLoginSessions());
     api.shiftHandover(newUser.name);
     showToast(`Active operator switched to ${newUser.name} (${newUser.role})`, 'info');
     soundService.speakKhmerWelcome();
@@ -535,6 +541,7 @@ export const AppProvider = ({ children }) => {
         setUser(res.user);
         setIsAuthenticated(true);
         setIsScreenLocked(false);
+        setLoginSessions(getStoredLoginSessions());
         showToast(`Welcome back, ${res.user.name}! (Biometric Face ID)`, 'success');
         soundService.speakKhmerWelcome();
         return res.user;
@@ -574,10 +581,12 @@ export const AppProvider = ({ children }) => {
     setIsScreenLocked(true);
   };
 
-  const unlockScreen = (staffMember) => {
+  const unlockScreen = async (staffMember) => {
     setIsScreenLocked(false);
     setUser(staffMember);
     saveStoredUser(staffMember);
+    await recordLoginSession(staffMember, 'SCREEN_UNLOCK');
+    setLoginSessions(getStoredLoginSessions());
     api.shiftHandover(staffMember.name);
     showToast(`Handover complete! Register now operated by ${staffMember.name} (${staffMember.role})`, 'success');
   };
@@ -1517,7 +1526,13 @@ export const AppProvider = ({ children }) => {
         openCustomerDisplayWindow,
         staffList,
         auditLogs,
+        loginSessions,
         loadStaffAndAudits,
+        loadLoginSessions: loadStaffAndAudits,
+        terminateLoginSession: async (id) => {
+          const updated = api.terminateLoginSession(id);
+          setLoginSessions([...updated]);
+        },
         overrideModal,
         requestManagerOverride,
         closeManagerOverride,

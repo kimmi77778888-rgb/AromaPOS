@@ -1,6 +1,7 @@
 import { INITIAL_PRODUCTS, INITIAL_ORDERS, DEMO_USERS, INITIAL_INGREDIENTS, CATEGORIES } from './coffeeData';
 import { storage } from '../utils/storage';
 import { checkFaceUniqueness } from '../utils/faceBiometrics';
+import { getDeviceInfo, resolveClientIp, classifyIp } from '../utils/deviceDetector';
 
 const API_HOST = typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_API_URL 
   ? process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '') 
@@ -213,10 +214,216 @@ export const saveStoredAuditLogs = (logs) => {
   } catch (e) {}
 };
 
+export const getStoredLoginSessions = () => {
+  try {
+    const raw = storage.getItem('aromapos_login_sessions');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {}
+
+  const now = Date.now();
+  return [
+    {
+      id: "sess-1001",
+      userId: "usr-3",
+      userName: "Marcus Thorne",
+      userRole: "ADMIN",
+      userAvatar: "",
+      ipAddress: "103.216.54.12",
+      ipType: "IPv4",
+      ipLabel: "Public IPv4",
+      deviceType: "Desktop",
+      deviceModel: "Windows 11 (Desktop PC)",
+      os: "Windows 11",
+      browser: "Google Chrome 124",
+      screen: "1920x1080",
+      terminalId: "AROMA-POS-01",
+      loginMethod: "PASSWORD",
+      status: "ACTIVE",
+      timestamp: new Date(now - 15 * 60 * 1000).toISOString(),
+      lastActive: new Date().toISOString()
+    },
+    {
+      id: "sess-1002",
+      userId: "usr-4",
+      userName: "Chloe Chen",
+      userRole: "CASHIER",
+      userAvatar: "",
+      ipAddress: "192.168.1.105",
+      ipType: "LAN",
+      ipLabel: "Secure LAN (Station #01)",
+      deviceType: "POS Touch Station",
+      deviceModel: "Windows 10 (POS Kiosk)",
+      os: "Windows 10",
+      browser: "Google Chrome 122",
+      screen: "1920x1080",
+      terminalId: "AROMA-POS-01",
+      loginMethod: "PIN",
+      status: "ACTIVE",
+      timestamp: new Date(now - 60 * 60 * 1000).toISOString(),
+      lastActive: new Date(now - 10 * 60 * 1000).toISOString()
+    },
+    {
+      id: "sess-1003",
+      userId: "usr-2",
+      userName: "Sophia Bennett",
+      userRole: "MANAGER",
+      userAvatar: "",
+      ipAddress: "192.168.1.102",
+      ipType: "LAN",
+      ipLabel: "Secure LAN (Manager Pad)",
+      deviceType: "Tablet",
+      deviceModel: "iPad Pro 12.9 (Tablet)",
+      os: "iPadOS",
+      browser: "Apple Safari 17",
+      screen: "1024x768",
+      terminalId: "AROMA-PAD-02",
+      loginMethod: "PIN",
+      status: "CLOSED",
+      timestamp: new Date(now - 140 * 60 * 1000).toISOString(),
+      lastActive: new Date(now - 45 * 60 * 1000).toISOString()
+    },
+    {
+      id: "sess-1004",
+      userId: "usr-1",
+      userName: "Liam Vance",
+      userRole: "BARISTA",
+      userAvatar: "",
+      ipAddress: "192.168.1.108",
+      ipType: "LAN",
+      ipLabel: "Secure LAN (Kitchen KDS)",
+      deviceType: "Tablet",
+      deviceModel: "Android Tablet 10\"",
+      os: "Android 13",
+      browser: "Google Chrome 121",
+      screen: "1280x800",
+      terminalId: "AROMA-KDS-01",
+      loginMethod: "FACE_BIOMETRIC",
+      status: "CLOSED",
+      timestamp: new Date(now - 220 * 60 * 1000).toISOString(),
+      lastActive: new Date(now - 120 * 60 * 1000).toISOString()
+    },
+    {
+      id: "sess-1005",
+      userId: "usr-5",
+      userName: "Security Officer",
+      userRole: "SECURITY",
+      userAvatar: "",
+      ipAddress: "103.216.54.88",
+      ipType: "IPv4",
+      ipLabel: "Public IPv4 (HQ VPN)",
+      deviceType: "Desktop",
+      deviceModel: "macOS Sonoma (MacBook Pro)",
+      os: "macOS",
+      browser: "Apple Safari 17",
+      screen: "2560x1440",
+      terminalId: "SEC-STATION-HQ",
+      loginMethod: "PASSWORD",
+      status: "CLOSED",
+      timestamp: new Date(now - 340 * 60 * 1000).toISOString(),
+      lastActive: new Date(now - 260 * 60 * 1000).toISOString()
+    }
+  ];
+};
+
+export const saveStoredLoginSessions = (sessions) => {
+  try {
+    storage.setItem('aromapos_login_sessions', JSON.stringify(sessions));
+  } catch (e) {}
+};
+
+export const recordLoginSession = async (user, loginMethod = 'PASSWORD', clientIpOverride = null, deviceInfoOverride = null) => {
+  if (!user) return null;
+  try {
+    const liveIp = clientIpOverride || await resolveClientIp();
+    const info = deviceInfoOverride || getDeviceInfo();
+    const classification = classifyIp(liveIp);
+
+    const newSession = {
+      id: "sess-" + Date.now(),
+      userId: user.id,
+      userName: user.name,
+      userRole: user.role,
+      userAvatar: user.avatar || user.facePhoto || '',
+      ipAddress: liveIp,
+      ipType: classification.type,
+      ipLabel: classification.label,
+      deviceType: info.deviceType || 'Desktop',
+      deviceModel: info.deviceModel || `${info.os} (${info.deviceType})`,
+      os: info.os || 'Unknown OS',
+      browser: info.browser || 'Web Browser',
+      screen: info.screen || '1920x1080',
+      terminalId: info.terminalId || 'AROMA-POS-01',
+      loginMethod,
+      status: 'ACTIVE',
+      timestamp: new Date().toISOString(),
+      lastActive: new Date().toISOString()
+    };
+
+    const existing = getStoredLoginSessions();
+    const updatedSessions = [newSession, ...existing.filter((s) => s.id !== newSession.id)].slice(0, 100);
+    saveStoredLoginSessions(updatedSessions);
+
+    // Update staff roster with lastLogin details
+    const staffList = getStoredStaff();
+    const updatedStaff = staffList.map((u) => {
+      if (u.id === user.id) {
+        return {
+          ...u,
+          lastLoginIp: liveIp,
+          lastLoginDevice: `${info.deviceType} • ${info.os} (${info.browser})`,
+          lastLoginAt: newSession.timestamp,
+          lastLoginMethod
+        };
+      }
+      return u;
+    });
+    saveStoredStaff(updatedStaff);
+
+    // Update current stored user if matching
+    const currentStored = getStoredUser();
+    if (currentStored && currentStored.id === user.id) {
+      saveStoredUser({
+        ...currentStored,
+        lastLoginIp: liveIp,
+        lastLoginDevice: `${info.deviceType} • ${info.os} (${info.browser})`,
+        lastLoginAt: newSession.timestamp,
+        lastLoginMethod
+      });
+    }
+
+    return newSession;
+  } catch (e) {
+    console.warn('Error recording login session:', e);
+    return null;
+  }
+};
+
+export const terminateLoginSession = (sessionId) => {
+  try {
+    const sessions = getStoredLoginSessions();
+    const updated = sessions.map((s) => (s.id === sessionId ? { ...s, status: 'CLOSED', lastActive: new Date().toISOString() } : s));
+    saveStoredLoginSessions(updated);
+    return updated;
+  } catch (e) {
+    return getStoredLoginSessions();
+  }
+};
+
+export const clearLoginSessions = () => {
+  try {
+    storage.removeItem('aromapos_login_sessions');
+  } catch (e) {}
+};
+
 export const api = {
   async login(email, password) {
     const cleanEmail = (email || '').trim().toLowerCase();
     const p = String(password || '').trim();
+    const liveIp = await resolveClientIp();
+    const devInfo = getDeviceInfo();
 
     // 1. Instant local authentication (0ms response, immune to sleeping server or 401s)
     const staffList = getStoredStaff();
@@ -237,7 +444,15 @@ export const api = {
         (found.pinCode && p === found.pinCode);
 
       if (isMatch) {
-        saveStoredUser(found);
+        await recordLoginSession(found, 'PASSWORD', liveIp, devInfo);
+        const updatedFound = {
+          ...found,
+          lastLoginIp: liveIp,
+          lastLoginDevice: devInfo.deviceSummary,
+          lastLoginAt: new Date().toISOString(),
+          lastLoginMethod: 'PASSWORD'
+        };
+        saveStoredUser(updatedFound);
         try {
           const logEntry = {
             id: 'aud-' + Date.now(),
@@ -246,9 +461,12 @@ export const api = {
             userName: found.name,
             userRole: found.role,
             action: 'LOGIN_SUCCESS',
-            details: `User ${found.name} (${found.role}) authenticated securely`,
+            details: `User ${found.name} (${found.role}) authenticated securely from IP ${liveIp} via ${devInfo.deviceSummary}`,
             authorizedBy: 'Credential-Auth',
-            amount: 0
+            amount: 0,
+            ipAddress: liveIp,
+            deviceInfo: devInfo.deviceSummary,
+            loginMethod: 'PASSWORD'
           };
           saveStoredAuditLogs([logEntry, ...getStoredAuditLogs()]);
         } catch (e) {}
@@ -258,11 +476,11 @@ export const api = {
           fetch(`${BASE_URL}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: found.email, password: p })
+            body: JSON.stringify({ email: found.email, password: p, ipAddress: liveIp, deviceInfo: devInfo.deviceSummary })
           }).catch(() => {});
         } catch (e) {}
 
-        return { success: true, user: found, token: 'local-token-' + found.id };
+        return { success: true, user: updatedFound, token: 'local-token-' + found.id, ipAddress: liveIp, deviceInfo: devInfo };
       }
 
       try {
@@ -273,9 +491,12 @@ export const api = {
           userName: found.name,
           userRole: found.role,
           action: 'LOGIN_FAILED',
-          details: `Incorrect password attempt for user ${found.email}`,
+          details: `Incorrect password attempt for user ${found.email} from IP ${liveIp}`,
           authorizedBy: 'Security-Shield',
-          amount: 0
+          amount: 0,
+          ipAddress: liveIp,
+          deviceInfo: devInfo.deviceSummary,
+          loginMethod: 'PASSWORD'
         };
         saveStoredAuditLogs([failLog, ...getStoredAuditLogs()]);
       } catch (e) {}
@@ -287,12 +508,13 @@ export const api = {
       const res = await fetch(`${BASE_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email, password, ipAddress: liveIp, deviceInfo: devInfo.deviceSummary })
       });
       if (res.ok) {
         const data = await res.json();
+        await recordLoginSession(data.user, 'PASSWORD', liveIp, devInfo);
         saveStoredUser(data.user);
-        return { success: true, user: data.user, token: data.token };
+        return { success: true, user: data.user, token: data.token, ipAddress: liveIp, deviceInfo: devInfo };
       }
     } catch (err) {}
 
@@ -301,33 +523,62 @@ export const api = {
 
   async pinLogin(pin) {
     const p = (pin || '').trim();
+    const liveIp = await resolveClientIp();
+    const devInfo = getDeviceInfo();
     const staffList = getStoredStaff();
     const found = staffList.find((u) => 
       (u.pin && u.pin === p) || 
       (u.pinCode && u.pinCode === p)
     );
     if (found) {
-      saveStoredUser(found);
+      await recordLoginSession(found, 'PIN', liveIp, devInfo);
+      const updatedFound = {
+        ...found,
+        lastLoginIp: liveIp,
+        lastLoginDevice: devInfo.deviceSummary,
+        lastLoginAt: new Date().toISOString(),
+        lastLoginMethod: 'PIN'
+      };
+      saveStoredUser(updatedFound);
+      try {
+        const logEntry = {
+          id: 'aud-' + Date.now(),
+          timestamp: new Date().toISOString(),
+          userId: found.id,
+          userName: found.name,
+          userRole: found.role,
+          action: 'PIN_LOGIN_SUCCESS',
+          details: `POS Terminal unlocked with PIN by ${found.name} (${found.role}) from IP ${liveIp}`,
+          authorizedBy: 'Station-PIN',
+          amount: 0,
+          ipAddress: liveIp,
+          deviceInfo: devInfo.deviceSummary,
+          loginMethod: 'PIN'
+        };
+        saveStoredAuditLogs([logEntry, ...getStoredAuditLogs()]);
+      } catch (e) {}
+
       try {
         fetch(`${BASE_URL}/auth/pin-login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ pin: p })
+          body: JSON.stringify({ pin: p, ipAddress: liveIp, deviceInfo: devInfo.deviceSummary })
         }).catch(() => {});
       } catch (e) {}
-      return { success: true, user: found, token: 'local-token-' + found.id };
+      return { success: true, user: updatedFound, token: 'local-token-' + found.id, ipAddress: liveIp, deviceInfo: devInfo };
     }
 
     try {
       const res = await fetch(`${BASE_URL}/auth/pin-login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pin: p })
+        body: JSON.stringify({ pin: p, ipAddress: liveIp, deviceInfo: devInfo.deviceSummary })
       });
       if (res.ok) {
         const data = await res.json();
+        await recordLoginSession(data.user, 'PIN', liveIp, devInfo);
         saveStoredUser(data.user);
-        return { success: true, user: data.user, token: data.token };
+        return { success: true, user: data.user, token: data.token, ipAddress: liveIp, deviceInfo: devInfo };
       }
     } catch (e) {}
 
@@ -389,24 +640,52 @@ export const api = {
   },
 
   async faceLogin(staffId) {
+    const liveIp = await resolveClientIp();
+    const devInfo = getDeviceInfo();
     try {
       const res = await fetch(`${BASE_URL}/auth/face-login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ staffId })
+        body: JSON.stringify({ staffId, ipAddress: liveIp, deviceInfo: devInfo.deviceSummary })
       });
       if (res.ok) {
         const data = await res.json();
+        await recordLoginSession(data.user, 'FACE_BIOMETRIC', liveIp, devInfo);
         saveStoredUser(data.user);
-        return { success: true, user: data.user, token: data.token };
+        return { success: true, user: data.user, token: data.token, ipAddress: liveIp, deviceInfo: devInfo };
       }
     } catch (e) {}
 
     const staffList = getStoredStaff();
     const found = staffList.find((u) => u.id === staffId || u.name.toLowerCase() === (staffId || '').toLowerCase());
     if (found) {
-      saveStoredUser(found);
-      return { success: true, user: found, token: 'local-face-token-' + found.id };
+      await recordLoginSession(found, 'FACE_BIOMETRIC', liveIp, devInfo);
+      const updatedFound = {
+        ...found,
+        lastLoginIp: liveIp,
+        lastLoginDevice: devInfo.deviceSummary,
+        lastLoginAt: new Date().toISOString(),
+        lastLoginMethod: 'FACE_BIOMETRIC'
+      };
+      saveStoredUser(updatedFound);
+      try {
+        const logEntry = {
+          id: 'aud-' + Date.now(),
+          timestamp: new Date().toISOString(),
+          userId: found.id,
+          userName: found.name,
+          userRole: found.role,
+          action: 'FACE_LOGIN_SUCCESS',
+          details: `Touchless Face ID biometrics verified for ${found.name} (${found.role}) from IP ${liveIp}`,
+          authorizedBy: 'Biometric-FaceID',
+          amount: 0,
+          ipAddress: liveIp,
+          deviceInfo: devInfo.deviceSummary,
+          loginMethod: 'FACE_BIOMETRIC'
+        };
+        saveStoredAuditLogs([logEntry, ...getStoredAuditLogs()]);
+      } catch (e) {}
+      return { success: true, user: updatedFound, token: 'local-face-token-' + found.id, ipAddress: liveIp, deviceInfo: devInfo };
     }
     throw new Error('Biometric Face Recognition did not match an active staff member.');
   },
@@ -1568,6 +1847,29 @@ export const api = {
       console.error('Failed to query Bakong payment status', e);
     }
     return { paid: false, status: 'ERROR' };
+  },
+
+  async fetchLoginSessions() {
+    return getStoredLoginSessions();
+  },
+
+  async terminateLoginSession(sessionId) {
+    return terminateLoginSession(sessionId);
+  },
+
+  async clearLoginSessions() {
+    clearLoginSessions();
+    return [];
+  },
+
+  async recordLogin(user, method = 'PASSWORD') {
+    return await recordLoginSession(user, method);
+  },
+
+  async getClientSecuritySnapshot() {
+    const ip = await resolveClientIp();
+    const dev = getDeviceInfo();
+    return { ...dev, ipAddress: ip, classification: classifyIp(ip) };
   }
 };
 

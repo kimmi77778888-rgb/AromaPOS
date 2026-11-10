@@ -545,6 +545,15 @@ export const Sidebar = () => {
                     {isKhmer ? 'ដំណើរការ' : 'Active'}
                   </span>
                 </div>
+                <div className="mt-2 pt-2 border-t border-stone-800/60 flex items-center justify-between text-[10px] font-mono text-stone-400">
+                  <span className="flex items-center gap-1 text-cyan-400">
+                    <span>🌐</span>
+                    <span>{user?.lastLoginIp || '192.168.1.108'}</span>
+                  </span>
+                  <span className="text-stone-500 truncate max-w-[110px]" title={user?.lastLoginDevice || 'Desktop'}>
+                    {user?.lastLoginDevice?.split('(')[0]?.trim() || 'Desktop'}
+                  </span>
+                </div>
               </div>
 
               {/* Management & Profile Actions */}

@@ -12,6 +12,9 @@ public class AuditLog {
     private String details;
     private String authorizedBy;
     private double amount;
+    private String ipAddress;
+    private String deviceInfo;
+    private String loginMethod;
 
     public AuditLog() {
         this.timestamp = LocalDateTime.now();
@@ -27,6 +30,21 @@ public class AuditLog {
         this.details = details;
         this.authorizedBy = authorizedBy;
         this.amount = amount;
+    }
+
+    public AuditLog(String id, String userId, String userName, String userRole, String action, String details, String authorizedBy, double amount, String ipAddress, String deviceInfo, String loginMethod) {
+        this.id = id;
+        this.timestamp = LocalDateTime.now();
+        this.userId = userId;
+        this.userName = userName;
+        this.userRole = userRole;
+        this.action = action;
+        this.details = details;
+        this.authorizedBy = authorizedBy;
+        this.amount = amount;
+        this.ipAddress = ipAddress;
+        this.deviceInfo = deviceInfo;
+        this.loginMethod = loginMethod;
     }
 
     public String getId() {
@@ -99,5 +117,29 @@ public class AuditLog {
 
     public void setAmount(double amount) {
         this.amount = amount;
+    }
+
+    public String getIpAddress() {
+        return ipAddress;
+    }
+
+    public void setIpAddress(String ipAddress) {
+        this.ipAddress = ipAddress;
+    }
+
+    public String getDeviceInfo() {
+        return deviceInfo;
+    }
+
+    public void setDeviceInfo(String deviceInfo) {
+        this.deviceInfo = deviceInfo;
+    }
+
+    public String getLoginMethod() {
+        return loginMethod;
+    }
+
+    public void setLoginMethod(String loginMethod) {
+        this.loginMethod = loginMethod;
     }
 }

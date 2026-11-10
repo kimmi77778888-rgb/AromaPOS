@@ -15,7 +15,7 @@ public class AuthService {
 
     public AuthService() {
         // Standard Role Hierarchy (Admin, Manager, Cashier, Barista) - Clean start without stock internet model photos
-        users.add(new User(
+        User u1 = new User(
                 "usr-1",
                 "Liam Vance",
                 "barista@cafe.com",
@@ -28,9 +28,14 @@ public class AuthService {
                 "",
                 false,
                 new ArrayList<>(List.of("canAccessKds", "canAccessOrders"))
-        ));
+        );
+        u1.setLastLoginIp("192.168.1.108 (KDS Station)");
+        u1.setLastLoginDevice("Tablet • Android 13 (Chrome 122)");
+        u1.setLastLoginAt(LocalDateTime.now().minusHours(3).toString());
+        u1.setLastLoginMethod("FACE_BIOMETRIC");
+        users.add(u1);
 
-        users.add(new User(
+        User u2 = new User(
                 "usr-2",
                 "Sophia Bennett",
                 "manager@cafe.com",
@@ -43,9 +48,14 @@ public class AuthService {
                 "",
                 false,
                 new ArrayList<>(List.of("canAccessPos", "canAccessKds", "canAccessDashboard", "canAccessInventory", "canAccessOrders", "canAccessReports", "canPerformOverrides", "canSeeExpectedCash", "canManageStaff"))
-        ));
+        );
+        u2.setLastLoginIp("192.168.1.102 (Manager Pad)");
+        u2.setLastLoginDevice("Tablet • iPad Pro (Safari 17)");
+        u2.setLastLoginAt(LocalDateTime.now().minusHours(2).toString());
+        u2.setLastLoginMethod("PIN");
+        users.add(u2);
 
-        users.add(new User(
+        User u3 = new User(
                 "usr-3",
                 "Marcus Thorne",
                 "admin@cafe.com",
@@ -58,9 +68,14 @@ public class AuthService {
                 "",
                 false,
                 new ArrayList<>(List.of("canAccessPos", "canAccessKds", "canAccessDashboard", "canAccessInventory", "canAccessOrders", "canAccessReports", "canPerformOverrides", "canSeeExpectedCash", "canManageStaff", "canEditInventory", "canEditMenu"))
-        ));
+        );
+        u3.setLastLoginIp("103.216.54.12 (Public IPv4)");
+        u3.setLastLoginDevice("Desktop • Windows 11 (Chrome 124)");
+        u3.setLastLoginAt(LocalDateTime.now().minusMinutes(15).toString());
+        u3.setLastLoginMethod("PASSWORD");
+        users.add(u3);
 
-        users.add(new User(
+        User u4 = new User(
                 "usr-4",
                 "Chloe Chen",
                 "cashier@cafe.com",
@@ -73,9 +88,14 @@ public class AuthService {
                 "",
                 false,
                 new ArrayList<>(List.of("canAccessPos", "canAccessOrders"))
-        ));
+        );
+        u4.setLastLoginIp("192.168.1.105 (POS Station #01)");
+        u4.setLastLoginDevice("POS Terminal • Windows 10 (POS Kiosk)");
+        u4.setLastLoginAt(LocalDateTime.now().minusHours(1).toString());
+        u4.setLastLoginMethod("PIN");
+        users.add(u4);
 
-        users.add(new User(
+        User u5 = new User(
                 "usr-5",
                 "Security Officer",
                 "security@cafe.com",
@@ -88,7 +108,12 @@ public class AuthService {
                 "",
                 false,
                 new ArrayList<>(List.of("canAccessDashboard", "canAccessOrders", "canAccessReports", "canPerformOverrides", "canSeeExpectedCash", "canManageStaff"))
-        ));
+        );
+        u5.setLastLoginIp("103.216.54.88 (HQ VPN)");
+        u5.setLastLoginDevice("Desktop • macOS Sonoma (Safari 17)");
+        u5.setLastLoginAt(LocalDateTime.now().minusHours(5).toString());
+        u5.setLastLoginMethod("PASSWORD");
+        users.add(u5);
 
         // Seed realistic Initial Audit Activity
         auditLogs.add(new AuditLog(
@@ -126,6 +151,10 @@ public class AuthService {
     }
 
     public Optional<User> authenticate(String email, String password) {
+        return authenticate(email, password, null, null);
+    }
+
+    public Optional<User> authenticate(String email, String password, String ipAddress, String deviceInfo) {
         if (email == null || password == null) return Optional.empty();
         String pass = password.trim();
         String mail = email.trim();
@@ -140,15 +169,28 @@ public class AuthService {
 
         if (userOpt.isPresent()) {
             User u = userOpt.get();
-            recordAudit("LOGIN_SUCCESS", "User authenticated into terminal", u.getName() + " (" + u.getRole() + ")");
+            String ip = (ipAddress != null && !ipAddress.isBlank()) ? ipAddress : "127.0.0.1 (POS Station)";
+            String device = (deviceInfo != null && !deviceInfo.isBlank()) ? deviceInfo : "Standard POS Station";
+            u.setLastLoginIp(ip);
+            u.setLastLoginDevice(device);
+            u.setLastLoginAt(LocalDateTime.now().toString());
+            u.setLastLoginMethod("PASSWORD");
+
+            recordAudit("LOGIN_SUCCESS", "User authenticated into terminal from " + ip, u.getName() + " (" + u.getRole() + ")", ip, device, "PASSWORD");
             return Optional.of(u);
         } else {
-            recordAudit("LOGIN_FAILED", "Failed credential verification for: " + mail, "ANONYMOUS");
+            String ip = (ipAddress != null && !ipAddress.isBlank()) ? ipAddress : "127.0.0.1";
+            String device = (deviceInfo != null && !deviceInfo.isBlank()) ? deviceInfo : "Standard POS Station";
+            recordAudit("LOGIN_FAILED", "Failed credential verification for: " + mail, "ANONYMOUS", ip, device, "PASSWORD");
             return Optional.empty();
         }
     }
 
     public Optional<User> authenticatePin(String pin) {
+        return authenticatePin(pin, null, null);
+    }
+
+    public Optional<User> authenticatePin(String pin, String ipAddress, String deviceInfo) {
         if (pin == null || pin.isBlank()) return Optional.empty();
         String p = pin.trim();
         Optional<User> userOpt = users.stream()
@@ -157,15 +199,28 @@ public class AuthService {
 
         if (userOpt.isPresent()) {
             User u = userOpt.get();
-            recordAudit("PIN_LOGIN_SUCCESS", "POS Terminal unlocked via PIN code", u.getName() + " (" + u.getRole() + ")");
+            String ip = (ipAddress != null && !ipAddress.isBlank()) ? ipAddress : "127.0.0.1 (POS Station)";
+            String device = (deviceInfo != null && !deviceInfo.isBlank()) ? deviceInfo : "POS Station Touch Screen";
+            u.setLastLoginIp(ip);
+            u.setLastLoginDevice(device);
+            u.setLastLoginAt(LocalDateTime.now().toString());
+            u.setLastLoginMethod("PIN");
+
+            recordAudit("PIN_LOGIN_SUCCESS", "POS Terminal unlocked via 4-digit PIN from " + ip, u.getName() + " (" + u.getRole() + ")", ip, device, "PIN");
             return Optional.of(u);
         } else {
-            recordAudit("PIN_LOGIN_FAILED", "Invalid terminal PIN code attempt", "ANONYMOUS");
+            String ip = (ipAddress != null && !ipAddress.isBlank()) ? ipAddress : "127.0.0.1";
+            String device = (deviceInfo != null && !deviceInfo.isBlank()) ? deviceInfo : "POS Station Touch Screen";
+            recordAudit("PIN_LOGIN_FAILED", "Invalid terminal PIN code attempt", "ANONYMOUS", ip, device, "PIN");
             return Optional.empty();
         }
     }
 
     public Optional<User> authenticateFace(String staffIdOrName) {
+        return authenticateFace(staffIdOrName, null, null);
+    }
+
+    public Optional<User> authenticateFace(String staffIdOrName, String ipAddress, String deviceInfo) {
         if (staffIdOrName == null || staffIdOrName.isBlank()) return Optional.empty();
         String target = staffIdOrName.trim();
         Optional<User> userOpt = users.stream()
@@ -174,10 +229,19 @@ public class AuthService {
 
         if (userOpt.isPresent()) {
             User u = userOpt.get();
-            recordAudit("FACE_LOGIN_SUCCESS", "Touchless Face ID biometrics verified", u.getName() + " (" + u.getRole() + ")");
+            String ip = (ipAddress != null && !ipAddress.isBlank()) ? ipAddress : "127.0.0.1 (POS Station)";
+            String device = (deviceInfo != null && !deviceInfo.isBlank()) ? deviceInfo : "Touchless Biometric Camera";
+            u.setLastLoginIp(ip);
+            u.setLastLoginDevice(device);
+            u.setLastLoginAt(LocalDateTime.now().toString());
+            u.setLastLoginMethod("FACE_BIOMETRIC");
+
+            recordAudit("FACE_LOGIN_SUCCESS", "Touchless Face ID biometrics verified from " + ip, u.getName() + " (" + u.getRole() + ")", ip, device, "FACE_BIOMETRIC");
             return Optional.of(u);
         } else {
-            recordAudit("FACE_LOGIN_FAILED", "Face biometric match failed for target: " + target, "ANONYMOUS");
+            String ip = (ipAddress != null && !ipAddress.isBlank()) ? ipAddress : "127.0.0.1";
+            String device = (deviceInfo != null && !deviceInfo.isBlank()) ? deviceInfo : "Touchless Biometric Camera";
+            recordAudit("FACE_LOGIN_FAILED", "Face biometric match failed for target: " + target, "ANONYMOUS", ip, device, "FACE_BIOMETRIC");
             return Optional.empty();
         }
     }
@@ -376,6 +440,10 @@ public class AuthService {
     }
 
     public void recordAudit(String action, String details, String performedBy) {
+        recordAudit(action, details, performedBy, null, null, null);
+    }
+
+    public void recordAudit(String action, String details, String performedBy, String ipAddress, String deviceInfo, String loginMethod) {
         AuditLog log = new AuditLog(
                 "aud-" + System.currentTimeMillis() + "-" + (int)(Math.random() * 1000),
                 "sys",
@@ -384,7 +452,10 @@ public class AuthService {
                 action,
                 details,
                 performedBy != null ? performedBy : "System",
-                0.0
+                0.0,
+                ipAddress,
+                deviceInfo,
+                loginMethod
         );
         logAudit(log);
     }

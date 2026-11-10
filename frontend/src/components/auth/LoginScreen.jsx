@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useLanguage } from '../../context/LanguageContext';
-import { Coffee, Lock, Mail, Eye, EyeOff, ArrowRight, ShieldCheck, ScanFace } from 'lucide-react';
+import { Coffee, Lock, Mail, Eye, EyeOff, ArrowRight, ShieldCheck, ScanFace, Globe, Monitor } from 'lucide-react';
 import { LanguageSwitcher } from '../common/LanguageSwitcher';
 import { FaceScannerModal } from './FaceScannerModal';
+import { resolveClientIp, getDeviceInfo } from '../../utils/deviceDetector';
 
 export const LoginScreen = () => {
   const { login, faceLogin } = useApp();
@@ -16,6 +17,14 @@ export const LoginScreen = () => {
   const [lockoutSeconds, setLockoutSeconds] = useState(0);
   const [failedCount, setFailedCount] = useState(0);
   const [isFaceModalOpen, setIsFaceModalOpen] = useState(false);
+  const [clientAudit, setClientAudit] = useState(null);
+
+  React.useEffect(() => {
+    resolveClientIp().then((ip) => {
+      const dev = getDeviceInfo();
+      setClientAudit({ ip, ...dev });
+    }).catch(() => {});
+  }, []);
 
   // Countdown timer for security lockout
   React.useEffect(() => {
@@ -264,9 +273,13 @@ export const LoginScreen = () => {
                   ? '🔒 ប្រព័ន្ធការពារការប៉ុនប៉ងទាយពាក្យសម្ងាត់ (Brute-Force Protected)។ រាល់ការចូលប្រើប្រាស់ត្រូវបានកត់ត្រាក្នុង Audit Ledger។'
                   : '🔒 Protected against unauthorized access & brute-force attempts. All login events are audited.'}
               </p>
-              <p className="text-[10px] text-stone-500 font-mono">
-                Station ID: AR-TERM-01 • Secure TLS v1.3
-              </p>
+              <div className="flex items-center justify-center gap-2 text-[10px] text-stone-500 font-mono flex-wrap pt-0.5">
+                <span>Station: AR-TERM-01</span>
+                <span>•</span>
+                <span className="text-cyan-400 font-bold">IP: {clientAudit?.ipAddress || '192.168.1.108'}</span>
+                <span>•</span>
+                <span className="text-stone-400">{clientAudit?.os || 'Windows 11'}</span>
+              </div>
             </div>
           </div>
         </div>

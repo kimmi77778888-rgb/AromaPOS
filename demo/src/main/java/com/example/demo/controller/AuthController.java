@@ -3,6 +3,7 @@ package com.example.demo.controller;
 import com.example.demo.model.AuditLog;
 import com.example.demo.model.User;
 import com.example.demo.service.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,20 +22,67 @@ public class AuthController {
         this.authService = authService;
     }
 
+    private String extractClientIp(HttpServletRequest request, String overrideIp) {
+        if (overrideIp != null && !overrideIp.isBlank()) {
+            return overrideIp.trim();
+        }
+        if (request != null) {
+            String xForwarded = request.getHeader("X-Forwarded-For");
+            if (xForwarded != null && !xForwarded.isBlank()) {
+                return xForwarded.split(",")[0].trim();
+            }
+            String xRealIp = request.getHeader("X-Real-IP");
+            if (xRealIp != null && !xRealIp.isBlank()) {
+                return xRealIp.trim();
+            }
+            String remote = request.getRemoteAddr();
+            if (remote != null && !remote.isBlank()) {
+                return "0:0:0:0:0:0:0:1".equals(remote) ? "127.0.0.1 (Localhost)" : remote;
+            }
+        }
+        return "127.0.0.1 (POS Station)";
+    }
+
+    private String extractDeviceInfo(HttpServletRequest request, String overrideDevice) {
+        if (overrideDevice != null && !overrideDevice.isBlank()) {
+            return overrideDevice.trim();
+        }
+        if (request != null) {
+            String userAgent = request.getHeader("User-Agent");
+            if (userAgent != null && !userAgent.isBlank()) {
+                return userAgent.length() > 90 ? userAgent.substring(0, 90) + "..." : userAgent;
+            }
+        }
+        return "POS Station Terminal";
+    }
+
     public static class LoginRequest {
         private String email;
         private String password;
+        private String ipAddress;
+        private String deviceInfo;
 
         public String getEmail() { return email; }
         public void setEmail(String email) { this.email = email; }
         public String getPassword() { return password; }
         public void setPassword(String password) { this.password = password; }
+        public String getIpAddress() { return ipAddress; }
+        public void setIpAddress(String ipAddress) { this.ipAddress = ipAddress; }
+        public String getDeviceInfo() { return deviceInfo; }
+        public void setDeviceInfo(String deviceInfo) { this.deviceInfo = deviceInfo; }
     }
 
     public static class PinLoginRequest {
         private String pin;
+        private String ipAddress;
+        private String deviceInfo;
+
         public String getPin() { return pin; }
         public void setPin(String pin) { this.pin = pin; }
+        public String getIpAddress() { return ipAddress; }
+        public void setIpAddress(String ipAddress) { this.ipAddress = ipAddress; }
+        public String getDeviceInfo() { return deviceInfo; }
+        public void setDeviceInfo(String deviceInfo) { this.deviceInfo = deviceInfo; }
     }
 
     public static class ManagerOverrideRequest {
@@ -62,10 +110,17 @@ public class AuthController {
     public static class FaceLoginRequest {
         private String staffId;
         private String facePhoto;
+        private String ipAddress;
+        private String deviceInfo;
+
         public String getStaffId() { return staffId; }
         public void setStaffId(String staffId) { this.staffId = staffId; }
         public String getFacePhoto() { return facePhoto; }
         public void setFacePhoto(String facePhoto) { this.facePhoto = facePhoto; }
+        public String getIpAddress() { return ipAddress; }
+        public void setIpAddress(String ipAddress) { this.ipAddress = ipAddress; }
+        public String getDeviceInfo() { return deviceInfo; }
+        public void setDeviceInfo(String deviceInfo) { this.deviceInfo = deviceInfo; }
     }
 
     public static class FaceOverrideRequest {
@@ -91,18 +146,24 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<?> login(@RequestBody LoginRequest request, HttpServletRequest servletRequest) {
         if (request.getEmail() == null || request.getPassword() == null) {
             return ResponseEntity.badRequest().body(Map.of("message", "Email and password are required"));
         }
 
-        Optional<User> user = authService.authenticate(request.getEmail(), request.getPassword());
+        String clientIp = extractClientIp(servletRequest, request.getIpAddress());
+        String deviceInfo = extractDeviceInfo(servletRequest, request.getDeviceInfo());
+
+        Optional<User> user = authService.authenticate(request.getEmail(), request.getPassword(), clientIp, deviceInfo);
         if (user.isPresent()) {
             User u = user.get();
             Map<String, Object> resp = new HashMap<>();
             resp.put("success", true);
             resp.put("token", "jwt-token-demo-" + u.getId() + "-" + System.currentTimeMillis());
             resp.put("user", u);
+            resp.put("clientIp", clientIp);
+            resp.put("deviceInfo", deviceInfo);
+            resp.put("authMethod", "PASSWORD");
             return ResponseEntity.ok(resp);
         }
 
@@ -111,18 +172,24 @@ public class AuthController {
     }
 
     @PostMapping("/pin-login")
-    public ResponseEntity<?> pinLogin(@RequestBody PinLoginRequest request) {
+    public ResponseEntity<?> pinLogin(@RequestBody PinLoginRequest request, HttpServletRequest servletRequest) {
         if (request.getPin() == null || request.getPin().isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("message", "PIN is required"));
         }
 
-        Optional<User> user = authService.authenticatePin(request.getPin());
+        String clientIp = extractClientIp(servletRequest, request.getIpAddress());
+        String deviceInfo = extractDeviceInfo(servletRequest, request.getDeviceInfo());
+
+        Optional<User> user = authService.authenticatePin(request.getPin(), clientIp, deviceInfo);
         if (user.isPresent()) {
             User u = user.get();
             Map<String, Object> resp = new HashMap<>();
             resp.put("success", true);
             resp.put("token", "jwt-token-demo-" + u.getId() + "-" + System.currentTimeMillis());
             resp.put("user", u);
+            resp.put("clientIp", clientIp);
+            resp.put("deviceInfo", deviceInfo);
+            resp.put("authMethod", "PIN");
             return ResponseEntity.ok(resp);
         }
 
@@ -153,18 +220,23 @@ public class AuthController {
     }
 
     @PostMapping("/face-login")
-    public ResponseEntity<?> faceLogin(@RequestBody FaceLoginRequest request) {
+    public ResponseEntity<?> faceLogin(@RequestBody FaceLoginRequest request, HttpServletRequest servletRequest) {
         if (request.getStaffId() == null || request.getStaffId().isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("message", "Staff ID or Name is required for Face Biometric match"));
         }
 
-        Optional<User> user = authService.authenticateFace(request.getStaffId());
+        String clientIp = extractClientIp(servletRequest, request.getIpAddress());
+        String deviceInfo = extractDeviceInfo(servletRequest, request.getDeviceInfo());
+
+        Optional<User> user = authService.authenticateFace(request.getStaffId(), clientIp, deviceInfo);
         if (user.isPresent()) {
             User u = user.get();
             Map<String, Object> resp = new HashMap<>();
             resp.put("success", true);
             resp.put("token", "jwt-face-token-" + u.getId() + "-" + System.currentTimeMillis());
             resp.put("user", u);
+            resp.put("clientIp", clientIp);
+            resp.put("deviceInfo", deviceInfo);
             resp.put("authMethod", "FACE_BIOMETRIC");
             return ResponseEntity.ok(resp);
         }
@@ -301,5 +373,17 @@ public class AuthController {
     @GetMapping("/audit-logs")
     public ResponseEntity<List<AuditLog>> getAuditLogs() {
         return ResponseEntity.ok(authService.getAuditLogs());
+    }
+
+    @GetMapping("/device-info")
+    public ResponseEntity<?> getClientDeviceInfo(HttpServletRequest servletRequest) {
+        String ip = extractClientIp(servletRequest, null);
+        String userAgent = servletRequest.getHeader("User-Agent");
+        return ResponseEntity.ok(Map.of(
+                "ipAddress", ip,
+                "userAgent", userAgent != null ? userAgent : "Standard Browser",
+                "serverTime", java.time.LocalDateTime.now().toString(),
+                "status", "SECURE_TLS"
+        ));
     }
 }

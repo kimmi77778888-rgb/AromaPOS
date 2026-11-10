@@ -571,6 +571,10 @@ export const DEMO_USERS = [
     phone: "+855 12 345 673",
     avatar: "",
     faceEnrolled: false,
+    lastLoginIp: "103.216.54.12",
+    lastLoginDevice: "Desktop • Windows 11 (Chrome 124)",
+    lastLoginAt: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
+    lastLoginMethod: "PASSWORD",
     permissions: [
       'canAccessPos', 'canAccessKds', 'canAccessDashboard', 'canAccessInventory', 
       'canAccessOrders', 'canAccessReports', 'canPerformOverrides', 'canSeeExpectedCash', 
@@ -590,6 +594,10 @@ export const DEMO_USERS = [
     phone: "+855 12 345 672",
     avatar: "",
     faceEnrolled: false,
+    lastLoginIp: "192.168.1.102 (Manager Pad)",
+    lastLoginDevice: "Tablet • iPad Pro (Safari 17)",
+    lastLoginAt: new Date(Date.now() - 140 * 60 * 1000).toISOString(),
+    lastLoginMethod: "PIN",
     permissions: [
       'canAccessPos', 'canAccessKds', 'canAccessDashboard', 'canAccessInventory', 
       'canAccessOrders', 'canAccessReports', 'canPerformOverrides', 'canSeeExpectedCash', 
@@ -609,6 +617,10 @@ export const DEMO_USERS = [
     phone: "+855 12 345 674",
     avatar: "",
     faceEnrolled: false,
+    lastLoginIp: "192.168.1.105 (POS Station #01)",
+    lastLoginDevice: "POS Terminal • Windows 10 (POS Kiosk)",
+    lastLoginAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+    lastLoginMethod: "PIN",
     permissions: [
       'canAccessPos', 'canAccessOrders'
     ]
@@ -626,6 +638,10 @@ export const DEMO_USERS = [
     phone: "+855 12 345 671",
     avatar: "",
     faceEnrolled: false,
+    lastLoginIp: "192.168.1.108 (Kitchen KDS)",
+    lastLoginDevice: "Tablet • Android 13 (Chrome 122)",
+    lastLoginAt: new Date(Date.now() - 220 * 60 * 1000).toISOString(),
+    lastLoginMethod: "FACE_BIOMETRIC",
     permissions: [
       'canAccessKds', 'canAccessOrders'
     ]
@@ -643,6 +659,10 @@ export const DEMO_USERS = [
     phone: "+855 12 345 675",
     avatar: "",
     faceEnrolled: false,
+    lastLoginIp: "103.216.54.88 (HQ VPN)",
+    lastLoginDevice: "Desktop • macOS Sonoma (Safari 17)",
+    lastLoginAt: new Date(Date.now() - 340 * 60 * 1000).toISOString(),
+    lastLoginMethod: "PASSWORD",
     permissions: [
       'canAccessPos', 'canAccessDashboard', 'canAccessOrders', 'canAccessReports', 
       'canPerformOverrides', 'canSeeExpectedCash', 'canManageStaff'
