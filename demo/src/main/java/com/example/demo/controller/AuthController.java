@@ -1,6 +1,7 @@
 package com.example.demo.controller;
 
 import com.example.demo.model.AuditLog;
+import com.example.demo.model.DeviceTravelBreadcrumb;
 import com.example.demo.model.User;
 import com.example.demo.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -62,6 +63,11 @@ public class AuthController {
         private String ipAddress;
         private String deviceInfo;
         private String location;
+        private Double latitude;
+        private Double longitude;
+        private String isp;
+        private Double speed;
+        private Double accuracy;
 
         public String getEmail() { return email; }
         public void setEmail(String email) { this.email = email; }
@@ -73,6 +79,16 @@ public class AuthController {
         public void setDeviceInfo(String deviceInfo) { this.deviceInfo = deviceInfo; }
         public String getLocation() { return location; }
         public void setLocation(String location) { this.location = location; }
+        public Double getLatitude() { return latitude; }
+        public void setLatitude(Double latitude) { this.latitude = latitude; }
+        public Double getLongitude() { return longitude; }
+        public void setLongitude(Double longitude) { this.longitude = longitude; }
+        public String getIsp() { return isp; }
+        public void setIsp(String isp) { this.isp = isp; }
+        public Double getSpeed() { return speed; }
+        public void setSpeed(Double speed) { this.speed = speed; }
+        public Double getAccuracy() { return accuracy; }
+        public void setAccuracy(Double accuracy) { this.accuracy = accuracy; }
     }
 
     public static class PinLoginRequest {
@@ -80,6 +96,11 @@ public class AuthController {
         private String ipAddress;
         private String deviceInfo;
         private String location;
+        private Double latitude;
+        private Double longitude;
+        private String isp;
+        private Double speed;
+        private Double accuracy;
 
         public String getPin() { return pin; }
         public void setPin(String pin) { this.pin = pin; }
@@ -89,6 +110,16 @@ public class AuthController {
         public void setDeviceInfo(String deviceInfo) { this.deviceInfo = deviceInfo; }
         public String getLocation() { return location; }
         public void setLocation(String location) { this.location = location; }
+        public Double getLatitude() { return latitude; }
+        public void setLatitude(Double latitude) { this.latitude = latitude; }
+        public Double getLongitude() { return longitude; }
+        public void setLongitude(Double longitude) { this.longitude = longitude; }
+        public String getIsp() { return isp; }
+        public void setIsp(String isp) { this.isp = isp; }
+        public Double getSpeed() { return speed; }
+        public void setSpeed(Double speed) { this.speed = speed; }
+        public Double getAccuracy() { return accuracy; }
+        public void setAccuracy(Double accuracy) { this.accuracy = accuracy; }
     }
 
     public static class ManagerOverrideRequest {
@@ -119,6 +150,11 @@ public class AuthController {
         private String ipAddress;
         private String deviceInfo;
         private String location;
+        private Double latitude;
+        private Double longitude;
+        private String isp;
+        private Double speed;
+        private Double accuracy;
 
         public String getStaffId() { return staffId; }
         public void setStaffId(String staffId) { this.staffId = staffId; }
@@ -130,6 +166,59 @@ public class AuthController {
         public void setDeviceInfo(String deviceInfo) { this.deviceInfo = deviceInfo; }
         public String getLocation() { return location; }
         public void setLocation(String location) { this.location = location; }
+        public Double getLatitude() { return latitude; }
+        public void setLatitude(Double latitude) { this.latitude = latitude; }
+        public Double getLongitude() { return longitude; }
+        public void setLongitude(Double longitude) { this.longitude = longitude; }
+        public String getIsp() { return isp; }
+        public void setIsp(String isp) { this.isp = isp; }
+        public Double getSpeed() { return speed; }
+        public void setSpeed(Double speed) { this.speed = speed; }
+        public Double getAccuracy() { return accuracy; }
+        public void setAccuracy(Double accuracy) { this.accuracy = accuracy; }
+    }
+
+    public static class DeviceTravelPingRequest {
+        private String userId;
+        private String userName;
+        private String userRole;
+        private String deviceId;
+        private String deviceInfo;
+        private String ipAddress;
+        private String location;
+        private Double latitude;
+        private Double longitude;
+        private Double accuracy;
+        private Double speed;
+        private String isp;
+        private String activity;
+
+        public String getUserId() { return userId; }
+        public void setUserId(String userId) { this.userId = userId; }
+        public String getUserName() { return userName; }
+        public void setUserName(String userName) { this.userName = userName; }
+        public String getUserRole() { return userRole; }
+        public void setUserRole(String userRole) { this.userRole = userRole; }
+        public String getDeviceId() { return deviceId; }
+        public void setDeviceId(String deviceId) { this.deviceId = deviceId; }
+        public String getDeviceInfo() { return deviceInfo; }
+        public void setDeviceInfo(String deviceInfo) { this.deviceInfo = deviceInfo; }
+        public String getIpAddress() { return ipAddress; }
+        public void setIpAddress(String ipAddress) { this.ipAddress = ipAddress; }
+        public String getLocation() { return location; }
+        public void setLocation(String location) { this.location = location; }
+        public Double getLatitude() { return latitude; }
+        public void setLatitude(Double latitude) { this.latitude = latitude; }
+        public Double getLongitude() { return longitude; }
+        public void setLongitude(Double longitude) { this.longitude = longitude; }
+        public Double getAccuracy() { return accuracy; }
+        public void setAccuracy(Double accuracy) { this.accuracy = accuracy; }
+        public Double getSpeed() { return speed; }
+        public void setSpeed(Double speed) { this.speed = speed; }
+        public String getIsp() { return isp; }
+        public void setIsp(String isp) { this.isp = isp; }
+        public String getActivity() { return activity; }
+        public void setActivity(String activity) { this.activity = activity; }
     }
 
     public static class FaceOverrideRequest {
@@ -163,8 +252,11 @@ public class AuthController {
         String clientIp = extractClientIp(servletRequest, request.getIpAddress());
         String deviceInfo = extractDeviceInfo(servletRequest, request.getDeviceInfo());
         String location = request.getLocation() != null && !request.getLocation().isBlank() ? request.getLocation().trim() : "Phnom Penh, Cambodia 🇰🇭";
+        Double lat = request.getLatitude() != null ? request.getLatitude() : 11.5564;
+        Double lon = request.getLongitude() != null ? request.getLongitude() : 104.9282;
+        String isp = request.getIsp() != null && !request.getIsp().isBlank() ? request.getIsp() : "Broadband ISP";
 
-        Optional<User> user = authService.authenticate(request.getEmail(), request.getPassword(), clientIp, deviceInfo, location);
+        Optional<User> user = authService.authenticate(request.getEmail(), request.getPassword(), clientIp, deviceInfo, location, lat, lon, isp);
         if (user.isPresent()) {
             User u = user.get();
             Map<String, Object> resp = new HashMap<>();
@@ -174,6 +266,9 @@ public class AuthController {
             resp.put("clientIp", clientIp);
             resp.put("deviceInfo", deviceInfo);
             resp.put("location", u.getLastLoginLocation());
+            resp.put("latitude", u.getLastLoginLatitude());
+            resp.put("longitude", u.getLastLoginLongitude());
+            resp.put("isp", u.getLastLoginIsp());
             resp.put("authMethod", "PASSWORD");
             return ResponseEntity.ok(resp);
         }
@@ -191,8 +286,11 @@ public class AuthController {
         String clientIp = extractClientIp(servletRequest, request.getIpAddress());
         String deviceInfo = extractDeviceInfo(servletRequest, request.getDeviceInfo());
         String location = request.getLocation() != null && !request.getLocation().isBlank() ? request.getLocation().trim() : "Phnom Penh, Cambodia 🇰🇭";
+        Double lat = request.getLatitude() != null ? request.getLatitude() : 11.5564;
+        Double lon = request.getLongitude() != null ? request.getLongitude() : 104.9282;
+        String isp = request.getIsp() != null && !request.getIsp().isBlank() ? request.getIsp() : "Store POS LAN";
 
-        Optional<User> user = authService.authenticatePin(request.getPin(), clientIp, deviceInfo, location);
+        Optional<User> user = authService.authenticatePin(request.getPin(), clientIp, deviceInfo, location, lat, lon, isp);
         if (user.isPresent()) {
             User u = user.get();
             Map<String, Object> resp = new HashMap<>();
@@ -202,13 +300,14 @@ public class AuthController {
             resp.put("clientIp", clientIp);
             resp.put("deviceInfo", deviceInfo);
             resp.put("location", u.getLastLoginLocation());
+            resp.put("latitude", u.getLastLoginLatitude());
+            resp.put("longitude", u.getLastLoginLongitude());
+            resp.put("isp", u.getLastLoginIsp());
             resp.put("authMethod", "PIN");
             return ResponseEntity.ok(resp);
         }
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(Map.of("message", "Invalid 4-digit PIN code"));
-    }
                 .body(Map.of("message", "Invalid 4-digit PIN code"));
     }
 
@@ -243,8 +342,11 @@ public class AuthController {
         String clientIp = extractClientIp(servletRequest, request.getIpAddress());
         String deviceInfo = extractDeviceInfo(servletRequest, request.getDeviceInfo());
         String location = request.getLocation() != null && !request.getLocation().isBlank() ? request.getLocation().trim() : "Phnom Penh, Cambodia 🇰🇭";
+        Double lat = request.getLatitude() != null ? request.getLatitude() : 11.5564;
+        Double lon = request.getLongitude() != null ? request.getLongitude() : 104.9282;
+        String isp = request.getIsp() != null && !request.getIsp().isBlank() ? request.getIsp() : "Biometric Sensor Network";
 
-        Optional<User> user = authService.authenticateFace(request.getStaffId(), clientIp, deviceInfo, location);
+        Optional<User> user = authService.authenticateFace(request.getStaffId(), clientIp, deviceInfo, location, lat, lon, isp);
         if (user.isPresent()) {
             User u = user.get();
             Map<String, Object> resp = new HashMap<>();
@@ -254,6 +356,9 @@ public class AuthController {
             resp.put("clientIp", clientIp);
             resp.put("deviceInfo", deviceInfo);
             resp.put("location", u.getLastLoginLocation());
+            resp.put("latitude", u.getLastLoginLatitude());
+            resp.put("longitude", u.getLastLoginLongitude());
+            resp.put("isp", u.getLastLoginIsp());
             resp.put("authMethod", "FACE_BIOMETRIC");
             return ResponseEntity.ok(resp);
         }
@@ -390,6 +495,45 @@ public class AuthController {
     @GetMapping("/audit-logs")
     public ResponseEntity<List<AuditLog>> getAuditLogs() {
         return ResponseEntity.ok(authService.getAuditLogs());
+    }
+
+    @GetMapping("/device-travel")
+    public ResponseEntity<List<DeviceTravelBreadcrumb>> getDeviceTravelAll() {
+        return ResponseEntity.ok(authService.getDeviceTravelBreadcrumbs(null));
+    }
+
+    @GetMapping("/device-travel/{userId}")
+    public ResponseEntity<List<DeviceTravelBreadcrumb>> getDeviceTravelUser(@PathVariable String userId) {
+        return ResponseEntity.ok(authService.getDeviceTravelBreadcrumbs(userId));
+    }
+
+    @PostMapping("/device-travel/ping")
+    public ResponseEntity<?> recordDeviceTravelPing(@RequestBody DeviceTravelPingRequest req, HttpServletRequest servletRequest) {
+        String clientIp = extractClientIp(servletRequest, req.getIpAddress());
+        String deviceInfo = extractDeviceInfo(servletRequest, req.getDeviceInfo());
+        String loc = req.getLocation() != null && !req.getLocation().isBlank() ? req.getLocation() : "Phnom Penh, Cambodia 🇰🇭";
+        Double lat = req.getLatitude() != null ? req.getLatitude() : 11.5564;
+        Double lon = req.getLongitude() != null ? req.getLongitude() : 104.9282;
+
+        DeviceTravelBreadcrumb b = new DeviceTravelBreadcrumb(
+                "tb-" + System.currentTimeMillis() + "-" + (int)(Math.random() * 1000),
+                req.getUserId() != null ? req.getUserId() : "usr-anon",
+                req.getUserName() != null ? req.getUserName() : "Active Device",
+                req.getUserRole() != null ? req.getUserRole() : "STAFF",
+                req.getDeviceId() != null ? req.getDeviceId() : "DEV-POS",
+                deviceInfo,
+                clientIp,
+                loc,
+                lat,
+                lon,
+                req.getAccuracy() != null ? req.getAccuracy() : 10.0,
+                req.getSpeed() != null ? req.getSpeed() : 0.0,
+                req.getIsp() != null ? req.getIsp() : "Broadband ISP",
+                req.getActivity() != null ? req.getActivity() : "MOVING"
+        );
+
+        authService.recordDeviceTravelBreadcrumb(b);
+        return ResponseEntity.ok(Map.of("success", true, "breadcrumb", b));
     }
 
     @GetMapping("/device-info")

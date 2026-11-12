@@ -1,5 +1,7 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
+import { api } from '../../services/api';
+import { startLiveDeviceTracking } from '../../utils/deviceDetector';
 import {
   MapPin,
   Navigation,
@@ -18,7 +20,15 @@ import {
   ExternalLink,
   X,
   Wifi,
-  Compass
+  Compass,
+  Play,
+  Pause,
+  RotateCcw,
+  Route,
+  Activity,
+  Gauge,
+  Clock,
+  Car
 } from 'lucide-react';
 
 const MAP_LAYERS = {
@@ -45,6 +55,22 @@ const MAP_LAYERS = {
   }
 };
 
+// Haversine distance calculator between 2 GPS coordinates in km
+const calculateDistanceKm = (lat1, lon1, lat2, lon2) => {
+  if (!lat1 || !lon1 || !lat2 || !lon2) return 0;
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.round(R * c * 10) / 10;
+};
+
 export const LiveDeviceMap = ({
   sessions = [],
   focusedSessionId = null,
@@ -57,23 +83,73 @@ export const LiveDeviceMap = ({
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersRef = useRef([]);
+  const routeLayerRef = useRef(null);
+  const routeMarkersRef = useRef([]);
+  const movingTracerRef = useRef(null);
   const tileLayerRef = useRef(null);
+  const playbackTimerRef = useRef(null);
 
   const [activeLayer, setActiveLayer] = useState('dark');
   const [selectedSession, setSelectedSession] = useState(null);
   const [isLocatingUser, setIsLocatingUser] = useState(false);
-  const [userGpsPosition, setUserGpsPosition] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [lastRefreshed, setLastRefreshed] = useState(new Date());
+
+  // Travel Route State
+  const [showTravelRoute, setShowTravelRoute] = useState(true);
+  const [selectedStaffRoute, setSelectedStaffRoute] = useState('ALL');
+  const [travelBreadcrumbs, setTravelBreadcrumbs] = useState([]);
+  const [isPlayingRoute, setIsPlayingRoute] = useState(false);
+  const [playbackIndex, setPlaybackIndex] = useState(0);
+  const [playbackSpeed, setPlaybackSpeed] = useState(1);
+  const [isLiveBeaconActive, setIsLiveBeaconActive] = useState(false);
+
+  // Load Travel Breadcrumbs from API / Local Storage
+  const loadTravelData = useCallback(async () => {
+    try {
+      const data = await api.fetchDeviceTravel(selectedStaffRoute);
+      if (Array.isArray(data) && data.length > 0) {
+        setTravelBreadcrumbs(data);
+      }
+    } catch (e) {}
+    setLastRefreshed(new Date());
+  }, [selectedStaffRoute]);
+
+  useEffect(() => {
+    loadTravelData();
+  }, [loadTravelData]);
+
+  // Live Beacon Watcher
+  useEffect(() => {
+    if (!isLiveBeaconActive) return;
+    const stopWatcher = startLiveDeviceTracking((pos) => {
+      const newCrumb = {
+        id: 'live-' + Date.now(),
+        userId: 'current-user',
+        userName: isKhmer ? 'ឧបករណ៍បច្ចុប្បន្ន' : 'Current Active Station',
+        location: `GPS: ${pos.latitude.toFixed(4)}°, ${pos.longitude.toFixed(4)}° 📍`,
+        latitude: pos.latitude,
+        longitude: pos.longitude,
+        speed: pos.speed || 0,
+        accuracy: pos.accuracyMeters || 10,
+        isp: 'Live Device GPS Beacon',
+        activity: pos.speed > 5 ? 'MOVING' : 'STATIONARY',
+        timestamp: new Date().toISOString()
+      };
+      api.pingDeviceLocation(newCrumb);
+      setTravelBreadcrumbs((prev) => [...prev, newCrumb]);
+    });
+    return () => {
+      if (stopWatcher) stopWatcher();
+    };
+  }, [isLiveBeaconActive, isKhmer]);
 
   // Filter valid sessions with coordinates
   const mappedSessions = useMemo(() => {
     return (sessions || []).map((s, idx) => {
-      // Fallback coordinate mapping for Cambodia branches
       let lat = typeof s.latitude === 'number' ? s.latitude : 11.5564;
       let lon = typeof s.longitude === 'number' ? s.longitude : 104.9282;
 
-      // Jitter slightly if coordinates overlap exactly so pins don't cover each other
       const jitterLat = lat + ((idx % 3) - 1) * 0.0025;
       const jitterLon = lon + ((Math.floor(idx / 3) % 3) - 1) * 0.0025;
 
@@ -85,119 +161,129 @@ export const LiveDeviceMap = ({
     });
   }, [sessions]);
 
-  // Count active vs idle
+  // Route points sorted chronologically
+  const activeRoutePoints = useMemo(() => {
+    let list = travelBreadcrumbs;
+    if (selectedStaffRoute !== 'ALL') {
+      list = list.filter((b) => b.userId === selectedStaffRoute || b.userName === selectedStaffRoute);
+    }
+    return [...list].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+  }, [travelBreadcrumbs, selectedStaffRoute]);
+
+  // Compute Total Travel Distance & Stats
+  const travelStats = useMemo(() => {
+    let dist = 0;
+    for (let i = 1; i < activeRoutePoints.length; i++) {
+      dist += calculateDistanceKm(
+        activeRoutePoints[i - 1].latitude,
+        activeRoutePoints[i - 1].longitude,
+        activeRoutePoints[i].latitude,
+        activeRoutePoints[i].longitude
+      );
+    }
+    const currentSpeed = activeRoutePoints.length > 0
+      ? activeRoutePoints[activeRoutePoints.length - 1].speed || 0
+      : 0;
+
+    return {
+      totalDistanceKm: Math.round(dist * 10) / 10,
+      totalStops: activeRoutePoints.length,
+      currentSpeed,
+      isMoving: currentSpeed > 5
+    };
+  }, [activeRoutePoints]);
+
   const activeCount = useMemo(() => {
     return mappedSessions.filter((s) => s.status === 'ACTIVE').length;
   }, [mappedSessions]);
 
-  // Initialize Leaflet Map
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (!mapContainerRef.current) return;
-    if (isModal && !isOpen) return;
+  // Clear travel route helper
+  const clearTravelRoute = (map) => {
+    if (routeLayerRef.current && map) {
+      map.removeLayer(routeLayerRef.current);
+      routeLayerRef.current = null;
+    }
+    if (map) {
+      routeMarkersRef.current.forEach((m) => map.removeLayer(m));
+    }
+    routeMarkersRef.current = [];
+    if (movingTracerRef.current && map) {
+      map.removeLayer(movingTracerRef.current);
+      movingTracerRef.current = null;
+    }
+  };
 
-    let isMounted = true;
+  // Render Travel Route Path and Milestone Pins
+  const renderTravelRoute = (L, map, points) => {
+    clearTravelRoute(map);
+    if (!points || points.length === 0) return;
 
-    // Dynamically import leaflet
-    import('leaflet').then((L) => {
-      if (!isMounted || !mapContainerRef.current) return;
+    const latlngs = points.map((p) => [p.latitude, p.longitude]);
 
-      // Clean up previous instance if exists
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
-      }
+    // 1. Draw Polyline Path with amber glow and dash
+    const polyline = L.polyline(latlngs, {
+      color: '#f59e0b',
+      weight: 4,
+      opacity: 0.9,
+      dashArray: '10, 8',
+      lineCap: 'round',
+      lineJoin: 'round'
+    }).addTo(map);
 
-      // Default center: Phnom Penh or first session
-      const defaultCenter = mappedSessions.length > 0 && mappedSessions[0].effectiveLat
-        ? [mappedSessions[0].effectiveLat, mappedSessions[0].effectiveLon]
-        : [11.5564, 104.9282];
+    routeLayerRef.current = polyline;
 
-      const map = L.map(mapContainerRef.current, {
-        center: defaultCenter,
-        zoom: 12,
-        zoomControl: false,
-        attributionControl: false
+    // 2. Render Checkpoint Milestone Pins (①, ②, ③, ④)
+    points.forEach((pt, idx) => {
+      const isStart = idx === 0;
+      const isLatest = idx === points.length - 1;
+      const stopNum = idx + 1;
+      const timeStr = pt.timestamp ? new Date(pt.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+
+      const milestoneHtml = `
+        <div class="relative cursor-pointer group" style="transform: translate(-50%, -50%);">
+          <div class="relative w-6 h-6 rounded-full flex items-center justify-center font-black text-[11px] border-2 shadow-lg transition-transform group-hover:scale-125 ${
+            isLatest
+              ? 'bg-rose-600 border-white text-white animate-pulse shadow-rose-950'
+              : isStart
+              ? 'bg-emerald-600 border-white text-white shadow-emerald-950'
+              : 'bg-stone-900 border-amber-400 text-amber-300'
+          }">
+            ${isLatest ? '📍' : stopNum}
+          </div>
+          <div class="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap px-1.5 py-0.5 rounded bg-stone-950/95 border border-stone-800 text-[9px] font-mono font-bold text-amber-200 pointer-events-none shadow">
+            ${timeStr}
+          </div>
+        </div>
+      `;
+
+      const icon = L.divIcon({
+        html: milestoneHtml,
+        className: 'route-milestone-pin',
+        iconSize: [24, 24],
+        iconAnchor: [12, 12]
       });
 
-      // Add Tile Layer
-      const cfg = MAP_LAYERS[activeLayer];
-      const tiles = L.tileLayer(cfg.url, {
-        attribution: cfg.attribution,
-        subdomains: cfg.subdomains,
-        maxZoom: cfg.maxZoom
-      }).addTo(map);
+      const marker = L.marker([pt.latitude, pt.longitude], { icon })
+        .addTo(map)
+        .bindPopup(`
+          <div class="p-2 text-xs font-sans text-stone-900">
+            <p class="font-extrabold text-sm mb-1">${pt.location || 'Store Checkpoint'}</p>
+            <p class="text-[11px] text-stone-600">Time: <strong>${new Date(pt.timestamp).toLocaleString()}</strong></p>
+            <p class="text-[11px] text-stone-600">Speed: <strong>${pt.speed || 0} km/h</strong> • Accuracy: ±${pt.accuracy || 10}m</p>
+            <p class="text-[11px] text-stone-600">Network: <strong>${pt.isp || 'Broadband Network'}</strong></p>
+          </div>
+        `);
 
-      tileLayerRef.current = tiles;
-      mapInstanceRef.current = map;
-
-      // Zoom control in bottom right
-      L.control.zoom({ position: 'bottomright' }).addTo(map);
-
-      // Render Session Markers
-      renderMarkers(L, map, mappedSessions);
-
-      // Focus session if specified
-      if (focusedSessionId) {
-        const found = mappedSessions.find((s) => s.id === focusedSessionId);
-        if (found) {
-          map.setView([found.effectiveLat, found.effectiveLon], 15);
-          setSelectedSession(found);
-        }
-      }
-    }).catch((err) => {
-      console.error('Failed to load Leaflet:', err);
+      routeMarkersRef.current.push(marker);
     });
 
-    return () => {
-      isMounted = false;
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
-      }
-    };
-  }, [isOpen, isModal]);
+    try {
+      map.fitBounds(polyline.getBounds(), { padding: [40, 40], maxZoom: 15 });
+    } catch (e) {}
+  };
 
-  // Re-render markers when sessions change
-  useEffect(() => {
-    if (!mapInstanceRef.current) return;
-    import('leaflet').then((L) => {
-      if (mapInstanceRef.current) {
-        renderMarkers(L, mapInstanceRef.current, mappedSessions);
-      }
-    });
-  }, [mappedSessions]);
-
-  // Switch Tile Layer
-  useEffect(() => {
-    if (!mapInstanceRef.current || !tileLayerRef.current) return;
-    import('leaflet').then((L) => {
-      const cfg = MAP_LAYERS[activeLayer];
-      if (tileLayerRef.current) {
-        mapInstanceRef.current.removeLayer(tileLayerRef.current);
-      }
-      const newTiles = L.tileLayer(cfg.url, {
-        attribution: cfg.attribution,
-        subdomains: cfg.subdomains,
-        maxZoom: cfg.maxZoom
-      }).addTo(mapInstanceRef.current);
-      tileLayerRef.current = newTiles;
-    });
-  }, [activeLayer]);
-
-  // Handle focused session update
-  useEffect(() => {
-    if (!mapInstanceRef.current || !focusedSessionId) return;
-    const found = mappedSessions.find((s) => s.id === focusedSessionId);
-    if (found) {
-      mapInstanceRef.current.flyTo([found.effectiveLat, found.effectiveLon], 15, { duration: 1.2 });
-      setSelectedSession(found);
-    }
-  }, [focusedSessionId, mappedSessions]);
-
-  // Render Custom Animated HTML Markers
+  // Render Static Stations Markers
   const renderMarkers = (L, map, items) => {
-    // Clear old markers
     markersRef.current.forEach((m) => map.removeLayer(m));
     markersRef.current = [];
 
@@ -205,7 +291,6 @@ export const LiveDeviceMap = ({
       const isActive = s.status === 'ACTIVE';
       const isSelected = selectedSession?.id === s.id;
 
-      // Custom HTML Pin
       const pinHtml = `
         <div class="relative group cursor-pointer" style="transform: translate(-50%, -50%);">
           ${isActive ? `
@@ -249,6 +334,178 @@ export const LiveDeviceMap = ({
     });
   };
 
+  // Initialize Leaflet Map
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!mapContainerRef.current) return;
+    if (isModal && !isOpen) return;
+
+    let isMounted = true;
+
+    import('leaflet').then((L) => {
+      if (!isMounted || !mapContainerRef.current) return;
+
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+
+      const defaultCenter = mappedSessions.length > 0 && mappedSessions[0].effectiveLat
+        ? [mappedSessions[0].effectiveLat, mappedSessions[0].effectiveLon]
+        : [11.5564, 104.9282];
+
+      const map = L.map(mapContainerRef.current, {
+        center: defaultCenter,
+        zoom: 13,
+        zoomControl: false,
+        attributionControl: false
+      });
+
+      const cfg = MAP_LAYERS[activeLayer];
+      const tiles = L.tileLayer(cfg.url, {
+        attribution: cfg.attribution,
+        subdomains: cfg.subdomains,
+        maxZoom: cfg.maxZoom
+      }).addTo(map);
+
+      tileLayerRef.current = tiles;
+      mapInstanceRef.current = map;
+
+      L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+      renderMarkers(L, map, mappedSessions);
+
+      if (showTravelRoute && activeRoutePoints.length > 0) {
+        renderTravelRoute(L, map, activeRoutePoints);
+      }
+
+      if (focusedSessionId) {
+        const found = mappedSessions.find((s) => s.id === focusedSessionId);
+        if (found) {
+          map.setView([found.effectiveLat, found.effectiveLon], 15);
+          setSelectedSession(found);
+        }
+      }
+    }).catch((err) => {
+      console.error('Failed to load Leaflet:', err);
+    });
+
+    return () => {
+      isMounted = false;
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+    };
+  }, [isOpen, isModal]);
+
+  // Update Stations Markers
+  useEffect(() => {
+    if (!mapInstanceRef.current) return;
+    import('leaflet').then((L) => {
+      if (mapInstanceRef.current) {
+        renderMarkers(L, mapInstanceRef.current, mappedSessions);
+      }
+    });
+  }, [mappedSessions]);
+
+  // Switch Tile Layer
+  useEffect(() => {
+    if (!mapInstanceRef.current || !tileLayerRef.current) return;
+    import('leaflet').then((L) => {
+      const cfg = MAP_LAYERS[activeLayer];
+      if (tileLayerRef.current) {
+        mapInstanceRef.current.removeLayer(tileLayerRef.current);
+      }
+      const newTiles = L.tileLayer(cfg.url, {
+        attribution: cfg.attribution,
+        subdomains: cfg.subdomains,
+        maxZoom: cfg.maxZoom
+      }).addTo(mapInstanceRef.current);
+      tileLayerRef.current = newTiles;
+    });
+  }, [activeLayer]);
+
+  // Re-draw Travel Route when Route Points or Toggle Changes
+  useEffect(() => {
+    if (!mapInstanceRef.current) return;
+    import('leaflet').then((L) => {
+      if (showTravelRoute && activeRoutePoints.length > 0) {
+        renderTravelRoute(L, mapInstanceRef.current, activeRoutePoints);
+      } else {
+        clearTravelRoute(mapInstanceRef.current);
+      }
+    });
+  }, [showTravelRoute, activeRoutePoints]);
+
+  // Animated Route Playback Controller
+  useEffect(() => {
+    if (!isPlayingRoute) {
+      if (playbackTimerRef.current) clearInterval(playbackTimerRef.current);
+      return;
+    }
+
+    if (activeRoutePoints.length === 0) return;
+
+    const intervalTime = Math.max(800, 2000 / playbackSpeed);
+
+    playbackTimerRef.current = setInterval(() => {
+      setPlaybackIndex((prevIdx) => {
+        const nextIdx = prevIdx + 1;
+        if (nextIdx >= activeRoutePoints.length) {
+          setIsPlayingRoute(false);
+          return activeRoutePoints.length - 1;
+        }
+
+        const currentPoint = activeRoutePoints[nextIdx];
+        if (mapInstanceRef.current && currentPoint) {
+          import('leaflet').then((L) => {
+            const tracerHtml = `
+              <div class="relative flex items-center justify-center cursor-pointer" style="transform: translate(-50%, -50%);">
+                <div class="absolute -inset-3 rounded-full bg-amber-500/40 animate-ping"></div>
+                <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-amber-500 to-rose-500 border-2 border-white text-white flex items-center justify-center shadow-xl shadow-amber-950 font-bold text-xs">
+                  🚗
+                </div>
+              </div>
+            `;
+            const tracerIcon = L.divIcon({
+              html: tracerHtml,
+              className: 'travel-tracer-icon',
+              iconSize: [32, 32],
+              iconAnchor: [16, 16]
+            });
+
+            if (movingTracerRef.current) {
+              movingTracerRef.current.setLatLng([currentPoint.latitude, currentPoint.longitude]);
+            } else {
+              movingTracerRef.current = L.marker([currentPoint.latitude, currentPoint.longitude], { icon: tracerIcon })
+                .addTo(mapInstanceRef.current);
+            }
+
+            mapInstanceRef.current.panTo([currentPoint.latitude, currentPoint.longitude], { animate: true, duration: 0.8 });
+          });
+        }
+        return nextIdx;
+      });
+    }, intervalTime);
+
+    return () => {
+      if (playbackTimerRef.current) clearInterval(playbackTimerRef.current);
+    };
+  }, [isPlayingRoute, activeRoutePoints, playbackSpeed]);
+
+  const handleResetPlayback = () => {
+    setIsPlayingRoute(false);
+    setPlaybackIndex(0);
+    if (activeRoutePoints.length > 0 && mapInstanceRef.current) {
+      const first = activeRoutePoints[0];
+      mapInstanceRef.current.panTo([first.latitude, first.longitude]);
+      if (movingTracerRef.current) {
+        movingTracerRef.current.setLatLng([first.latitude, first.longitude]);
+      }
+    }
+  };
+
   // Locate Current Device with GPS
   const handleLocateMyDevice = () => {
     if (typeof window === 'undefined' || !navigator.geolocation) {
@@ -261,7 +518,6 @@ export const LiveDeviceMap = ({
       (pos) => {
         setIsLocatingUser(false);
         const { latitude, longitude } = pos.coords;
-        setUserGpsPosition({ latitude, longitude });
 
         if (mapInstanceRef.current) {
           import('leaflet').then((L) => {
@@ -289,7 +545,6 @@ export const LiveDeviceMap = ({
       },
       () => {
         setIsLocatingUser(false);
-        // Fallback to Phnom Penh
         if (mapInstanceRef.current) {
           mapInstanceRef.current.flyTo([11.5564, 104.9282], 14);
         }
@@ -298,54 +553,75 @@ export const LiveDeviceMap = ({
     );
   };
 
-  // Center on Cambodia bounds
-  const handleFitCambodia = () => {
-    if (!mapInstanceRef.current) return;
-    mapInstanceRef.current.flyTo([12.5657, 104.9910], 8, { duration: 1 });
-  };
-
   if (isModal && !isOpen) return null;
 
   const content = (
-    <div className={`relative flex flex-col bg-stone-950 border border-stone-800 rounded-2xl overflow-hidden shadow-2xl ${className} ${isFullscreen ? 'fixed inset-0 z-[100] rounded-none border-0' : 'h-[620px]'}`}>
+    <div className={`relative flex flex-col bg-stone-950 border border-stone-800 rounded-2xl overflow-hidden shadow-2xl ${className} ${isFullscreen ? 'fixed inset-0 z-[100] rounded-none border-0' : 'h-[660px]'}`}>
       
       {/* Top Map Toolbar */}
-      <div className="z-10 bg-stone-900/90 backdrop-blur-md border-b border-stone-800 px-4 py-3 flex flex-wrap items-center justify-between gap-3">
-        {/* Left: Title & Live Indicator */}
+      <div className="z-10 bg-stone-900/95 backdrop-blur-md border-b border-stone-800 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
+        {/* Left: Title, Live Stats & Beacon Status */}
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500 to-rose-600 flex items-center justify-center text-white shadow-lg shadow-amber-950/50">
             <Globe className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="font-extrabold text-sm text-stone-100 tracking-tight flex items-center gap-1.5">
-                <span>{isKhmer ? 'ផែនទីផ្ទៀងផ្ទាត់ទីតាំងឧបករណ៍ផ្ទាល់' : 'Real-Time Device Geolocation Map'}</span>
+              <h3 className="font-extrabold text-sm text-stone-100 tracking-tight">
+                {isKhmer ? 'ផែនទីផ្ទៀងផ្ទាត់ទីតាំង & ផ្លូវធ្វើដំណើរផ្ទាល់' : 'Real-Time Device Location & Travel Tracker'}
               </h3>
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-mono text-[10px] font-bold">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span>{activeCount} {isKhmer ? 'ឧបករណ៍ Online' : 'Active Online'}</span>
+                <span>{activeCount} {isKhmer ? 'ស្ថានីយ Online' : 'Stations Online'}</span>
               </span>
             </div>
-            <p className="text-[11px] text-stone-400 flex items-center gap-1 mt-0.5">
-              <Shield className="w-3 h-3 text-cyan-400" />
-              <span>{isKhmer ? 'ផ្ទៀងផ្ទាត់សុវត្ថិភាព IP, GPS និងបណ្តាញ ISP' : 'Zero-Trust Geolocation & Network Audit'}</span>
+            <p className="text-[11px] text-stone-400 flex items-center gap-1.5 mt-0.5">
+              <Route className="w-3.5 h-3.5 text-amber-400" />
+              <span>{isKhmer ? 'ចម្ងាយធ្វើសរុប:' : 'Total Distance:'} <strong className="text-amber-300 font-mono">{travelStats.totalDistanceKm} km</strong> ({travelStats.totalStops} {isKhmer ? 'ទីតាំង' : 'Checkpoints'})</span>
               <span>•</span>
-              <span className="font-mono text-[10px] text-stone-500">
-                {isKhmer ? 'ធ្វើបច្ចុប្បន្នភាព' : 'Updated'}: {lastRefreshed.toLocaleTimeString()}
-              </span>
+              <span className="font-mono text-[10px] text-stone-500">{lastRefreshed.toLocaleTimeString()}</span>
             </p>
           </div>
         </div>
 
         {/* Right: Controls & Layer Switcher */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Travel Route Toggle */}
+          <button
+            type="button"
+            onClick={() => setShowTravelRoute(!showTravelRoute)}
+            className={`px-2.5 py-1.5 rounded-xl border font-bold text-xs flex items-center gap-1.5 transition cursor-pointer ${
+              showTravelRoute
+                ? 'bg-amber-500/20 border-amber-500/40 text-amber-300 shadow'
+                : 'bg-stone-900 border-stone-800 text-stone-400 hover:text-stone-200'
+            }`}
+            title={isKhmer ? 'បង្ហាញ ឬលាក់ផ្លូវធ្វើដំណើរ' : 'Toggle Device Travel Path'}
+          >
+            <Route className="w-3.5 h-3.5 text-amber-400" />
+            <span>{isKhmer ? 'ផ្លូវធ្វើដំណើរ' : 'Travel Path'}</span>
+          </button>
+
+          {/* Real-time Beacon Toggle */}
+          <button
+            type="button"
+            onClick={() => setIsLiveBeaconActive(!isLiveBeaconActive)}
+            className={`px-2.5 py-1.5 rounded-xl border font-bold text-xs flex items-center gap-1.5 transition cursor-pointer ${
+              isLiveBeaconActive
+                ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300 animate-pulse'
+                : 'bg-stone-900 border-stone-800 text-stone-400 hover:text-stone-200'
+            }`}
+            title={isKhmer ? 'បើកការចាប់យក GPS ពេលធ្វើដំណើរ' : 'Toggle Live GPS Beacon'}
+          >
+            <Radio className="w-3.5 h-3.5 text-emerald-400" />
+            <span>{isLiveBeaconActive ? (isKhmer ? 'Beacon កំពុងដើរ' : 'Beacon Active') : (isKhmer ? 'Beacon GPS' : 'Live Beacon')}</span>
+          </button>
+
           {/* Map Layer Switcher */}
           <div className="flex items-center p-0.5 rounded-xl bg-stone-950 border border-stone-800 text-[11px] font-bold">
             <button
               type="button"
               onClick={() => setActiveLayer('dark')}
               className={`px-2.5 py-1 rounded-lg transition ${activeLayer === 'dark' ? 'bg-stone-800 text-amber-300 shadow' : 'text-stone-400 hover:text-stone-200'}`}
-              title="CartoDB Dark Matter"
             >
               Dark
             </button>
@@ -353,7 +629,6 @@ export const LiveDeviceMap = ({
               type="button"
               onClick={() => setActiveLayer('street')}
               className={`px-2.5 py-1 rounded-lg transition ${activeLayer === 'street' ? 'bg-stone-800 text-amber-300 shadow' : 'text-stone-400 hover:text-stone-200'}`}
-              title="Street Voyager"
             >
               Street
             </button>
@@ -361,7 +636,6 @@ export const LiveDeviceMap = ({
               type="button"
               onClick={() => setActiveLayer('satellite')}
               className={`px-2.5 py-1 rounded-lg transition ${activeLayer === 'satellite' ? 'bg-stone-800 text-amber-300 shadow' : 'text-stone-400 hover:text-stone-200'}`}
-              title="Satellite Imagery"
             >
               Satellite
             </button>
@@ -372,22 +646,21 @@ export const LiveDeviceMap = ({
             type="button"
             onClick={handleLocateMyDevice}
             disabled={isLocatingUser}
-            className="px-3 py-1.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
+            className="px-2.5 py-1.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
             title={isKhmer ? 'ស្វែងរកទីតាំងឧបករណ៍បច្ចុប្បន្ន' : 'Locate My Station (GPS)'}
           >
             <Crosshair className={`w-3.5 h-3.5 ${isLocatingUser ? 'animate-spin' : ''}`} />
             <span className="hidden sm:inline">{isKhmer ? 'ទីតាំងខ្ញុំ' : 'My GPS'}</span>
           </button>
 
-          {/* Fit Cambodia */}
+          {/* Refresh Action */}
           <button
             type="button"
-            onClick={handleFitCambodia}
-            className="px-2.5 py-1.5 rounded-xl bg-stone-800 hover:bg-stone-750 border border-stone-700 text-stone-200 font-bold text-xs flex items-center gap-1 transition cursor-pointer"
-            title={isKhmer ? 'ពង្រីកមើលទូទាំងប្រទេសកម្ពុជា' : 'Fit Cambodia View'}
+            onClick={loadTravelData}
+            className="p-1.5 rounded-xl bg-stone-800 hover:bg-stone-750 border border-stone-700 text-stone-300 hover:text-stone-100 transition cursor-pointer"
+            title={isKhmer ? 'ទាញយកទិន្នន័យឡើងវិញ' : 'Refresh Data'}
           >
-            <Compass className="w-3.5 h-3.5 text-amber-400" />
-            <span className="hidden sm:inline">🇰🇭 {isKhmer ? 'កម្ពុជា' : 'Cambodia'}</span>
+            <RefreshCw className="w-3.5 h-3.5" />
           </button>
 
           {/* Fullscreen Toggle */}
@@ -400,7 +673,6 @@ export const LiveDeviceMap = ({
             {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
           </button>
 
-          {/* Close Modal (if in modal mode) */}
           {isModal && (
             <button
               type="button"
@@ -413,14 +685,59 @@ export const LiveDeviceMap = ({
         </div>
       </div>
 
-      {/* Main Map Body + Side Drawer */}
+      {/* Main Map Body + Floating Overlays */}
       <div className="relative flex-1 w-full h-full overflow-hidden">
         
-        {/* Leaflet Map Canvas */}
+        {/* Leaflet Canvas */}
         <div ref={mapContainerRef} className="absolute inset-0 z-0 w-full h-full bg-stone-950" />
 
-        {/* Floating Quick Jump Stations Selector */}
-        <div className="absolute top-3 left-3 z-10 flex flex-wrap gap-1.5 max-w-[80%] pointer-events-auto">
+        {/* Floating Travel Route Playback Bar (bottom center) */}
+        {showTravelRoute && activeRoutePoints.length > 1 && (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 bg-stone-950/95 backdrop-blur-xl border border-stone-800 rounded-2xl px-4 py-2.5 shadow-2xl flex items-center gap-3 pointer-events-auto">
+            {/* Play/Pause Button */}
+            <button
+              type="button"
+              onClick={() => setIsPlayingRoute(!isPlayingRoute)}
+              className="w-8 h-8 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 flex items-center justify-center font-bold shadow-lg transition cursor-pointer active:scale-95"
+              title={isPlayingRoute ? 'Pause Route' : 'Play Travel Animation'}
+            >
+              {isPlayingRoute ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 fill-stone-950 ml-0.5" />}
+            </button>
+
+            {/* Reset Button */}
+            <button
+              type="button"
+              onClick={handleResetPlayback}
+              className="p-1.5 rounded-xl bg-stone-900 hover:bg-stone-850 text-stone-400 hover:text-stone-200 border border-stone-800 transition cursor-pointer"
+              title="Reset Travel Animation"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+            </button>
+
+            {/* Speed Multiplier */}
+            <button
+              type="button"
+              onClick={() => setPlaybackSpeed((s) => (s === 1 ? 2 : s === 2 ? 4 : 1))}
+              className="px-2 py-1 rounded-lg bg-stone-900 border border-stone-800 text-[10px] font-mono font-bold text-amber-300 hover:bg-stone-850 transition"
+              title="Playback Speed"
+            >
+              {playbackSpeed}x Speed
+            </button>
+
+            {/* Current Stop Indicator */}
+            <div className="hidden sm:flex items-center gap-2 border-l border-stone-800 pl-3">
+              <span className="text-[11px] font-bold text-stone-200">
+                {isKhmer ? 'ចំណតទី' : 'Stop'} {playbackIndex + 1} / {activeRoutePoints.length}
+              </span>
+              <span className="text-[10px] font-mono text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
+                {activeRoutePoints[playbackIndex]?.speed || 0} km/h
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Floating Quick Stations & Route Filter Chips (top-left) */}
+        <div className="absolute top-3 left-3 z-10 flex flex-wrap gap-1.5 max-w-[85%] pointer-events-auto">
           {mappedSessions.map((s) => {
             const isSelected = selectedSession?.id === s.id;
             const isActive = s.status === 'ACTIVE';
@@ -450,7 +767,7 @@ export const LiveDeviceMap = ({
 
         {/* Selected Session Inspector Overlay Card */}
         {selectedSession && (
-          <div className="absolute bottom-4 left-4 right-4 sm:right-auto sm:w-96 z-10 bg-stone-950/95 backdrop-blur-xl border border-stone-800 rounded-2xl p-4 shadow-2xl animate-in fade-in slide-in-from-bottom-3 duration-200 pointer-events-auto">
+          <div className="absolute top-14 right-4 sm:w-96 z-10 bg-stone-950/95 backdrop-blur-xl border border-stone-800 rounded-2xl p-4 shadow-2xl animate-in fade-in slide-in-from-right-3 duration-200 pointer-events-auto">
             <div className="flex items-start justify-between gap-3 border-b border-stone-850 pb-3">
               <div className="flex items-center gap-2.5">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/20 to-rose-500/20 border border-amber-500/30 flex items-center justify-center text-amber-300 font-extrabold text-sm">
@@ -520,7 +837,7 @@ export const LiveDeviceMap = ({
               </div>
             </div>
 
-            {/* Google Maps External Button */}
+            {/* Actions */}
             <div className="mt-3 pt-2.5 border-t border-stone-850 flex items-center justify-between gap-2">
               <span className="text-[11px] font-mono text-stone-500">
                 Status: <strong className={selectedSession.status === 'ACTIVE' ? 'text-emerald-400' : 'text-stone-400'}>{selectedSession.status}</strong>
@@ -533,7 +850,7 @@ export const LiveDeviceMap = ({
                 className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-amber-950 transition"
               >
                 <Navigation className="w-3.5 h-3.5" />
-                <span>{isKhmer ? 'បើកលើ Google Maps' : 'Open in Google Maps'}</span>
+                <span>{isKhmer ? 'Google Maps' : 'Google Maps'}</span>
                 <ExternalLink className="w-3 h-3" />
               </a>
             </div>

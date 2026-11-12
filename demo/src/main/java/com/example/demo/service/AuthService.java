@@ -1,17 +1,20 @@
 package com.example.demo.service;
 
 import com.example.demo.model.AuditLog;
+import com.example.demo.model.DeviceTravelBreadcrumb;
 import com.example.demo.model.User;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 
 @Service
 public class AuthService {
     private final List<User> users = new CopyOnWriteArrayList<>();
     private final List<AuditLog> auditLogs = new CopyOnWriteArrayList<>();
+    private final List<DeviceTravelBreadcrumb> deviceTravelLogs = new CopyOnWriteArrayList<>();
 
     public AuthService() {
         // Standard Role Hierarchy (Admin, Manager, Cashier, Barista) - Clean start without stock internet model photos
@@ -148,17 +151,48 @@ public class AuthService {
                 "Self-Verified",
                 0.00
         ));
+
+        // Seed realistic Initial Device Travel Breadcrumbs across store network
+        LocalDateTime t0 = LocalDateTime.now().minusHours(4);
+        deviceTravelLogs.add(new DeviceTravelBreadcrumb(
+                "tb-101", "usr-3", "Marcus Thorne", "ADMIN", "POS-STATION-01", "Windows 11 Desktop",
+                "103.216.54.12", "BKK1 Flagship Store, Phnom Penh 🇰🇭", 11.5529, 104.9248, 5.0, 0.0, "Smart Axiata Co., Ltd.", "LOGIN", t0
+        ));
+
+        deviceTravelLogs.add(new DeviceTravelBreadcrumb(
+                "tb-102", "usr-3", "Marcus Thorne", "ADMIN", "Manager Tablet", "iPad Pro 12.9",
+                "103.216.54.15", "Norodom Blvd In-Transit, Phnom Penh 🇰🇭", 11.5620, 104.9290, 8.0, 32.5, "Cellcard 4G LTE", "MOVING", t0.plusHours(1)
+        ));
+
+        deviceTravelLogs.add(new DeviceTravelBreadcrumb(
+                "tb-103", "usr-3", "Marcus Thorne", "ADMIN", "Manager Tablet", "iPad Pro 12.9",
+                "103.216.54.22", "Riverside Roastery, Phnom Penh 🇰🇭", 11.5714, 104.9312, 4.0, 0.0, "CamNet Broadband", "CHECKPOINT", t0.plusHours(2)
+        ));
+
+        deviceTravelLogs.add(new DeviceTravelBreadcrumb(
+                "tb-104", "usr-3", "Marcus Thorne", "ADMIN", "Manager Tablet", "iPad Pro 12.9",
+                "103.216.54.30", "Russian Blvd In-Transit, Phnom Penh 🇰🇭", 11.5680, 104.9120, 9.0, 28.0, "Smart Axiata 5G", "MOVING", t0.plusHours(3)
+        ));
+
+        deviceTravelLogs.add(new DeviceTravelBreadcrumb(
+                "tb-105", "usr-3", "Marcus Thorne", "ADMIN", "POS-STATION-02", "Windows 11 POS Terminal",
+                "103.216.54.88", "Tuol Kork Branch, Phnom Penh 🇰🇭", 11.5739, 104.8985, 3.5, 0.0, "SINET Cambodia Fiber", "LOGIN", t0.plusHours(3).plusMinutes(45)
+        ));
     }
 
     public Optional<User> authenticate(String email, String password) {
-        return authenticate(email, password, null, null, null);
+        return authenticate(email, password, null, null, null, null, null, null);
     }
 
     public Optional<User> authenticate(String email, String password, String ipAddress, String deviceInfo) {
-        return authenticate(email, password, ipAddress, deviceInfo, null);
+        return authenticate(email, password, ipAddress, deviceInfo, null, null, null, null);
     }
 
     public Optional<User> authenticate(String email, String password, String ipAddress, String deviceInfo, String location) {
+        return authenticate(email, password, ipAddress, deviceInfo, location, null, null, null);
+    }
+
+    public Optional<User> authenticate(String email, String password, String ipAddress, String deviceInfo, String location, Double latitude, Double longitude, String isp) {
         if (email == null || password == null) return Optional.empty();
         String pass = password.trim();
         String mail = email.trim();
@@ -176,13 +210,26 @@ public class AuthService {
             String ip = (ipAddress != null && !ipAddress.isBlank()) ? ipAddress : "127.0.0.1 (POS Station)";
             String device = (deviceInfo != null && !deviceInfo.isBlank()) ? deviceInfo : "Standard POS Station";
             String loc = (location != null && !location.isBlank()) ? location : "Phnom Penh, Cambodia 🇰🇭";
+            Double lat = latitude != null ? latitude : 11.5564;
+            Double lon = longitude != null ? longitude : 104.9282;
+            String provider = (isp != null && !isp.isBlank()) ? isp : "Broadband ISP";
+
             u.setLastLoginIp(ip);
             u.setLastLoginDevice(device);
             u.setLastLoginLocation(loc);
+            u.setLastLoginLatitude(lat);
+            u.setLastLoginLongitude(lon);
+            u.setLastLoginIsp(provider);
             u.setLastLoginAt(LocalDateTime.now().toString());
             u.setLastLoginMethod("PASSWORD");
 
-            recordAudit("LOGIN_SUCCESS", "User authenticated into terminal from " + ip + " [" + loc + "]", u.getName() + " (" + u.getRole() + ")", ip, device, "PASSWORD", loc);
+            // Record real-time travel breadcrumb
+            recordDeviceTravelBreadcrumb(new DeviceTravelBreadcrumb(
+                    "tb-" + System.currentTimeMillis(), u.getId(), u.getName(), u.getRole(),
+                    "POS-" + u.getId(), device, ip, loc, lat, lon, 5.0, 0.0, provider, "LOGIN"
+            ));
+
+            recordAudit("LOGIN_SUCCESS", "User authenticated into terminal from " + ip + " [" + loc + "]", u.getName() + " (" + u.getRole() + ")", ip, device, "PASSWORD", loc, lat, lon);
             return Optional.of(u);
         } else {
             String ip = (ipAddress != null && !ipAddress.isBlank()) ? ipAddress : "127.0.0.1";
@@ -194,14 +241,18 @@ public class AuthService {
     }
 
     public Optional<User> authenticatePin(String pin) {
-        return authenticatePin(pin, null, null, null);
+        return authenticatePin(pin, null, null, null, null, null, null);
     }
 
     public Optional<User> authenticatePin(String pin, String ipAddress, String deviceInfo) {
-        return authenticatePin(pin, ipAddress, deviceInfo, null);
+        return authenticatePin(pin, ipAddress, deviceInfo, null, null, null, null);
     }
 
     public Optional<User> authenticatePin(String pin, String ipAddress, String deviceInfo, String location) {
+        return authenticatePin(pin, ipAddress, deviceInfo, location, null, null, null);
+    }
+
+    public Optional<User> authenticatePin(String pin, String ipAddress, String deviceInfo, String location, Double latitude, Double longitude, String isp) {
         if (pin == null || pin.isBlank()) return Optional.empty();
         String p = pin.trim();
         Optional<User> userOpt = users.stream()
@@ -213,13 +264,25 @@ public class AuthService {
             String ip = (ipAddress != null && !ipAddress.isBlank()) ? ipAddress : "127.0.0.1 (POS Station)";
             String device = (deviceInfo != null && !deviceInfo.isBlank()) ? deviceInfo : "POS Station Touch Screen";
             String loc = (location != null && !location.isBlank()) ? location : "Phnom Penh, Cambodia 🇰🇭";
+            Double lat = latitude != null ? latitude : 11.5564;
+            Double lon = longitude != null ? longitude : 104.9282;
+            String provider = (isp != null && !isp.isBlank()) ? isp : "Store POS LAN";
+
             u.setLastLoginIp(ip);
             u.setLastLoginDevice(device);
             u.setLastLoginLocation(loc);
+            u.setLastLoginLatitude(lat);
+            u.setLastLoginLongitude(lon);
+            u.setLastLoginIsp(provider);
             u.setLastLoginAt(LocalDateTime.now().toString());
             u.setLastLoginMethod("PIN");
 
-            recordAudit("PIN_LOGIN_SUCCESS", "POS Terminal unlocked via 4-digit PIN from " + ip + " [" + loc + "]", u.getName() + " (" + u.getRole() + ")", ip, device, "PIN", loc);
+            recordDeviceTravelBreadcrumb(new DeviceTravelBreadcrumb(
+                    "tb-" + System.currentTimeMillis(), u.getId(), u.getName(), u.getRole(),
+                    "POS-" + u.getId(), device, ip, loc, lat, lon, 5.0, 0.0, provider, "PIN_LOGIN"
+            ));
+
+            recordAudit("PIN_LOGIN_SUCCESS", "POS Terminal unlocked via 4-digit PIN from " + ip + " [" + loc + "]", u.getName() + " (" + u.getRole() + ")", ip, device, "PIN", loc, lat, lon);
             return Optional.of(u);
         } else {
             String ip = (ipAddress != null && !ipAddress.isBlank()) ? ipAddress : "127.0.0.1";
@@ -231,14 +294,18 @@ public class AuthService {
     }
 
     public Optional<User> authenticateFace(String staffIdOrName) {
-        return authenticateFace(staffIdOrName, null, null, null);
+        return authenticateFace(staffIdOrName, null, null, null, null, null, null);
     }
 
     public Optional<User> authenticateFace(String staffIdOrName, String ipAddress, String deviceInfo) {
-        return authenticateFace(staffIdOrName, ipAddress, deviceInfo, null);
+        return authenticateFace(staffIdOrName, ipAddress, deviceInfo, null, null, null, null);
     }
 
     public Optional<User> authenticateFace(String staffIdOrName, String ipAddress, String deviceInfo, String location) {
+        return authenticateFace(staffIdOrName, ipAddress, deviceInfo, location, null, null, null);
+    }
+
+    public Optional<User> authenticateFace(String staffIdOrName, String ipAddress, String deviceInfo, String location, Double latitude, Double longitude, String isp) {
         if (staffIdOrName == null || staffIdOrName.isBlank()) return Optional.empty();
         String target = staffIdOrName.trim();
         Optional<User> userOpt = users.stream()
@@ -250,13 +317,25 @@ public class AuthService {
             String ip = (ipAddress != null && !ipAddress.isBlank()) ? ipAddress : "127.0.0.1 (POS Station)";
             String device = (deviceInfo != null && !deviceInfo.isBlank()) ? deviceInfo : "Touchless Biometric Camera";
             String loc = (location != null && !location.isBlank()) ? location : "Phnom Penh, Cambodia 🇰🇭";
+            Double lat = latitude != null ? latitude : 11.5564;
+            Double lon = longitude != null ? longitude : 104.9282;
+            String provider = (isp != null && !isp.isBlank()) ? isp : "Biometric Sensor Network";
+
             u.setLastLoginIp(ip);
             u.setLastLoginDevice(device);
             u.setLastLoginLocation(loc);
+            u.setLastLoginLatitude(lat);
+            u.setLastLoginLongitude(lon);
+            u.setLastLoginIsp(provider);
             u.setLastLoginAt(LocalDateTime.now().toString());
             u.setLastLoginMethod("FACE_BIOMETRIC");
 
-            recordAudit("FACE_LOGIN_SUCCESS", "Touchless Face ID biometrics verified from " + ip + " [" + loc + "]", u.getName() + " (" + u.getRole() + ")", ip, device, "FACE_BIOMETRIC", loc);
+            recordDeviceTravelBreadcrumb(new DeviceTravelBreadcrumb(
+                    "tb-" + System.currentTimeMillis(), u.getId(), u.getName(), u.getRole(),
+                    "POS-" + u.getId(), device, ip, loc, lat, lon, 5.0, 0.0, provider, "FACE_LOGIN"
+            ));
+
+            recordAudit("FACE_LOGIN_SUCCESS", "Touchless Face ID biometrics verified from " + ip + " [" + loc + "]", u.getName() + " (" + u.getRole() + ")", ip, device, "FACE_BIOMETRIC", loc, lat, lon);
             return Optional.of(u);
         } else {
             String ip = (ipAddress != null && !ipAddress.isBlank()) ? ipAddress : "127.0.0.1";
@@ -469,6 +548,10 @@ public class AuthService {
     }
 
     public void recordAudit(String action, String details, String performedBy, String ipAddress, String deviceInfo, String loginMethod, String location) {
+        recordAudit(action, details, performedBy, ipAddress, deviceInfo, loginMethod, location, null, null);
+    }
+
+    public void recordAudit(String action, String details, String performedBy, String ipAddress, String deviceInfo, String loginMethod, String location, Double latitude, Double longitude) {
         AuditLog log = new AuditLog(
                 "aud-" + System.currentTimeMillis() + "-" + (int)(Math.random() * 1000),
                 "sys",
@@ -481,8 +564,30 @@ public class AuthService {
                 ipAddress,
                 deviceInfo,
                 loginMethod,
-                location
+                location,
+                latitude,
+                longitude
         );
         logAudit(log);
+    }
+
+    public void recordDeviceTravelBreadcrumb(DeviceTravelBreadcrumb b) {
+        if (b.getId() == null) b.setId("tb-" + System.currentTimeMillis() + "-" + (int)(Math.random() * 1000));
+        deviceTravelLogs.add(b);
+        while (deviceTravelLogs.size() > 1000) {
+            deviceTravelLogs.remove(0);
+        }
+    }
+
+    public List<DeviceTravelBreadcrumb> getDeviceTravelBreadcrumbs(String userId) {
+        if (userId != null && !userId.isBlank() && !userId.equalsIgnoreCase("ALL")) {
+            return deviceTravelLogs.stream()
+                    .filter(b -> userId.equalsIgnoreCase(b.getUserId()) || userId.equalsIgnoreCase(b.getUserName()))
+                    .sorted(Comparator.comparing(DeviceTravelBreadcrumb::getTimestamp))
+                    .collect(Collectors.toList());
+        }
+        return deviceTravelLogs.stream()
+                .sorted(Comparator.comparing(DeviceTravelBreadcrumb::getTimestamp))
+                .collect(Collectors.toList());
     }
 }

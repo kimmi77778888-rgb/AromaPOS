@@ -26,6 +26,9 @@ public class User {
     private String lastLoginIp;
     private String lastLoginDevice;
     private String lastLoginLocation;
+    private Double lastLoginLatitude;
+    private Double lastLoginLongitude;
+    private String lastLoginIsp;
     private String lastLoginAt;
     private String lastLoginMethod;
 
@@ -219,6 +222,30 @@ public class User {
 
     public void setLastLoginLocation(String lastLoginLocation) {
         this.lastLoginLocation = lastLoginLocation;
+    }
+
+    public Double getLastLoginLatitude() {
+        return lastLoginLatitude;
+    }
+
+    public void setLastLoginLatitude(Double lastLoginLatitude) {
+        this.lastLoginLatitude = lastLoginLatitude;
+    }
+
+    public Double getLastLoginLongitude() {
+        return lastLoginLongitude;
+    }
+
+    public void setLastLoginLongitude(Double lastLoginLongitude) {
+        this.lastLoginLongitude = lastLoginLongitude;
+    }
+
+    public String getLastLoginIsp() {
+        return lastLoginIsp;
+    }
+
+    public void setLastLoginIsp(String lastLoginIsp) {
+        this.lastLoginIsp = lastLoginIsp;
     }
 
     public String getLastLoginAt() {

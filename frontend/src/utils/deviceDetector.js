@@ -369,7 +369,7 @@ export const resolveClientLocation = async (ip = null) => {
 /**
  * Request high-precision GPS coordinates from browser Geolocation API
  */
-export const requestPreciseGpsLocation = () => {
+export const requestPreciseGpsLocation = (timeoutMs = 1800) => {
   return new Promise((resolve) => {
     if (typeof window === 'undefined' || !navigator.geolocation) {
       resolve(null);
@@ -379,6 +379,7 @@ export const requestPreciseGpsLocation = () => {
       (pos) => {
         const lat = pos.coords.latitude;
         const lon = pos.coords.longitude;
+        const speed = pos.coords.speed ? Math.round(pos.coords.speed * 3.6) : 0;
         const loc = {
           city: 'Phnom Penh (GPS)',
           region: 'Cambodia',
@@ -387,6 +388,7 @@ export const requestPreciseGpsLocation = () => {
           flag: '🇰🇭',
           latitude: lat,
           longitude: lon,
+          speed,
           accuracyMeters: Math.round(pos.coords.accuracy || 10),
           isp: 'Precise GPS Satellite Receiver',
           displayLocation: `GPS: ${lat.toFixed(4)}°, ${lon.toFixed(4)}° 📍`,
@@ -400,9 +402,40 @@ export const requestPreciseGpsLocation = () => {
         resolve(loc);
       },
       () => resolve(null),
-      { timeout: 4000, enableHighAccuracy: true }
+      { timeout: timeoutMs, enableHighAccuracy: true, maximumAge: 15000 }
     );
   });
+};
+
+/**
+ * Start Real-Time Live Device Geolocation Tracking (Beacon)
+ * Listens for physical movement/travel and invokes callback with breadcrumb
+ */
+export const startLiveDeviceTracking = (onPositionUpdate) => {
+  if (typeof window === 'undefined' || !navigator.geolocation) return () => {};
+
+  const watchId = navigator.geolocation.watchPosition(
+    (pos) => {
+      const lat = pos.coords.latitude;
+      const lon = pos.coords.longitude;
+      const speed = pos.coords.speed ? Math.round(pos.coords.speed * 3.6) : 0; // m/s to km/h
+      const accuracy = Math.round(pos.coords.accuracy || 10);
+      const update = {
+        latitude: lat,
+        longitude: lon,
+        speed,
+        accuracyMeters: accuracy,
+        timestamp: new Date().toISOString()
+      };
+      if (onPositionUpdate) onPositionUpdate(update);
+    },
+    () => {},
+    { enableHighAccuracy: true, maximumAge: 10000, timeout: 20000 }
+  );
+
+  return () => {
+    navigator.geolocation.clearWatch(watchId);
+  };
 };
 
 /**
@@ -411,7 +444,12 @@ export const requestPreciseGpsLocation = () => {
 export const getFullDeviceAuditSnapshot = async () => {
   const syncInfo = getDeviceInfo();
   const liveIp = await resolveClientIp();
-  const location = await resolveClientLocation(liveIp);
+
+  // Try precise GPS first, otherwise fallback to high-accuracy IP Geolocation
+  let location = await requestPreciseGpsLocation(1500);
+  if (!location) {
+    location = await resolveClientLocation(liveIp);
+  }
   const ipClassification = classifyIp(liveIp);
 
   return {
@@ -428,6 +466,8 @@ export const getFullDeviceAuditSnapshot = async () => {
     latitude: location.latitude,
     longitude: location.longitude,
     isp: location.isp,
+    speed: location.speed || 0,
+    accuracy: location.accuracyMeters || 10,
     mapsUrl: location.mapsUrl,
     capturedAt: new Date().toISOString()
   };

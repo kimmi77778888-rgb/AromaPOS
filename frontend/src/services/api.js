@@ -1,7 +1,7 @@
 import { INITIAL_PRODUCTS, INITIAL_ORDERS, DEMO_USERS, INITIAL_INGREDIENTS, CATEGORIES } from './coffeeData';
 import { storage } from '../utils/storage';
 import { checkFaceUniqueness } from '../utils/faceBiometrics';
-import { getDeviceInfo, resolveClientIp, classifyIp, resolveClientLocation } from '../utils/deviceDetector';
+import { getDeviceInfo, resolveClientIp, classifyIp, resolveClientLocation, getFullDeviceAuditSnapshot } from '../utils/deviceDetector';
 
 const API_HOST = typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_API_URL 
   ? process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '') 
@@ -475,13 +475,136 @@ export const clearLoginSessions = () => {
   } catch (e) {}
 };
 
+export const getStoredDeviceTravelBreadcrumbs = () => {
+  try {
+    const raw = storage.getItem('aromapos_device_travel_breadcrumbs');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {}
+
+  const now = Date.now();
+  return [
+    {
+      id: "tb-101",
+      userId: "usr-3",
+      userName: "Marcus Thorne",
+      userRole: "ADMIN",
+      deviceId: "POS-STATION-01",
+      deviceInfo: "Windows 11 Desktop",
+      ipAddress: "103.216.54.12",
+      location: "BKK1 Flagship Store, Phnom Penh 🇰🇭",
+      city: "Phnom Penh",
+      country: "Cambodia",
+      latitude: 11.5529,
+      longitude: 104.9248,
+      speed: 0,
+      accuracy: 5,
+      isp: "Smart Axiata Co., Ltd.",
+      activity: "LOGIN",
+      timestamp: new Date(now - 4 * 60 * 60 * 1000).toISOString()
+    },
+    {
+      id: "tb-102",
+      userId: "usr-3",
+      userName: "Marcus Thorne",
+      userRole: "ADMIN",
+      deviceId: "Manager Tablet",
+      deviceInfo: "iPad Pro 12.9",
+      ipAddress: "103.216.54.15",
+      location: "Norodom Blvd In-Transit, Phnom Penh 🇰🇭",
+      city: "Phnom Penh",
+      country: "Cambodia",
+      latitude: 11.5620,
+      longitude: 104.9290,
+      speed: 32,
+      accuracy: 8,
+      isp: "Cellcard 4G LTE",
+      activity: "MOVING",
+      timestamp: new Date(now - 3 * 60 * 60 * 1000).toISOString()
+    },
+    {
+      id: "tb-103",
+      userId: "usr-3",
+      userName: "Marcus Thorne",
+      userRole: "ADMIN",
+      deviceId: "Manager Tablet",
+      deviceInfo: "iPad Pro 12.9",
+      ipAddress: "103.216.54.22",
+      location: "Riverside Roastery, Phnom Penh 🇰🇭",
+      city: "Phnom Penh",
+      country: "Cambodia",
+      latitude: 11.5714,
+      longitude: 104.9312,
+      speed: 0,
+      accuracy: 4,
+      isp: "CamNet Broadband",
+      activity: "CHECKPOINT",
+      timestamp: new Date(now - 2 * 60 * 60 * 1000).toISOString()
+    },
+    {
+      id: "tb-104",
+      userId: "usr-3",
+      userName: "Marcus Thorne",
+      userRole: "ADMIN",
+      deviceId: "Manager Tablet",
+      deviceInfo: "iPad Pro 12.9",
+      ipAddress: "103.216.54.30",
+      location: "Russian Blvd In-Transit, Phnom Penh 🇰🇭",
+      city: "Phnom Penh",
+      country: "Cambodia",
+      latitude: 11.5680,
+      longitude: 104.9120,
+      speed: 28,
+      accuracy: 9,
+      isp: "Smart Axiata 5G",
+      activity: "MOVING",
+      timestamp: new Date(now - 1 * 60 * 60 * 1000).toISOString()
+    },
+    {
+      id: "tb-105",
+      userId: "usr-3",
+      userName: "Marcus Thorne",
+      userRole: "ADMIN",
+      deviceId: "POS-STATION-02",
+      deviceInfo: "Windows 11 POS Terminal",
+      ipAddress: "103.216.54.88",
+      location: "Tuol Kork Branch, Phnom Penh 🇰🇭",
+      city: "Phnom Penh",
+      country: "Cambodia",
+      latitude: 11.5739,
+      longitude: 104.8985,
+      speed: 0,
+      accuracy: 3.5,
+      isp: "SINET Cambodia Fiber",
+      activity: "LOGIN",
+      timestamp: new Date(now - 15 * 60 * 1000).toISOString()
+    }
+  ];
+};
+
+export const saveStoredDeviceTravelBreadcrumbs = (crumbs) => {
+  try {
+    storage.setItem('aromapos_device_travel_breadcrumbs', JSON.stringify(crumbs));
+  } catch (e) {}
+};
+
+export const addStoredDeviceTravelBreadcrumb = (crumb) => {
+  const existing = getStoredDeviceTravelBreadcrumbs();
+  const updated = [...existing, { ...crumb, id: crumb.id || 'tb-' + Date.now(), timestamp: crumb.timestamp || new Date().toISOString() }].slice(-500);
+  saveStoredDeviceTravelBreadcrumbs(updated);
+  return updated;
+};
+
 export const api = {
   async login(email, password) {
     const cleanEmail = (email || '').trim().toLowerCase();
     const p = String(password || '').trim();
-    const liveIp = await resolveClientIp();
-    const devInfo = getDeviceInfo();
-    const liveLoc = await resolveClientLocation(liveIp);
+    const liveAudit = await getFullDeviceAuditSnapshot();
+    const liveIp = liveAudit.ipAddress;
+    const devInfo = { ...liveAudit, deviceSummary: `${liveAudit.os} (${liveAudit.browser})` };
+    const liveLoc = { ...liveAudit, displayLocation: liveAudit.location };
 
     // 1. Instant local authentication (0ms response, immune to sleeping server or 401s)
     const staffList = getStoredStaff();
@@ -503,11 +626,31 @@ export const api = {
 
       if (isMatch) {
         await recordLoginSession(found, 'PASSWORD', liveIp, devInfo, liveLoc);
+        addStoredDeviceTravelBreadcrumb({
+          userId: found.id,
+          userName: found.name,
+          userRole: found.role,
+          deviceId: liveAudit.terminalId || 'POS-DEV',
+          deviceInfo: devInfo.deviceSummary,
+          ipAddress: liveIp,
+          location: liveAudit.location,
+          latitude: liveAudit.latitude,
+          longitude: liveAudit.longitude,
+          speed: liveAudit.speed || 0,
+          accuracy: liveAudit.accuracy || 10,
+          isp: liveAudit.isp,
+          activity: 'LOGIN',
+          timestamp: new Date().toISOString()
+        });
+
         const updatedFound = {
           ...found,
           lastLoginIp: liveIp,
           lastLoginDevice: devInfo.deviceSummary,
           lastLoginLocation: liveLoc.displayLocation,
+          lastLoginLatitude: liveAudit.latitude,
+          lastLoginLongitude: liveAudit.longitude,
+          lastLoginIsp: liveAudit.isp,
           lastLoginAt: new Date().toISOString(),
           lastLoginMethod: 'PASSWORD'
         };
@@ -536,7 +679,18 @@ export const api = {
           fetch(`${BASE_URL}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: found.email, password: p, ipAddress: liveIp, deviceInfo: devInfo.deviceSummary, location: liveLoc.displayLocation })
+            body: JSON.stringify({
+              email: found.email,
+              password: p,
+              ipAddress: liveIp,
+              deviceInfo: devInfo.deviceSummary,
+              location: liveLoc.displayLocation,
+              latitude: liveAudit.latitude,
+              longitude: liveAudit.longitude,
+              isp: liveAudit.isp,
+              speed: liveAudit.speed,
+              accuracy: liveAudit.accuracy
+            })
           }).catch(() => {});
         } catch (e) {}
 
@@ -569,7 +723,18 @@ export const api = {
       const res = await fetch(`${BASE_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, ipAddress: liveIp, deviceInfo: devInfo.deviceSummary, location: liveLoc.displayLocation })
+        body: JSON.stringify({
+          email,
+          password,
+          ipAddress: liveIp,
+          deviceInfo: devInfo.deviceSummary,
+          location: liveLoc.displayLocation,
+          latitude: liveAudit.latitude,
+          longitude: liveAudit.longitude,
+          isp: liveAudit.isp,
+          speed: liveAudit.speed,
+          accuracy: liveAudit.accuracy
+        })
       });
       if (res.ok) {
         const data = await res.json();
@@ -584,9 +749,10 @@ export const api = {
 
   async pinLogin(pin) {
     const p = (pin || '').trim();
-    const liveIp = await resolveClientIp();
-    const devInfo = getDeviceInfo();
-    const liveLoc = await resolveClientLocation(liveIp);
+    const liveAudit = await getFullDeviceAuditSnapshot();
+    const liveIp = liveAudit.ipAddress;
+    const devInfo = { ...liveAudit, deviceSummary: `${liveAudit.os} (${liveAudit.browser})` };
+    const liveLoc = { ...liveAudit, displayLocation: liveAudit.location };
     const staffList = getStoredStaff();
     const found = staffList.find((u) => 
       (u.pin && u.pin === p) || 
@@ -594,11 +760,31 @@ export const api = {
     );
     if (found) {
       await recordLoginSession(found, 'PIN', liveIp, devInfo, liveLoc);
+      addStoredDeviceTravelBreadcrumb({
+        userId: found.id,
+        userName: found.name,
+        userRole: found.role,
+        deviceId: liveAudit.terminalId || 'POS-DEV',
+        deviceInfo: devInfo.deviceSummary,
+        ipAddress: liveIp,
+        location: liveAudit.location,
+        latitude: liveAudit.latitude,
+        longitude: liveAudit.longitude,
+        speed: liveAudit.speed || 0,
+        accuracy: liveAudit.accuracy || 10,
+        isp: liveAudit.isp,
+        activity: 'PIN_LOGIN',
+        timestamp: new Date().toISOString()
+      });
+
       const updatedFound = {
         ...found,
         lastLoginIp: liveIp,
         lastLoginDevice: devInfo.deviceSummary,
         lastLoginLocation: liveLoc.displayLocation,
+        lastLoginLatitude: liveAudit.latitude,
+        lastLoginLongitude: liveAudit.longitude,
+        lastLoginIsp: liveAudit.isp,
         lastLoginAt: new Date().toISOString(),
         lastLoginMethod: 'PIN'
       };
@@ -626,7 +812,17 @@ export const api = {
         fetch(`${BASE_URL}/auth/pin-login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ pin: p, ipAddress: liveIp, deviceInfo: devInfo.deviceSummary, location: liveLoc.displayLocation })
+          body: JSON.stringify({
+            pin: p,
+            ipAddress: liveIp,
+            deviceInfo: devInfo.deviceSummary,
+            location: liveLoc.displayLocation,
+            latitude: liveAudit.latitude,
+            longitude: liveAudit.longitude,
+            isp: liveAudit.isp,
+            speed: liveAudit.speed,
+            accuracy: liveAudit.accuracy
+          })
         }).catch(() => {});
       } catch (e) {}
       return { success: true, user: updatedFound, token: 'local-token-' + found.id, ipAddress: liveIp, deviceInfo: devInfo, location: liveLoc };
@@ -636,7 +832,17 @@ export const api = {
       const res = await fetch(`${BASE_URL}/auth/pin-login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pin: p, ipAddress: liveIp, deviceInfo: devInfo.deviceSummary, location: liveLoc.displayLocation })
+        body: JSON.stringify({
+          pin: p,
+          ipAddress: liveIp,
+          deviceInfo: devInfo.deviceSummary,
+          location: liveLoc.displayLocation,
+          latitude: liveAudit.latitude,
+          longitude: liveAudit.longitude,
+          isp: liveAudit.isp,
+          speed: liveAudit.speed,
+          accuracy: liveAudit.accuracy
+        })
       });
       if (res.ok) {
         const data = await res.json();
@@ -704,14 +910,25 @@ export const api = {
   },
 
   async faceLogin(staffId) {
-    const liveIp = await resolveClientIp();
-    const devInfo = getDeviceInfo();
-    const liveLoc = await resolveClientLocation(liveIp);
+    const liveAudit = await getFullDeviceAuditSnapshot();
+    const liveIp = liveAudit.ipAddress;
+    const devInfo = { ...liveAudit, deviceSummary: `${liveAudit.os} (${liveAudit.browser})` };
+    const liveLoc = { ...liveAudit, displayLocation: liveAudit.location };
     try {
       const res = await fetch(`${BASE_URL}/auth/face-login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ staffId, ipAddress: liveIp, deviceInfo: devInfo.deviceSummary, location: liveLoc.displayLocation })
+        body: JSON.stringify({
+          staffId,
+          ipAddress: liveIp,
+          deviceInfo: devInfo.deviceSummary,
+          location: liveLoc.displayLocation,
+          latitude: liveAudit.latitude,
+          longitude: liveAudit.longitude,
+          isp: liveAudit.isp,
+          speed: liveAudit.speed,
+          accuracy: liveAudit.accuracy
+        })
       });
       if (res.ok) {
         const data = await res.json();
@@ -725,11 +942,31 @@ export const api = {
     const found = staffList.find((u) => u.id === staffId || u.name.toLowerCase() === (staffId || '').toLowerCase());
     if (found) {
       await recordLoginSession(found, 'FACE_BIOMETRIC', liveIp, devInfo, liveLoc);
+      addStoredDeviceTravelBreadcrumb({
+        userId: found.id,
+        userName: found.name,
+        userRole: found.role,
+        deviceId: liveAudit.terminalId || 'POS-DEV',
+        deviceInfo: devInfo.deviceSummary,
+        ipAddress: liveIp,
+        location: liveAudit.location,
+        latitude: liveAudit.latitude,
+        longitude: liveAudit.longitude,
+        speed: liveAudit.speed || 0,
+        accuracy: liveAudit.accuracy || 10,
+        isp: liveAudit.isp,
+        activity: 'FACE_LOGIN',
+        timestamp: new Date().toISOString()
+      });
+
       const updatedFound = {
         ...found,
         lastLoginIp: liveIp,
         lastLoginDevice: devInfo.deviceSummary,
         lastLoginLocation: liveLoc.displayLocation,
+        lastLoginLatitude: liveAudit.latitude,
+        lastLoginLongitude: liveAudit.longitude,
+        lastLoginIsp: liveAudit.isp,
         lastLoginAt: new Date().toISOString(),
         lastLoginMethod: 'FACE_BIOMETRIC'
       };
@@ -1938,6 +2175,33 @@ export const api = {
     const ip = await resolveClientIp();
     const dev = getDeviceInfo();
     return { ...dev, ipAddress: ip, classification: classifyIp(ip) };
+  },
+
+  async fetchDeviceTravel(userId = null) {
+    try {
+      const endpoint = userId && userId !== 'ALL' ? `${BASE_URL}/auth/device-travel/${userId}` : `${BASE_URL}/auth/device-travel`;
+      const res = await fetch(endpoint);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) return data;
+      }
+    } catch (e) {}
+    const local = getStoredDeviceTravelBreadcrumbs();
+    if (userId && userId !== 'ALL') {
+      return local.filter((b) => b.userId === userId || b.userName === userId);
+    }
+    return local;
+  },
+
+  async pingDeviceLocation(crumb) {
+    addStoredDeviceTravelBreadcrumb(crumb);
+    try {
+      fetch(`${BASE_URL}/auth/device-travel/ping`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(crumb)
+      }).catch(() => {});
+    } catch (e) {}
   }
 };
 
