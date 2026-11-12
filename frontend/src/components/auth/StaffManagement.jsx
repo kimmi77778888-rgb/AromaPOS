@@ -58,7 +58,8 @@ import {
   ExternalLink,
   Compass,
   Radio,
-  FlaskConical
+  FlaskConical,
+  LayoutGrid
 } from 'lucide-react';
 import { LiveDeviceMap } from '../security/LiveDeviceMap';
 import { getBrandBadge } from '../../utils/deviceDetector';
@@ -94,7 +95,7 @@ export const StaffManagement = () => {
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
   // Login Sessions & Device IP State
-  const [sessionViewMode, setSessionViewMode] = useState('table'); // 'table' or 'map'
+  const [sessionViewMode, setSessionViewMode] = useState('cards'); // 'cards' (easy view standard), 'table', or 'map'
   const [isLiveMapModalOpen, setIsLiveMapModalOpen] = useState(false);
   const [liveMapTargetSessionId, setLiveMapTargetSessionId] = useState(null);
   const [loginSearchQuery, setLoginSearchQuery] = useState('');
@@ -1656,8 +1657,21 @@ export const StaffManagement = () => {
                   {filteredSessions.length} / {loginSessions.length}
                 </span>
 
-                {/* View Mode Switcher (Table vs Real-Time Live Map) */}
+                {/* View Mode Switcher (Standard Easy Cards vs Audit Table vs Live Map) */}
                 <div className="flex items-center p-0.5 rounded-xl bg-stone-900 border border-stone-800 text-xs font-bold">
+                  <button
+                    type="button"
+                    onClick={() => setSessionViewMode('cards')}
+                    className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 cursor-pointer ${
+                      sessionViewMode === 'cards'
+                        ? 'bg-amber-500 text-stone-950 font-black shadow'
+                        : 'text-stone-400 hover:text-stone-200'
+                    }`}
+                    title={isKhmer ? 'ទិដ្ឋភាពឧបករណ៍ស្តង់ដារ (ងាយស្រួលមើល)' : 'Standard Device Cards (Easy View)'}
+                  >
+                    <LayoutGrid className="w-3.5 h-3.5" />
+                    <span>{isKhmer ? 'ឧបករណ៍ (ស្តង់ដារ)' : 'Easy Devices'}</span>
+                  </button>
                   <button
                     type="button"
                     onClick={() => setSessionViewMode('table')}
@@ -1666,6 +1680,7 @@ export const StaffManagement = () => {
                         ? 'bg-amber-500 text-stone-950 font-black shadow'
                         : 'text-stone-400 hover:text-stone-200'
                     }`}
+                    title={isKhmer ? 'តារាងទិន្នន័យលម្អិត' : 'Audit Data Table'}
                   >
                     <Monitor className="w-3.5 h-3.5" />
                     <span>{isKhmer ? 'តារាង' : 'Table'}</span>
@@ -1678,9 +1693,10 @@ export const StaffManagement = () => {
                         ? 'bg-amber-500 text-stone-950 font-black shadow'
                         : 'text-stone-400 hover:text-stone-200'
                     }`}
+                    title={isKhmer ? 'ផែនទីផ្កាយរណបផ្ទាល់' : 'Live Radar Map'}
                   >
                     <MapPin className="w-3.5 h-3.5" />
-                    <span>{isKhmer ? 'ផែនទីផ្ទាល់' : 'Live Map'}</span>
+                    <span>{isKhmer ? 'ផែនទី' : 'Live Map'}</span>
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   </button>
                 </div>
@@ -1714,13 +1730,230 @@ export const StaffManagement = () => {
               </div>
             </div>
 
-            {/* View Mode: Interactive Live Map vs Table View */}
+            {/* View Mode: Interactive Live Map vs Easy Standard Device Cards vs Audit Table View */}
             {sessionViewMode === 'map' ? (
               <LiveDeviceMap
                 sessions={filteredSessions.length > 0 ? filteredSessions : loginSessions}
                 focusedSessionId={inspectedSession?.id}
                 className="border-0 rounded-none h-[640px]"
               />
+            ) : sessionViewMode === 'cards' ? (
+              /* Easy Standard Device Cards View */
+              <div className="p-5">
+                {filteredSessions.length === 0 ? (
+                  <div className="py-12 text-center text-stone-500 font-sans">
+                    <div className="w-12 h-12 rounded-2xl bg-stone-900 border border-stone-800 flex items-center justify-center mx-auto mb-3 text-stone-400">
+                      <Globe className="w-6 h-6 opacity-60" />
+                    </div>
+                    <p className="font-bold text-sm text-stone-300">
+                      {isKhmer ? 'រកមិនឃើញឧបករណ៍តាមលក្ខខណ្ឌ' : 'No devices match your search or filter'}
+                    </p>
+                    <p className="text-xs text-stone-500 mt-1">
+                      {isKhmer ? 'សូមសាកល្បងសម្អាតពាក្យស្វែងរក ឬចុចប៊ូតុងខាងក្រោមដើម្បីកំណត់តម្រងឡើងវិញ' : 'Try clearing your search query or click the button below to reset filters'}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLoginSearchQuery('');
+                        setLoginMethodFilter('ALL');
+                        setLoginStatusFilter('ALL');
+                        setLoginLocationFilter('ALL');
+                        setLoginDeviceTypeFilter('ALL');
+                        setLoginBrandFilter('ALL');
+                        setLoginSourceFilter('ALL');
+                      }}
+                      className="mt-4 px-4 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 font-bold text-xs inline-flex items-center gap-2 transition cursor-pointer shadow-lg hover:border-amber-400"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>{isKhmer ? 'កំណត់តម្រងឡើងវិញ (បង្ហាញ Session ទាំងអស់)' : 'Reset Filters (Show All Sessions)'}</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {filteredSessions.map((sess) => {
+                      const isCurrentActive = sess.userId === user?.id;
+                      const isCopied = copiedSessionIp === sess.id;
+                      const brandInfo = getBrandBadge(sess.brand || sess.deviceModel);
+
+                      return (
+                        <div
+                          key={sess.id}
+                          className={`p-4 rounded-2xl border transition-all duration-200 relative flex flex-col justify-between ${
+                            isCurrentActive
+                              ? 'bg-gradient-to-b from-amber-950/20 via-stone-900/90 to-stone-900 border-amber-500/50 shadow-lg shadow-amber-500/5 ring-1 ring-amber-500/30'
+                              : 'bg-stone-900/80 hover:bg-stone-900 border-stone-800 hover:border-stone-700 shadow-sm'
+                          }`}
+                        >
+                          <div>
+                            {/* Header: Icon, Brand Badge, Device Title, and Status */}
+                            <div className="flex items-start justify-between gap-2.5">
+                              <div className="flex items-start gap-3 min-w-0">
+                                <div
+                                  className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 border ${
+                                    sess.deviceType === 'Phone' || sess.deviceType === 'Mobile'
+                                      ? 'bg-emerald-950/80 border-emerald-700/60 text-emerald-400'
+                                      : sess.deviceType === 'Tablet'
+                                      ? 'bg-sky-950/80 border-sky-700/60 text-sky-400'
+                                      : sess.deviceType === 'POS Touch Station' || sess.deviceType === 'POS Station'
+                                      ? 'bg-purple-950/80 border-purple-700/60 text-purple-400'
+                                      : 'bg-stone-950 border-stone-800 text-amber-400'
+                                  }`}
+                                  title={sess.deviceType || 'Workstation'}
+                                >
+                                  {sess.deviceType === 'Phone' || sess.deviceType === 'Mobile' ? (
+                                    <Smartphone className="w-5 h-5" />
+                                  ) : sess.deviceType === 'Tablet' ? (
+                                    <Tablet className="w-5 h-5" />
+                                  ) : sess.deviceType === 'POS Touch Station' || sess.deviceType === 'POS Station' ? (
+                                    <Terminal className="w-5 h-5" />
+                                  ) : (
+                                    <Monitor className="w-5 h-5" />
+                                  )}
+                                </div>
+
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    <span
+                                      className={`px-1.5 py-0.5 rounded text-[10px] font-extrabold border flex items-center gap-1 shrink-0 ${brandInfo.color}`}
+                                      title={`Brand: ${brandInfo.name}`}
+                                    >
+                                      <span>{brandInfo.icon}</span>
+                                      <span>{brandInfo.name}</span>
+                                    </span>
+                                    {sess.isDemo ? (
+                                      <span className="px-1.5 py-0.5 rounded bg-stone-800 text-stone-400 border border-stone-700/80 text-[9px] font-mono font-bold shrink-0">
+                                        🧪 DEMO
+                                      </span>
+                                    ) : (
+                                      <span className="px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-700 text-[9px] font-mono font-black flex items-center gap-1 shrink-0 shadow-2xs">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                        <span>🟢 REAL</span>
+                                      </span>
+                                    )}
+                                    {isCurrentActive && (
+                                      <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[9px] font-bold shrink-0">
+                                        {isKhmer ? 'ឧបករណ៍នេះ (This Device)' : 'This Device'}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <h4 className="font-extrabold text-sm text-stone-100 truncate mt-1">
+                                    {sess.deviceModel || sess.os || 'Workstation'}
+                                  </h4>
+                                  <p className="text-[11px] text-stone-400 truncate">
+                                    {sess.browser || 'Browser'} • {sess.os}
+                                  </p>
+                                </div>
+                              </div>
+
+                              <span
+                                className={`px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 flex items-center gap-1.5 font-mono ${
+                                  sess.status === 'ACTIVE'
+                                    ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
+                                    : 'bg-stone-800 text-stone-500 border border-stone-700'
+                                }`}
+                              >
+                                <span
+                                  className={`w-1.5 h-1.5 rounded-full ${
+                                    sess.status === 'ACTIVE' ? 'bg-emerald-400 animate-pulse' : 'bg-stone-500'
+                                  }`}
+                                />
+                                <span>{sess.status === 'ACTIVE' ? (isKhmer ? 'សកម្ម' : 'Active') : (isKhmer ? 'បានបិទ' : 'Closed')}</span>
+                              </span>
+                            </div>
+
+                            {/* Specs Box: User, Location & IP */}
+                            <div className="mt-3 pt-3 border-t border-stone-800/80 space-y-2 text-xs">
+                              {/* User who logged in */}
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <div className="w-6 h-6 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-300 font-extrabold text-[10px] shrink-0">
+                                    {sess.userName ? sess.userName.slice(0, 2).toUpperCase() : 'US'}
+                                  </div>
+                                  <div className="truncate">
+                                    <span className="font-bold text-stone-200 block truncate text-xs">{sess.userName}</span>
+                                    <span className="text-[9px] text-stone-500 uppercase font-bold">{sess.userRole}</span>
+                                  </div>
+                                </div>
+                                <span className="text-[10px] font-mono text-stone-400 bg-stone-950 px-2 py-0.5 rounded-md border border-stone-850">
+                                  {sess.terminalId || 'POS-01'}
+                                </span>
+                              </div>
+
+                              {/* Location & ISP */}
+                              <div className="flex items-center gap-2 text-stone-300 text-xs">
+                                <MapPin className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                                <span className="font-medium truncate text-[11px]">{sess.location || 'Phnom Penh, Cambodia 🇰🇭'}</span>
+                              </div>
+
+                              {/* IP Address Pill */}
+                              <div className="flex items-center justify-between bg-stone-950/70 px-2.5 py-1.5 rounded-xl border border-stone-850 font-mono text-[11px]">
+                                <div className="flex items-center gap-2 truncate">
+                                  <Globe className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                                  <span className="text-cyan-300 font-bold truncate">{sess.ipAddress}</span>
+                                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-stone-800 text-stone-400 border border-stone-700">
+                                    {sess.ipLabel || sess.ipType}
+                                  </span>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopySessionIp(sess.ipAddress, sess.id)}
+                                  className="p-1 rounded-lg hover:bg-stone-800 text-stone-400 hover:text-stone-200 transition cursor-pointer"
+                                  title="Copy IP"
+                                >
+                                  {isCopied ? <CheckCheck className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Card Footer Actions */}
+                          <div className="mt-3 pt-2.5 border-t border-stone-800/80 flex items-center justify-between text-xs">
+                            <span className="text-[10px] font-mono text-stone-500">
+                              {new Date(sess.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {new Date(sess.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                            </span>
+
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setInspectedSession(sess);
+                                  setSessionViewMode('map');
+                                }}
+                                className="px-2.5 py-1 rounded-lg bg-stone-800 hover:bg-stone-750 text-stone-200 font-bold text-[11px] flex items-center gap-1 transition cursor-pointer"
+                                title={isKhmer ? 'មើលទីតាំងលើផែនទី' : 'View on Live Map'}
+                              >
+                                <MapPin className="w-3 h-3 text-amber-400" />
+                                <span>{isKhmer ? 'ផែនទី' : 'Map'}</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => setInspectedSession(sess)}
+                                className="p-1 rounded-lg bg-stone-800 hover:bg-stone-750 text-stone-400 hover:text-stone-200 transition cursor-pointer"
+                                title={isKhmer ? 'ព័ត៌មានលម្អិត' : 'Specs Details'}
+                              >
+                                <Info className="w-3.5 h-3.5" />
+                              </button>
+
+                              {sess.status === 'ACTIVE' && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleTerminateSession(sess.id, sess.userName)}
+                                  className="px-2 py-1 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 border border-rose-800/50 text-rose-300 text-[11px] font-bold flex items-center gap-1 transition cursor-pointer"
+                                  title={isKhmer ? 'បញ្ចប់ Session' : 'Disconnect'}
+                                >
+                                  <LogOut className="w-3 h-3" />
+                                  <span className="hidden sm:inline">{isKhmer ? 'ផ្ដាច់' : 'Revoke'}</span>
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             ) : (
               /* Sessions Table */
               <div className="overflow-x-auto">
