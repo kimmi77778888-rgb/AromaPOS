@@ -2,6 +2,7 @@ package com.example.demo.service;
 
 import com.example.demo.model.AuditLog;
 import com.example.demo.model.DeviceTravelBreadcrumb;
+import com.example.demo.model.LoginSession;
 import com.example.demo.model.User;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +16,7 @@ public class AuthService {
     private final List<User> users = new CopyOnWriteArrayList<>();
     private final List<AuditLog> auditLogs = new CopyOnWriteArrayList<>();
     private final List<DeviceTravelBreadcrumb> deviceTravelLogs = new CopyOnWriteArrayList<>();
+    private final List<LoginSession> activeLoginSessions = new CopyOnWriteArrayList<>();
 
     public AuthService() {
         // Standard Role Hierarchy (Admin, Manager, Cashier, Barista) - Clean start without stock internet model photos
@@ -178,6 +180,157 @@ public class AuthService {
                 "tb-105", "usr-3", "Marcus Thorne", "ADMIN", "POS-STATION-02", "Windows 11 POS Terminal",
                 "103.216.54.88", "Tuol Kork Branch, Phnom Penh 🇰🇭", 11.5739, 104.8985, 3.5, 0.0, "SINET Cambodia Fiber", "LOGIN", t0.plusHours(3).plusMinutes(45)
         ));
+
+        // Seed Active Login Sessions including Mobile Phones
+        activeLoginSessions.add(new LoginSession(
+                "sess-phone-101",
+                "usr-3",
+                "Marcus Thorne",
+                "ADMIN",
+                "",
+                "103.216.54.18",
+                "IPv4",
+                "Smart 5G Cellular",
+                "Phone",
+                "iPhone 16 Pro (iOS 18)",
+                "iOS 18.1",
+                "Mobile Safari 18.0",
+                "393x852 (Touch)",
+                "MOB-PHONE-01",
+                "Phnom Penh, Cambodia 🇰🇭",
+                "Phnom Penh",
+                "Cambodia",
+                "KH",
+                "🇰🇭",
+                11.5564,
+                104.9282,
+                "Smart Axiata 5G Mobile Network",
+                "https://www.google.com/maps?q=11.5564,104.9282",
+                "PASSWORD",
+                "ACTIVE",
+                LocalDateTime.now().minusMinutes(5).toString(),
+                LocalDateTime.now().toString()
+        ));
+
+        activeLoginSessions.add(new LoginSession(
+                "sess-phone-102",
+                "usr-2",
+                "Sophia Bennett",
+                "MANAGER",
+                "",
+                "203.144.92.45",
+                "IPv4",
+                "Cellcard 4G LTE",
+                "Phone",
+                "Samsung Galaxy S24 Ultra (Android 14)",
+                "Android 14",
+                "Chrome Mobile 124",
+                "412x915 (Touch)",
+                "MOB-PHONE-02",
+                "Siem Reap, Cambodia 🇰🇭",
+                "Siem Reap",
+                "Cambodia",
+                "KH",
+                "🇰🇭",
+                13.3671,
+                103.8448,
+                "CamGSM (Cellcard Mobile Network)",
+                "https://www.google.com/maps?q=13.3671,103.8448",
+                "PIN",
+                "ACTIVE",
+                LocalDateTime.now().minusMinutes(20).toString(),
+                LocalDateTime.now().minusMinutes(2).toString()
+        ));
+
+        activeLoginSessions.add(new LoginSession(
+                "sess-pos-103",
+                "usr-4",
+                "Chloe Chen",
+                "CASHIER",
+                "",
+                "192.168.1.105",
+                "LAN",
+                "Secure LAN (Station #01)",
+                "POS Touch Station",
+                "Windows 10 (POS Kiosk)",
+                "Windows 10",
+                "Google Chrome 122",
+                "1920x1080 (Touch)",
+                "POS-TERM-01",
+                "BKK1 Store, Phnom Penh 🇰🇭",
+                "Phnom Penh",
+                "Cambodia",
+                "KH",
+                "🇰🇭",
+                11.5529,
+                104.9244,
+                "Store POS LAN / CamNet",
+                "https://www.google.com/maps?q=11.5529,104.9244",
+                "PIN",
+                "ACTIVE",
+                LocalDateTime.now().minusHours(1).toString(),
+                LocalDateTime.now().minusMinutes(8).toString()
+        ));
+
+        activeLoginSessions.add(new LoginSession(
+                "sess-tab-104",
+                "usr-1",
+                "Liam Vance",
+                "BARISTA",
+                "",
+                "192.168.1.108",
+                "LAN",
+                "Secure LAN (Kitchen KDS)",
+                "Tablet",
+                "Android Tablet 10\" (Kitchen KDS)",
+                "Android 13",
+                "Google Chrome 121",
+                "1280x800 (Touch)",
+                "AROMA-KDS-01",
+                "BKK1 Kitchen Station 🇰🇭",
+                "Phnom Penh",
+                "Cambodia",
+                "KH",
+                "🇰🇭",
+                11.5529,
+                104.9244,
+                "Store POS LAN",
+                "https://www.google.com/maps?q=11.5529,104.9244",
+                "FACE_BIOMETRIC",
+                "ACTIVE",
+                LocalDateTime.now().minusHours(2).toString(),
+                LocalDateTime.now().minusMinutes(12).toString()
+        ));
+
+        activeLoginSessions.add(new LoginSession(
+                "sess-desk-105",
+                "usr-3",
+                "Marcus Thorne",
+                "ADMIN",
+                "",
+                "103.216.54.12",
+                "IPv4",
+                "Public IPv4 (HQ PC)",
+                "Desktop",
+                "Windows 11 (Desktop PC)",
+                "Windows 11",
+                "Google Chrome 124",
+                "1920x1080",
+                "AROMA-POS-01",
+                "Phnom Penh, Cambodia 🇰🇭",
+                "Phnom Penh",
+                "Cambodia",
+                "KH",
+                "🇰🇭",
+                11.5564,
+                104.9282,
+                "Smart Axiata Co., Ltd.",
+                "https://www.google.com/maps?q=11.5564,104.9282",
+                "PASSWORD",
+                "CLOSED",
+                LocalDateTime.now().minusHours(3).toString(),
+                LocalDateTime.now().minusHours(2).toString()
+        ));
     }
 
     public Optional<User> authenticate(String email, String password) {
@@ -228,6 +381,8 @@ public class AuthService {
                     "tb-" + System.currentTimeMillis(), u.getId(), u.getName(), u.getRole(),
                     "POS-" + u.getId(), device, ip, loc, lat, lon, 5.0, 0.0, provider, "LOGIN"
             ));
+
+            recordActiveSessionForUser(u, ip, device, loc, lat, lon, provider, "PASSWORD");
 
             recordAudit("LOGIN_SUCCESS", "User authenticated into terminal from " + ip + " [" + loc + "]", u.getName() + " (" + u.getRole() + ")", ip, device, "PASSWORD", loc, lat, lon);
             return Optional.of(u);
@@ -282,6 +437,8 @@ public class AuthService {
                     "POS-" + u.getId(), device, ip, loc, lat, lon, 5.0, 0.0, provider, "PIN_LOGIN"
             ));
 
+            recordActiveSessionForUser(u, ip, device, loc, lat, lon, provider, "PIN");
+
             recordAudit("PIN_LOGIN_SUCCESS", "POS Terminal unlocked via 4-digit PIN from " + ip + " [" + loc + "]", u.getName() + " (" + u.getRole() + ")", ip, device, "PIN", loc, lat, lon);
             return Optional.of(u);
         } else {
@@ -334,6 +491,8 @@ public class AuthService {
                     "tb-" + System.currentTimeMillis(), u.getId(), u.getName(), u.getRole(),
                     "POS-" + u.getId(), device, ip, loc, lat, lon, 5.0, 0.0, provider, "FACE_LOGIN"
             ));
+
+            recordActiveSessionForUser(u, ip, device, loc, lat, lon, provider, "FACE_BIOMETRIC");
 
             recordAudit("FACE_LOGIN_SUCCESS", "Touchless Face ID biometrics verified from " + ip + " [" + loc + "]", u.getName() + " (" + u.getRole() + ")", ip, device, "FACE_BIOMETRIC", loc, lat, lon);
             return Optional.of(u);
@@ -589,5 +748,76 @@ public class AuthService {
         return deviceTravelLogs.stream()
                 .sorted(Comparator.comparing(DeviceTravelBreadcrumb::getTimestamp))
                 .collect(Collectors.toList());
+    }
+
+    public void recordActiveSessionForUser(User u, String ip, String device, String loc, Double lat, Double lon, String provider, String method) {
+        String devType = "Desktop";
+        String lowerDev = (device != null) ? device.toLowerCase() : "";
+        if (lowerDev.contains("iphone") || lowerDev.contains("mobile") || (lowerDev.contains("android") && !lowerDev.contains("tablet")) || lowerDev.contains("phone") || lowerDev.contains("mobi")) {
+            devType = "Phone";
+        } else if (lowerDev.contains("ipad") || lowerDev.contains("tablet")) {
+            devType = "Tablet";
+        } else if (lowerDev.contains("kiosk") || lowerDev.contains("pos") || lowerDev.contains("station")) {
+            devType = "POS Touch Station";
+        }
+
+        String sessId = "sess-" + u.getId() + "-" + System.currentTimeMillis();
+        LoginSession session = new LoginSession(
+                sessId,
+                u.getId(),
+                u.getName(),
+                u.getRole(),
+                u.getAvatar() != null ? u.getAvatar() : "",
+                ip,
+                ip.contains(":") ? "IPv6" : "IPv4",
+                devType.equals("Phone") ? "Cellular Mobile" : (ip.startsWith("192.168") || ip.startsWith("10.") || ip.startsWith("127.") ? "Secure LAN" : "Public IPv4"),
+                devType,
+                devType.equals("Phone") && !device.contains("Phone") && !device.contains("iPhone") ? device + " (Smartphone)" : device,
+                lowerDev.contains("ios") || lowerDev.contains("iphone") ? "iOS" : (lowerDev.contains("android") ? "Android" : (lowerDev.contains("mac") ? "macOS" : "Windows 11")),
+                lowerDev.contains("safari") ? "Safari" : (lowerDev.contains("firefox") ? "Firefox" : "Chrome"),
+                devType.equals("Phone") ? "393x852 (Touch)" : (devType.equals("Tablet") ? "1024x1366 (Touch)" : "1920x1080"),
+                "STATION-" + u.getId().toUpperCase(),
+                loc,
+                loc.contains("Siem Reap") ? "Siem Reap" : (loc.contains("Battambang") ? "Battambang" : "Phnom Penh"),
+                "Cambodia",
+                "KH",
+                "🇰🇭",
+                lat,
+                lon,
+                provider,
+                "https://www.google.com/maps?q=" + lat + "," + lon,
+                method,
+                "ACTIVE",
+                LocalDateTime.now().toString(),
+                LocalDateTime.now().toString()
+        );
+        recordLoginSession(session);
+    }
+
+    public List<LoginSession> getLoginSessions() {
+        return activeLoginSessions;
+    }
+
+    public void recordLoginSession(LoginSession session) {
+        if (session == null) return;
+        if (session.getId() == null || session.getId().isBlank()) {
+            session.setId("sess-" + System.currentTimeMillis() + "-" + (int)(Math.random() * 1000));
+        }
+        activeLoginSessions.removeIf(s -> s.getId().equalsIgnoreCase(session.getId()));
+        activeLoginSessions.add(0, session);
+        while (activeLoginSessions.size() > 50) {
+            activeLoginSessions.remove(activeLoginSessions.size() - 1);
+        }
+    }
+
+    public boolean terminateLoginSession(String sessionId) {
+        if (sessionId == null) return false;
+        for (LoginSession s : activeLoginSessions) {
+            if (s.getId().equalsIgnoreCase(sessionId.trim())) {
+                s.setStatus("CLOSED");
+                return true;
+            }
+        }
+        return false;
     }
 }

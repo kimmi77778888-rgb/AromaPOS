@@ -226,6 +226,64 @@ export const getStoredLoginSessions = () => {
   const now = Date.now();
   return [
     {
+      id: "sess-phone-101",
+      userId: "usr-3",
+      userName: "Marcus Thorne",
+      userRole: "ADMIN",
+      userAvatar: "",
+      ipAddress: "103.216.54.18",
+      ipType: "IPv4",
+      ipLabel: "Smart 5G Cellular",
+      deviceType: "Phone",
+      deviceModel: "iPhone 16 Pro (iOS 18)",
+      os: "iOS 18.1",
+      browser: "Mobile Safari 18.0",
+      screen: "393x852",
+      terminalId: "MOB-PHONE-01",
+      location: "Phnom Penh, Cambodia 🇰🇭",
+      city: "Phnom Penh",
+      country: "Cambodia",
+      countryCode: "KH",
+      flag: "🇰🇭",
+      latitude: 11.5564,
+      longitude: 104.9282,
+      isp: "Smart Axiata 5G Mobile Network",
+      mapsUrl: "https://www.google.com/maps?q=11.5564,104.9282",
+      loginMethod: "PASSWORD",
+      status: "ACTIVE",
+      timestamp: new Date(now - 8 * 60 * 1000).toISOString(),
+      lastActive: new Date().toISOString()
+    },
+    {
+      id: "sess-phone-102",
+      userId: "usr-2",
+      userName: "Sophia Bennett",
+      userRole: "MANAGER",
+      userAvatar: "",
+      ipAddress: "203.144.92.45",
+      ipType: "IPv4",
+      ipLabel: "Cellcard 4G LTE",
+      deviceType: "Phone",
+      deviceModel: "Samsung Galaxy S24 Ultra",
+      os: "Android 14",
+      browser: "Chrome Mobile 124",
+      screen: "412x915",
+      terminalId: "MOB-PHONE-02",
+      location: "Siem Reap, Cambodia 🇰🇭",
+      city: "Siem Reap",
+      country: "Cambodia",
+      countryCode: "KH",
+      flag: "🇰🇭",
+      latitude: 13.3671,
+      longitude: 103.8448,
+      isp: "CamGSM (Cellcard Mobile Network)",
+      mapsUrl: "https://www.google.com/maps?q=13.3671,103.8448",
+      loginMethod: "PIN",
+      status: "ACTIVE",
+      timestamp: new Date(now - 25 * 60 * 1000).toISOString(),
+      lastActive: new Date(now - 3 * 60 * 1000).toISOString()
+    },
+    {
       id: "sess-1001",
       userId: "usr-3",
       userName: "Marcus Thorne",
@@ -395,7 +453,7 @@ export const recordLoginSession = async (user, loginMethod = 'PASSWORD', clientI
       userAvatar: user.avatar || user.facePhoto || '',
       ipAddress: liveIp,
       ipType: classification.type,
-      ipLabel: classification.label,
+      ipLabel: info.deviceType === 'Phone' ? 'Cellular / Mobile 4G/5G' : classification.label,
       deviceType: info.deviceType || 'Desktop',
       deviceModel: info.deviceModel || `${info.os} (${info.deviceType})`,
       os: info.os || 'Unknown OS',
@@ -420,6 +478,13 @@ export const recordLoginSession = async (user, loginMethod = 'PASSWORD', clientI
     const existing = getStoredLoginSessions();
     const updatedSessions = [newSession, ...existing.filter((s) => s.id !== newSession.id)].slice(0, 100);
     saveStoredLoginSessions(updatedSessions);
+
+    // Cross-Device Server Broadcast: Ensure mobile logins sync with all connected devices
+    fetch(`${BASE_URL}/auth/sessions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newSession)
+    }).catch(() => {});
 
     // Update staff roster with lastLogin details
     const staffList = getStoredStaff();
@@ -2155,10 +2220,33 @@ export const api = {
   },
 
   async fetchLoginSessions() {
+    try {
+      const res = await fetch(`${BASE_URL}/auth/sessions`);
+      if (res.ok) {
+        const serverSessions = await res.json();
+        if (Array.isArray(serverSessions) && serverSessions.length > 0) {
+          const localSessions = getStoredLoginSessions();
+          const map = new Map();
+          // Server sessions are authority
+          serverSessions.forEach((s) => map.set(s.id, s));
+          localSessions.forEach((s) => {
+            if (!map.has(s.id)) map.set(s.id, s);
+          });
+          const merged = Array.from(map.values()).sort(
+            (a, b) => new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime()
+          );
+          saveStoredLoginSessions(merged);
+          return merged;
+        }
+      }
+    } catch (e) {}
     return getStoredLoginSessions();
   },
 
   async terminateLoginSession(sessionId) {
+    try {
+      fetch(`${BASE_URL}/auth/sessions/${sessionId}`, { method: 'DELETE' }).catch(() => {});
+    } catch (e) {}
     return terminateLoginSession(sessionId);
   },
 

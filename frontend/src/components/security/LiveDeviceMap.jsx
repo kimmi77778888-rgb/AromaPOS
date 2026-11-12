@@ -304,7 +304,7 @@ export const LiveDeviceMap = ({
               ? 'bg-emerald-600 border-emerald-300 text-white shadow-lg shadow-emerald-950/80'
               : 'bg-stone-800 border-stone-600 text-stone-300 shadow-md'
           } transition-all duration-300 hover:scale-125">
-            <span class="text-[11px] font-black tracking-tight">${s.flag || '🇰🇭'}</span>
+            <span class="text-[11px] font-black tracking-tight">${(s.deviceType === 'Phone' || s.deviceType === 'Mobile') ? '📱' : (s.flag || '🇰🇭')}</span>
             ${isActive ? `
               <span class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 border border-stone-900 rounded-full"></span>
             ` : ''}
@@ -758,6 +758,9 @@ export const LiveDeviceMap = ({
                 }`}
               >
                 <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-emerald-400' : 'bg-stone-500'}`} />
+                <span className="text-[11px]">
+                  {s.deviceType === 'Phone' || s.deviceType === 'Mobile' ? '📱' : s.deviceType === 'Tablet' ? '📟' : s.deviceType?.includes('POS') ? '📠' : '🖥️'}
+                </span>
                 <span className="truncate max-w-[110px]">{s.userName}</span>
                 <span className="text-[10px] opacity-75">{s.flag || '🇰🇭'}</span>
               </button>
@@ -822,8 +825,9 @@ export const LiveDeviceMap = ({
                 <span className="text-[10px] uppercase font-bold text-stone-500 block">
                   {isKhmer ? 'ឧបករណ៍ & OS' : 'Device & OS'}
                 </span>
-                <span className="font-semibold text-stone-200 text-[11px] truncate block mt-0.5">
-                  {selectedSession.deviceModel || selectedSession.os || 'Windows 11'}
+                <span className="font-semibold text-stone-200 text-[11px] truncate block mt-0.5 flex items-center gap-1">
+                  <span>{selectedSession.deviceType === 'Phone' || selectedSession.deviceType === 'Mobile' ? '📱' : selectedSession.deviceType === 'Tablet' ? '📟' : '🖥️'}</span>
+                  <span className="truncate">{selectedSession.deviceModel || selectedSession.os || 'Windows 11'}</span>
                 </span>
               </div>
 

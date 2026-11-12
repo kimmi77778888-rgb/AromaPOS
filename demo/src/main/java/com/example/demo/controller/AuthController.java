@@ -2,6 +2,7 @@ package com.example.demo.controller;
 
 import com.example.demo.model.AuditLog;
 import com.example.demo.model.DeviceTravelBreadcrumb;
+import com.example.demo.model.LoginSession;
 import com.example.demo.model.User;
 import com.example.demo.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -551,5 +552,25 @@ public class AuthController {
                 "serverTime", java.time.LocalDateTime.now().toString(),
                 "status", "SECURE_TLS"
         ));
+    }
+
+    @GetMapping("/sessions")
+    public ResponseEntity<List<LoginSession>> getLoginSessions() {
+        return ResponseEntity.ok(authService.getLoginSessions());
+    }
+
+    @PostMapping("/sessions")
+    public ResponseEntity<?> recordLoginSession(@RequestBody LoginSession session) {
+        authService.recordLoginSession(session);
+        return ResponseEntity.ok(Map.of("success", true, "session", session));
+    }
+
+    @DeleteMapping("/sessions/{sessionId}")
+    public ResponseEntity<?> terminateLoginSession(@PathVariable String sessionId) {
+        boolean closed = authService.terminateLoginSession(sessionId);
+        if (closed) {
+            return ResponseEntity.ok(Map.of("success", true, "message", "Session terminated successfully", "sessionId", sessionId));
+        }
+        return ResponseEntity.notFound().build();
     }
 }

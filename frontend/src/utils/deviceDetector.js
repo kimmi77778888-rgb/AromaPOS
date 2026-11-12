@@ -61,22 +61,24 @@ export const detectBrowser = () => {
 };
 
 /**
- * Detect device type: POS Terminal | Desktop | Tablet | Mobile
+ * Detect device type: Phone | Tablet | POS Touch Station | Desktop
  */
 export const detectDeviceType = () => {
   if (typeof window === 'undefined') return 'Desktop';
   const ua = window.navigator.userAgent || '';
-  const width = window.innerWidth || window.screen?.width || 1280;
+  const width = window.innerWidth || 1280;
   const isTouch = (window.navigator?.maxTouchPoints || 0) > 0;
 
-  if (/iPad|Android/i.test(ua) && isTouch && width >= 600 && width <= 1180) {
+  // 1. Mobile Phone / Smartphone (Priority #1)
+  if (/iPhone|iPod|Mobile|Mobi|Android.*Mobile/i.test(ua) || (isTouch && width < 600)) {
+    return 'Phone';
+  }
+  // 2. Tablet (iPad or non-mobile Android tablet)
+  if ((/iPad|Tablet/i.test(ua) || (/Android/i.test(ua) && !/Mobile/i.test(ua))) && isTouch) {
     return 'Tablet';
   }
-  if (/Mobi|iPhone|Android.*Mobile/i.test(ua) || (isTouch && width < 600)) {
-    return 'Mobile';
-  }
-  // POS Station heuristic: standard screen with touch or POS user context
-  if (isTouch && width >= 1024) {
+  // 3. POS Touch Station (Touch terminal on counter)
+  if (isTouch && width >= 1024 && !/Macintosh/i.test(ua)) {
     return 'POS Touch Station';
   }
   return 'Desktop';
@@ -204,11 +206,28 @@ export const getDeviceInfo = () => {
   } catch (e) {}
 
   const ipAddress = cachedPublicIp || '192.168.1.108 (LAN Station #01)';
-  const deviceSummary = `${deviceType} • ${os} (${browser})`;
+  let modelName = `${os} (${deviceType})`;
+  if (deviceType === 'Phone') {
+    if (/iPhone/i.test(os) || /iPhone/i.test(navigator.userAgent || '')) {
+      modelName = 'Apple iPhone (iOS Mobile)';
+    } else if (/Android/i.test(os) || /Android/i.test(navigator.userAgent || '')) {
+      modelName = 'Android Smartphone (Mobile)';
+    } else {
+      modelName = 'Smartphone (Mobile)';
+    }
+  } else if (deviceType === 'Tablet') {
+    if (/iPad/i.test(os) || /iPad/i.test(navigator.userAgent || '')) {
+      modelName = 'Apple iPad (Tablet)';
+    } else {
+      modelName = 'Android Tablet (Pad)';
+    }
+  }
+
+  const deviceSummary = `${deviceType} • ${modelName} (${browser})`;
 
   return {
     deviceType,
-    deviceModel: `${os} (${deviceType})`,
+    deviceModel: modelName,
     os,
     browser,
     screen,

@@ -99,6 +99,7 @@ export const StaffManagement = () => {
   const [loginMethodFilter, setLoginMethodFilter] = useState('ALL');
   const [loginStatusFilter, setLoginStatusFilter] = useState('ALL');
   const [loginLocationFilter, setLoginLocationFilter] = useState('ALL');
+  const [loginDeviceTypeFilter, setLoginDeviceTypeFilter] = useState('ALL');
   const [inspectedSession, setInspectedSession] = useState(null);
   const [copiedSessionIp, setCopiedSessionIp] = useState(null);
 
@@ -143,9 +144,34 @@ export const StaffManagement = () => {
         (sess.location || '').toLowerCase().includes(loginLocationFilter.toLowerCase()) ||
         (sess.city || '').toLowerCase().includes(loginLocationFilter.toLowerCase());
 
-      return matchQuery && matchMethod && matchStatus && matchLocation;
+      const matchDevice = loginDeviceTypeFilter === 'ALL' || 
+        (loginDeviceTypeFilter === 'Phone' && (
+          sess.deviceType === 'Phone' || 
+          sess.deviceType === 'Mobile' || 
+          (sess.deviceModel || '').toLowerCase().includes('phone') || 
+          (sess.deviceModel || '').toLowerCase().includes('iphone') ||
+          (sess.os || '').toLowerCase().includes('ios')
+        )) ||
+        (loginDeviceTypeFilter === 'Tablet' && (
+          sess.deviceType === 'Tablet' || 
+          (sess.deviceModel || '').toLowerCase().includes('tablet') || 
+          (sess.deviceModel || '').toLowerCase().includes('ipad')
+        )) ||
+        (loginDeviceTypeFilter === 'Desktop' && (
+          sess.deviceType === 'Desktop' || 
+          (sess.deviceModel || '').toLowerCase().includes('pc') || 
+          (sess.deviceModel || '').toLowerCase().includes('macbook')
+        )) ||
+        (loginDeviceTypeFilter === 'POS Touch Station' && (
+          sess.deviceType === 'POS Touch Station' || 
+          sess.deviceType === 'POS Station' || 
+          (sess.deviceModel || '').toLowerCase().includes('pos') || 
+          (sess.deviceModel || '').toLowerCase().includes('kiosk')
+        ));
+
+      return matchQuery && matchMethod && matchStatus && matchLocation && matchDevice;
     });
-  }, [loginSessions, loginSearchQuery, loginMethodFilter, loginStatusFilter, loginLocationFilter]);
+  }, [loginSessions, loginSearchQuery, loginMethodFilter, loginStatusFilter, loginLocationFilter, loginDeviceTypeFilter]);
 
   // Custom Roles state (allows creating brand new roles)
   const [customRoles, setCustomRoles] = useState([
@@ -224,6 +250,15 @@ export const StaffManagement = () => {
       return true;
     });
   }, [staffList, roleFilter, statusFilter, searchQuery]);
+
+  // Live Cross-Device Session Sync Polling: Automatically pulls new logins (including phones) every 10s
+  React.useEffect(() => {
+    if (activeSubTab !== 'sessions') return;
+    const interval = setInterval(() => {
+      if (loadStaffAndAudits) loadStaffAndAudits();
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [activeSubTab, loadStaffAndAudits]);
 
   const togglePinReveal = (id) => {
     setRevealedPins((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -1496,6 +1531,19 @@ export const StaffManagement = () => {
                   <option value="Kandal">Kandal 🇰🇭</option>
                 </select>
 
+                {/* Device Type Filter (Phones, Tablets, Desktops, POS Stations) */}
+                <select
+                  value={loginDeviceTypeFilter}
+                  onChange={(e) => setLoginDeviceTypeFilter(e.target.value)}
+                  className="bg-stone-900 border border-stone-800 rounded-xl px-3 py-1.5 text-xs text-stone-200 font-semibold focus:outline-none cursor-pointer"
+                >
+                  <option value="ALL">{isKhmer ? 'គ្រប់ប្រភេទឧបករណ៍ទាំងអស់' : 'All Device Types'}</option>
+                  <option value="Phone">{isKhmer ? '📱 ទូរស័ព្ទដៃ (Phones / Mobile)' : '📱 Phones / Mobile'}</option>
+                  <option value="Tablet">{isKhmer ? '📟 ថេប្លេត (Tablet / iPad)' : '📟 Tablet / iPad'}</option>
+                  <option value="Desktop">{isKhmer ? '🖥️ កុំព្យូទ័រ (Desktop / Laptop)' : '🖥️ Desktop / Laptop'}</option>
+                  <option value="POS Touch Station">{isKhmer ? '📠 ស្ថានីយគិតលុយ (POS Station)' : '📠 POS Touch Station'}</option>
+                </select>
+
                 {/* Method Filter */}
                 <select
                   value={loginMethodFilter}
@@ -1628,6 +1676,7 @@ export const StaffManagement = () => {
                             setLoginMethodFilter('ALL');
                             setLoginStatusFilter('ALL');
                             setLoginLocationFilter('ALL');
+                            setLoginDeviceTypeFilter('ALL');
                           }}
                           className="mt-4 px-4 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 font-bold text-xs inline-flex items-center gap-2 transition cursor-pointer shadow-lg hover:border-amber-400"
                         >
@@ -1731,24 +1780,39 @@ export const StaffManagement = () => {
                             </div>
                           </td>
 
-                          {/* 3. Device & Platform */}
+                          {/* 4. Device & Platform */}
                           <td className="py-3.5 px-4">
                             <div className="flex items-center gap-2">
-                              <div className="w-7 h-7 rounded-lg bg-stone-950 border border-stone-800 flex items-center justify-center text-amber-400 shrink-0">
-                                {sess.deviceType === 'Tablet' ? (
-                                  <Tablet className="w-3.5 h-3.5" />
-                                ) : sess.deviceType === 'Mobile' ? (
+                              {sess.deviceType === 'Phone' || sess.deviceType === 'Mobile' ? (
+                                <div className="w-7 h-7 rounded-lg bg-emerald-950/80 border border-emerald-700/70 flex items-center justify-center text-emerald-400 shrink-0 shadow-xs" title="Smartphone / Mobile Device">
                                   <Smartphone className="w-3.5 h-3.5" />
-                                ) : (
+                                </div>
+                              ) : sess.deviceType === 'Tablet' ? (
+                                <div className="w-7 h-7 rounded-lg bg-sky-950/80 border border-sky-700/70 flex items-center justify-center text-sky-400 shrink-0 shadow-xs" title="Tablet / iPad">
+                                  <Tablet className="w-3.5 h-3.5" />
+                                </div>
+                              ) : sess.deviceType === 'POS Touch Station' || sess.deviceType === 'POS Station' ? (
+                                <div className="w-7 h-7 rounded-lg bg-purple-950/80 border border-purple-700/70 flex items-center justify-center text-purple-400 shrink-0 shadow-xs" title="POS Station">
+                                  <Terminal className="w-3.5 h-3.5" />
+                                </div>
+                              ) : (
+                                <div className="w-7 h-7 rounded-lg bg-stone-950 border border-stone-800 flex items-center justify-center text-amber-400 shrink-0" title="Desktop / Workstation">
                                   <Monitor className="w-3.5 h-3.5" />
-                                )}
-                              </div>
-                              <div className="truncate max-w-[170px]">
-                                <span className="font-bold text-xs text-stone-200 block truncate">
-                                  {sess.os || 'Windows 11'}
-                                </span>
+                                </div>
+                              )}
+                              <div className="truncate max-w-[175px]">
+                                <div className="flex items-center gap-1.5 truncate">
+                                  <span className="font-bold text-xs text-stone-200 block truncate">
+                                    {sess.deviceModel || sess.os || 'Workstation'}
+                                  </span>
+                                  {(sess.deviceType === 'Phone' || sess.deviceType === 'Mobile') && (
+                                    <span className="px-1.5 py-0.2 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[9px] font-mono font-bold shrink-0">
+                                      📱 Phone
+                                    </span>
+                                  )}
+                                </div>
                                 <span className="text-[10px] text-stone-500 block truncate">
-                                  {sess.browser || 'Chrome 124'}
+                                  {sess.browser || 'Browser'} • {sess.os}
                                 </span>
                               </div>
                             </div>
