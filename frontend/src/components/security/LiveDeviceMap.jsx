@@ -782,6 +782,16 @@ export const LiveDeviceMap = ({
                     <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/15 border border-amber-500/30 text-amber-300">
                       {selectedSession.userRole || 'CASHIER'}
                     </span>
+                    {selectedSession.isDemo ? (
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-stone-800 text-stone-400 border border-stone-700">
+                        🧪 Demo Sample
+                      </span>
+                    ) : (
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-950 text-emerald-300 border border-emerald-700 flex items-center gap-1 shadow-xs">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                        🟢 Real Live
+                      </span>
+                    )}
                   </div>
                   <p className="text-[11px] text-stone-400 flex items-center gap-1 mt-0.5">
                     <MapPin className="w-3 h-3 text-rose-400 shrink-0" />

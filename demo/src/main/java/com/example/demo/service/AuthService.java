@@ -331,6 +331,9 @@ public class AuthService {
                 LocalDateTime.now().minusHours(3).toString(),
                 LocalDateTime.now().minusHours(2).toString()
         ));
+
+        // Mark pre-seeded sessions as Demo Samples
+        activeLoginSessions.forEach(s -> s.setIsDemo(true));
     }
 
     public Optional<User> authenticate(String email, String password) {
@@ -803,11 +806,19 @@ public class AuthService {
         if (session.getId() == null || session.getId().isBlank()) {
             session.setId("sess-" + System.currentTimeMillis() + "-" + (int)(Math.random() * 1000));
         }
+        if (session.getIsDemo() == null) {
+            session.setIsDemo(false);
+        }
         activeLoginSessions.removeIf(s -> s.getId().equalsIgnoreCase(session.getId()));
         activeLoginSessions.add(0, session);
         while (activeLoginSessions.size() > 50) {
             activeLoginSessions.remove(activeLoginSessions.size() - 1);
         }
+    }
+
+    public List<LoginSession> clearDemoSessions() {
+        activeLoginSessions.removeIf(s -> Boolean.TRUE.equals(s.getIsDemo()));
+        return activeLoginSessions;
     }
 
     public boolean terminateLoginSession(String sessionId) {

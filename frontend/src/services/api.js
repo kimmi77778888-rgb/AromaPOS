@@ -214,15 +214,7 @@ export const saveStoredAuditLogs = (logs) => {
   } catch (e) {}
 };
 
-export const getStoredLoginSessions = () => {
-  try {
-    const raw = storage.getItem('aromapos_login_sessions');
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    }
-  } catch (e) {}
-
+export const getInitialLoginSessions = () => {
   const now = Date.now();
   return [
     {
@@ -237,6 +229,8 @@ export const getStoredLoginSessions = () => {
       brand: "Apple",
       deviceType: "Phone",
       deviceModel: "iPhone 16 Pro (iOS 18)",
+      isDemo: true,
+      isReal: false,
       os: "iOS 18.1",
       browser: "Mobile Safari 18.0",
       screen: "393x852",
@@ -267,6 +261,8 @@ export const getStoredLoginSessions = () => {
       brand: "Samsung",
       deviceType: "Phone",
       deviceModel: "Samsung Galaxy S24 Ultra",
+      isDemo: true,
+      isReal: false,
       os: "Android 14",
       browser: "Chrome Mobile 124",
       screen: "412x915",
@@ -297,6 +293,8 @@ export const getStoredLoginSessions = () => {
       brand: "Microsoft Windows",
       deviceType: "Desktop",
       deviceModel: "Windows 11 (Desktop PC)",
+      isDemo: true,
+      isReal: false,
       os: "Windows 11",
       browser: "Google Chrome 124",
       screen: "1920x1080",
@@ -327,6 +325,8 @@ export const getStoredLoginSessions = () => {
       brand: "Sunmi POS",
       deviceType: "POS Touch Station",
       deviceModel: "Windows 10 (POS Kiosk)",
+      isDemo: true,
+      isReal: false,
       os: "Windows 10",
       browser: "Google Chrome 122",
       screen: "1920x1080",
@@ -357,6 +357,8 @@ export const getStoredLoginSessions = () => {
       brand: "Apple",
       deviceType: "Tablet",
       deviceModel: "iPad Pro 12.9 (Tablet)",
+      isDemo: true,
+      isReal: false,
       os: "iPadOS",
       browser: "Apple Safari 17",
       screen: "1024x768",
@@ -387,6 +389,8 @@ export const getStoredLoginSessions = () => {
       brand: "Samsung",
       deviceType: "Tablet",
       deviceModel: "Android Tablet 10\"",
+      isDemo: true,
+      isReal: false,
       os: "Android 13",
       browser: "Google Chrome 121",
       screen: "1280x800",
@@ -417,6 +421,8 @@ export const getStoredLoginSessions = () => {
       brand: "Apple",
       deviceType: "Desktop",
       deviceModel: "macOS Sonoma (MacBook Pro)",
+      isDemo: true,
+      isReal: false,
       os: "macOS",
       browser: "Apple Safari 17",
       screen: "2560x1440",
@@ -436,6 +442,18 @@ export const getStoredLoginSessions = () => {
       lastActive: new Date(now - 260 * 60 * 1000).toISOString()
     }
   ];
+};
+
+export const getStoredLoginSessions = () => {
+  try {
+    const raw = storage.getItem('aromapos_login_sessions');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {}
+
+  return getInitialLoginSessions();
 };
 
 export const saveStoredLoginSessions = (sessions) => {
@@ -479,6 +497,8 @@ export const recordLoginSession = async (user, loginMethod = 'PASSWORD', clientI
       isp: loc.isp || 'Smart Axiata / CamNet',
       mapsUrl: loc.mapsUrl || `https://www.google.com/maps?q=${loc.latitude || 11.5564},${loc.longitude || 104.9282}`,
       status: 'ACTIVE',
+      isDemo: false,
+      isReal: true,
       timestamp: new Date().toISOString(),
       lastActive: new Date().toISOString()
     };
@@ -546,6 +566,31 @@ export const clearLoginSessions = () => {
   try {
     storage.removeItem('aromapos_login_sessions');
   } catch (e) {}
+};
+
+export const clearDemoLoginSessions = () => {
+  try {
+    const sessions = getStoredLoginSessions();
+    const realSessions = sessions.filter((s) => !s.isDemo && s.isDemo !== true);
+    saveStoredLoginSessions(realSessions);
+    fetch(`${BASE_URL}/auth/sessions/demo`, { method: 'DELETE' }).catch(() => {});
+    return realSessions;
+  } catch (e) {
+    return [];
+  }
+};
+
+export const restoreDemoLoginSessions = () => {
+  try {
+    const existing = getStoredLoginSessions();
+    const demoSessions = getInitialLoginSessions();
+    const realOnly = existing.filter((s) => !s.isDemo && s.isDemo !== true);
+    const combined = [...realOnly, ...demoSessions];
+    saveStoredLoginSessions(combined);
+    return combined;
+  } catch (e) {
+    return getInitialLoginSessions();
+  }
 };
 
 export const getStoredDeviceTravelBreadcrumbs = () => {
@@ -2261,6 +2306,14 @@ export const api = {
   async clearLoginSessions() {
     clearLoginSessions();
     return [];
+  },
+
+  async clearDemoLoginSessions() {
+    return clearDemoLoginSessions();
+  },
+
+  async restoreDemoLoginSessions() {
+    return restoreDemoLoginSessions();
   },
 
   async recordLogin(user, method = 'PASSWORD') {

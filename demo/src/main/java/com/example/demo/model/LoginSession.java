@@ -14,6 +14,7 @@ public class LoginSession {
     private String deviceType; // Phone, Tablet, Desktop, POS Touch Station
     private String deviceModel;
     private String brand; // Apple, Samsung, Google, Xiaomi, Microsoft, etc.
+    private Boolean isDemo = false; // true if seeded sample data, false if 100% real live login
     private String os;
     private String browser;
     private String screen;
@@ -128,6 +129,9 @@ public class LoginSession {
         return deriveBrand(deviceModel, os);
     }
     public void setBrand(String brand) { this.brand = brand; }
+
+    public Boolean getIsDemo() { return isDemo != null ? isDemo : false; }
+    public void setIsDemo(Boolean isDemo) { this.isDemo = isDemo; }
 
     public String getOs() { return os; }
     public void setOs(String os) { this.os = os; }

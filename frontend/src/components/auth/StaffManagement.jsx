@@ -57,7 +57,8 @@ import {
   Navigation,
   ExternalLink,
   Compass,
-  Radio
+  Radio,
+  FlaskConical
 } from 'lucide-react';
 import { LiveDeviceMap } from '../security/LiveDeviceMap';
 import { getBrandBadge } from '../../utils/deviceDetector';
@@ -68,7 +69,7 @@ import { FaceScannerModal } from './FaceScannerModal';
 import { UserAvatar } from '../common/UserAvatar';
 
 export const StaffManagement = () => {
-  const { staffList, auditLogs, loginSessions = [], terminateLoginSession, loadStaffAndAudits, showToast, user } = useApp();
+  const { staffList, auditLogs, loginSessions = [], terminateLoginSession, clearDemoSessions, restoreDemoSessions, loadStaffAndAudits, showToast, user } = useApp();
   const { isKhmer } = useLanguage();
 
   // Navigation Subtabs: roster | matrix | roles | audit | shifts
@@ -102,6 +103,7 @@ export const StaffManagement = () => {
   const [loginLocationFilter, setLoginLocationFilter] = useState('ALL');
   const [loginDeviceTypeFilter, setLoginDeviceTypeFilter] = useState('ALL');
   const [loginBrandFilter, setLoginBrandFilter] = useState('ALL');
+  const [loginSourceFilter, setLoginSourceFilter] = useState('ALL'); // 'ALL' | 'REAL' | 'DEMO'
   const [inspectedSession, setInspectedSession] = useState(null);
   const [copiedSessionIp, setCopiedSessionIp] = useState(null);
 
@@ -177,9 +179,13 @@ export const StaffManagement = () => {
         (sess.brand || '').toLowerCase().includes(loginBrandFilter.toLowerCase()) ||
         (sess.deviceModel || '').toLowerCase().includes(loginBrandFilter.toLowerCase());
 
-      return matchQuery && matchMethod && matchStatus && matchLocation && matchDevice && matchBrand;
+      const matchSource = loginSourceFilter === 'ALL' ||
+        (loginSourceFilter === 'REAL' && !sess.isDemo && sess.isDemo !== true) ||
+        (loginSourceFilter === 'DEMO' && Boolean(sess.isDemo));
+
+      return matchQuery && matchMethod && matchStatus && matchLocation && matchDevice && matchBrand && matchSource;
     });
-  }, [loginSessions, loginSearchQuery, loginMethodFilter, loginStatusFilter, loginLocationFilter, loginDeviceTypeFilter, loginBrandFilter]);
+  }, [loginSessions, loginSearchQuery, loginMethodFilter, loginStatusFilter, loginLocationFilter, loginDeviceTypeFilter, loginBrandFilter, loginSourceFilter]);
 
   // Custom Roles state (allows creating brand new roles)
   const [customRoles, setCustomRoles] = useState([
@@ -1420,9 +1426,19 @@ export const StaffManagement = () => {
                   <Activity className="w-4 h-4" />
                 </div>
               </div>
-              <p className="text-2xl font-black text-stone-100 font-mono mt-2">
-                {loginSessions.length}
-              </p>
+              <div className="flex items-baseline gap-2 mt-2">
+                <span className="text-2xl font-black text-stone-100 font-mono">
+                  {loginSessions.length}
+                </span>
+                <span className="text-xs font-mono font-bold text-emerald-400">
+                  {loginSessions.filter((s) => !s.isDemo).length} {isKhmer ? 'ពិត (Real)' : 'Real'}
+                </span>
+                {loginSessions.some((s) => s.isDemo) && (
+                  <span className="text-xs font-mono text-stone-500">
+                    • {loginSessions.filter((s) => s.isDemo).length} {isKhmer ? 'គំរូ' : 'Demo'}
+                  </span>
+                )}
+              </div>
               <p className="text-[10px] text-stone-500 mt-1">
                 {isKhmer ? 'កំណត់ត្រាសុវត្ថិភាពចូលប្រើប្រព័ន្ធ' : 'Recorded device login events'}
               </p>
@@ -1594,6 +1610,47 @@ export const StaffManagement = () => {
                   <option value="CLOSED">{isKhmer ? 'បានបិទ (Closed)' : 'Closed Only'}</option>
                 </select>
 
+                {/* Source Filter (Real Devices vs Demo Samples) */}
+                <select
+                  value={loginSourceFilter}
+                  onChange={(e) => setLoginSourceFilter(e.target.value)}
+                  className="bg-stone-900 border border-stone-800 rounded-xl px-3 py-1.5 text-xs text-stone-200 font-semibold focus:outline-none cursor-pointer"
+                  title={isKhmer ? 'ចម្រាញ់មើលឧបករណ៍ពិត ឬទិន្នន័យគំរូ' : 'Filter by Real Device vs Demo Sample'}
+                >
+                  <option value="ALL">{isKhmer ? 'ប្រភពទាំងអស់ (All Data)' : 'All Data Sources'}</option>
+                  <option value="REAL">{isKhmer ? '🟢 ឧបករណ៍ពិត (Real Devices Only)' : '🟢 Real Devices Only'}</option>
+                  <option value="DEMO">{isKhmer ? '🧪 ទិន្នន័យគំរូ (Demo Samples)' : '🧪 Demo Samples'}</option>
+                </select>
+
+                {/* Clear / Restore Demo Samples Action */}
+                {loginSessions.some((s) => s.isDemo) ? (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (clearDemoSessions) await clearDemoSessions();
+                      showToast(isKhmer ? 'បានលុបទិន្នន័យគំរូទាំងអស់ (ទុកតែឧបករណ៍ពិត)' : 'Cleared all demo sample sessions (kept real devices)', 'success');
+                    }}
+                    className="px-2.5 py-1.5 rounded-xl bg-rose-950/40 hover:bg-rose-900/60 border border-rose-800/60 text-rose-300 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                    title={isKhmer ? 'លុបទិន្នន័យឧបករណ៍គំរូទាំង ៧ និងទុកតែឧបករណ៍ដែលបាន Login ពិត' : 'Remove all 7 demo mock devices and show only real logged-in devices'}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">{isKhmer ? 'លុបគំរូ' : 'Clear Demo'}</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (restoreDemoSessions) await restoreDemoSessions();
+                      showToast(isKhmer ? 'បានបញ្ចូលទិន្នន័យគំរូសម្រាប់តេស្តឡើងវិញ' : 'Restored demo sample sessions', 'success');
+                    }}
+                    className="px-2.5 py-1.5 rounded-xl bg-amber-950/40 hover:bg-amber-900/60 border border-amber-800/60 text-amber-300 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                    title={isKhmer ? 'បញ្ចូលឧបករណ៍គំរូឡើងវិញសម្រាប់តេស្ត' : 'Restore demo sample devices'}
+                  >
+                    <FlaskConical className="w-3.5 h-3.5 text-amber-400" />
+                    <span className="hidden sm:inline">{isKhmer ? 'ដាក់គំរូឡើងវិញ' : 'Restore Demo'}</span>
+                  </button>
+                )}
+
                 {/* Counter Pill */}
                 <span className="text-xs font-mono text-stone-400 bg-stone-900 px-3 py-1.5 rounded-xl border border-stone-800">
                   {filteredSessions.length} / {loginSessions.length}
@@ -1703,6 +1760,7 @@ export const StaffManagement = () => {
                             setLoginLocationFilter('ALL');
                             setLoginDeviceTypeFilter('ALL');
                             setLoginBrandFilter('ALL');
+                            setLoginSourceFilter('ALL');
                           }}
                           className="mt-4 px-4 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 font-bold text-xs inline-flex items-center gap-2 transition cursor-pointer shadow-lg hover:border-amber-400"
                         >
@@ -1844,6 +1902,22 @@ export const StaffManagement = () => {
                                   <span className="font-bold text-xs text-stone-100 truncate">
                                     {sess.deviceModel || sess.os || 'Workstation'}
                                   </span>
+                                  {sess.isDemo ? (
+                                    <span
+                                      className="px-1.5 py-0.2 rounded bg-stone-800 border border-stone-700/80 text-stone-400 text-[9px] font-mono font-bold shrink-0"
+                                      title={isKhmer ? 'ទិន្នន័យគំរូសម្រាប់ Preview' : 'Demo Seeded Sample'}
+                                    >
+                                      🧪 DEMO
+                                    </span>
+                                  ) : (
+                                    <span
+                                      className="px-1.5 py-0.2 rounded bg-emerald-950/90 border border-emerald-500/50 text-emerald-300 text-[9px] font-mono font-black shrink-0 flex items-center gap-1 shadow-xs"
+                                      title={isKhmer ? 'ឧបករណ៍តភ្ជាប់ និង Login ពិតប្រាកដ ១០០%' : '100% Real Live Connected Device'}
+                                    >
+                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                      <span>🟢 REAL</span>
+                                    </span>
+                                  )}
                                   {(sess.deviceType === 'Phone' || sess.deviceType === 'Mobile') && (
                                     <span className="px-1.5 py-0.2 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[9px] font-mono font-bold shrink-0">
                                       📱 Phone

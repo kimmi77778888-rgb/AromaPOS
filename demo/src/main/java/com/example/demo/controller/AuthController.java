@@ -565,6 +565,12 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("success", true, "session", session));
     }
 
+    @DeleteMapping("/sessions/demo")
+    public ResponseEntity<?> clearDemoSessions() {
+        List<LoginSession> remaining = authService.clearDemoSessions();
+        return ResponseEntity.ok(Map.of("success", true, "message", "Demo sessions cleared", "sessions", remaining));
+    }
+
     @DeleteMapping("/sessions/{sessionId}")
     public ResponseEntity<?> terminateLoginSession(@PathVariable String sessionId) {
         boolean closed = authService.terminateLoginSession(sessionId);

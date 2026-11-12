@@ -1618,6 +1618,14 @@ export const AppProvider = ({ children }) => {
           const updated = api.terminateLoginSession(id);
           setLoginSessions([...updated]);
         },
+        clearDemoSessions: async () => {
+          const updated = await api.clearDemoLoginSessions();
+          setLoginSessions([...updated]);
+        },
+        restoreDemoSessions: async () => {
+          const updated = await api.restoreDemoLoginSessions();
+          setLoginSessions([...updated]);
+        },
         overrideModal,
         requestManagerOverride,
         closeManagerOverride,
