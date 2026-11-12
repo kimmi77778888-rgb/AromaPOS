@@ -831,4 +831,27 @@ public class AuthService {
         }
         return false;
     }
+
+    private final List<Map<String, Object>> activeAlarms = new CopyOnWriteArrayList<>();
+
+    public Map<String, Object> broadcastAlarm(Map<String, Object> alarm) {
+        if (alarm == null) return Map.of();
+        activeAlarms.add(0, alarm);
+        while (activeAlarms.size() > 20) {
+            activeAlarms.remove(activeAlarms.size() - 1);
+        }
+        return alarm;
+    }
+
+    public List<Map<String, Object>> getActiveAlarms() {
+        return activeAlarms;
+    }
+
+    public void silenceAlarm(String alarmId) {
+        if (alarmId == null || alarmId.isBlank() || "ALL".equalsIgnoreCase(alarmId)) {
+            activeAlarms.clear();
+        } else {
+            activeAlarms.removeIf(a -> alarmId.equalsIgnoreCase((String) a.get("id")));
+        }
+    }
 }

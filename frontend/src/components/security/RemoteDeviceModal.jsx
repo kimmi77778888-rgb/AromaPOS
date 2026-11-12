@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
+import { useApp } from '../../context/AppContext';
 import { getBrandBadge } from '../../utils/deviceDetector';
 import {
   Smartphone,
@@ -24,11 +25,15 @@ import {
   Copy,
   CheckCheck,
   MessageSquare,
-  AlertTriangle
+  AlertTriangle,
+  BellRing,
+  Volume2,
+  Radio
 } from 'lucide-react';
 
 export const RemoteDeviceModal = ({ session, isOpen, onClose, onTerminate }) => {
   const { isKhmer } = useLanguage();
+  const { triggerDeviceAlarm } = useApp();
   const [activeScreenTab, setActiveScreenTab] = useState('pos'); // 'pos' | 'cart' | 'status'
   const [remoteMessage, setRemoteMessage] = useState('');
   const [sentMessageToast, setSentMessageToast] = useState(null);
@@ -36,6 +41,18 @@ export const RemoteDeviceModal = ({ session, isOpen, onClose, onTerminate }) => 
   const [isCopiedIp, setIsCopiedIp] = useState(false);
   const [simulatedPing, setSimulatedPing] = useState(18);
   const [isDeviceLocked, setIsDeviceLocked] = useState(false);
+
+  const handleSendAlarm = (soundType = 'SIREN') => {
+    if (!session) return;
+    if (triggerDeviceAlarm) {
+      triggerDeviceAlarm({
+        targetSessionId: session.id,
+        targetUserName: session.userName,
+        message: remoteMessage.trim() || `Urgent Attention Required on ${session.deviceModel || 'Terminal'}!`,
+        soundType
+      });
+    }
+  };
 
   useEffect(() => {
     if (!isOpen || !session) return;
@@ -423,6 +440,57 @@ export const RemoteDeviceModal = ({ session, isOpen, onClose, onTerminate }) => 
                   </button>
                 </form>
               </div>
+
+              {/* Instant Sound Alarm Trigger */}
+              <div className="p-4 rounded-2xl bg-stone-950/80 border border-rose-900/40 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <h5 className="font-extrabold text-xs text-rose-300 uppercase tracking-wider flex items-center gap-1.5">
+                    <BellRing className="w-3.5 h-3.5 text-rose-400 animate-bounce" />
+                    <span>{isKhmer ? 'បន្លឺសំឡេងរោទ៍ Alarm ទៅកាន់ឧបករណ៍' : 'Trigger Sound Alarm on Device'}</span>
+                  </h5>
+                  <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-800">
+                    ⚡ Live Audio
+                  </span>
+                </div>
+
+                <p className="text-[11px] text-stone-400">
+                  {isKhmer
+                    ? 'ចុចបន្លឺសំឡេងរោទ៍ Alarm លើទូរស័ព្ទ ឬកុំព្យូទ័ររបស់បុគ្គលិកនេះភ្លាមៗគ្រប់ពេលដែលអ្នកចង់'
+                    : 'Triggers an instant audible siren buzzer and alert vibration on this device immediately.'}
+                </p>
+
+                <div className="grid grid-cols-3 gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => handleSendAlarm('SIREN')}
+                    className="py-2.5 px-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-black text-[11px] flex flex-col items-center gap-1 transition cursor-pointer shadow-md shadow-rose-950"
+                    title={isKhmer ? 'បន្លឺសំឡេងស៊ីរ៉ែន' : 'Play Siren Alarm'}
+                  >
+                    <BellRing className="w-4 h-4" />
+                    <span>🚨 {isKhmer ? 'ស៊ីរ៉ែន' : 'Siren'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleSendAlarm('BUZZER')}
+                    className="py-2.5 px-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-stone-950 font-black text-[11px] flex flex-col items-center gap-1 transition cursor-pointer shadow-md shadow-amber-950"
+                    title={isKhmer ? 'បន្លឺសំឡេង Buzzer' : 'Play Loud Buzzer'}
+                  >
+                    <Volume2 className="w-4 h-4" />
+                    <span>📢 {isKhmer ? 'Buzzer' : 'Buzzer'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleSendAlarm('CHIME')}
+                    className="py-2.5 px-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-black text-[11px] flex flex-col items-center gap-1 transition cursor-pointer shadow-md shadow-cyan-950"
+                    title={isKhmer ? 'បន្លឺសំឡេងកណ្តឹងបន្ទាន់' : 'Play Urgent Chime'}
+                  >
+                    <Radio className="w-4 h-4" />
+                    <span>🔔 {isKhmer ? 'កណ្តឹង' : 'Chime'}</span>
+                  </button>
+                </div>
+              </div>
             </div>
 
             {/* Emergency Administrative Remote Actions */}
@@ -466,3 +534,4 @@ export const RemoteDeviceModal = ({ session, isOpen, onClose, onTerminate }) => 
     </div>
   );
 };
+

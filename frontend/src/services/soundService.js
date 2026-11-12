@@ -455,6 +455,116 @@ class SoundService {
   testKhmerSound(amount = 3.50, currency = 'USD') {
     this.playKhmerPaymentSuccessSound({ paymentMethod: 'KHQR', amount, currency });
   }
+
+  /**
+   * High-Priority Emergency Sound Alarm for Staff & Connected Devices
+   * Plays audible siren buzzer and triggers device vibration on phones.
+   * @param {'SIREN'|'BUZZER'|'CHIME'} type
+   */
+  playEmergencyAlarmSound(type = 'SIREN') {
+    const ctx = this.getAudioContext();
+    if (!ctx) return;
+
+    this.stopAlarmSound();
+    const now = ctx.currentTime;
+    this.alarmOscillators = [];
+
+    if (type === 'BUZZER') {
+      // 4 rapid loud buzzer pulses: 880Hz -> 440Hz
+      for (let i = 0; i < 4; i++) {
+        const startTime = now + i * 0.28;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(880, startTime);
+        osc.frequency.exponentialRampToValueAtTime(440, startTime + 0.18);
+        gain.gain.setValueAtTime(0.35, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.22);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(startTime);
+        osc.stop(startTime + 0.24);
+        this.alarmOscillators.push(osc);
+      }
+    } else if (type === 'CHIME') {
+      // Urgent High Chime (Ding-Dong-Ding-Dong)
+      for (let i = 0; i < 3; i++) {
+        const startTime = now + i * 0.45;
+        const osc1 = ctx.createOscillator();
+        const gain1 = ctx.createGain();
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(1760, startTime);
+        gain1.gain.setValueAtTime(0.3, startTime);
+        gain1.gain.exponentialRampToValueAtTime(0.001, startTime + 0.2);
+        osc1.connect(gain1);
+        gain1.connect(ctx.destination);
+        osc1.start(startTime);
+        osc1.stop(startTime + 0.22);
+        this.alarmOscillators.push(osc1);
+
+        const osc2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(1318.5, startTime + 0.2);
+        gain2.gain.setValueAtTime(0.3, startTime + 0.2);
+        gain2.gain.exponentialRampToValueAtTime(0.001, startTime + 0.4);
+        osc2.connect(gain2);
+        gain2.connect(ctx.destination);
+        osc2.start(startTime + 0.2);
+        osc2.stop(startTime + 0.42);
+        this.alarmOscillators.push(osc2);
+      }
+    } else {
+      // High-Priority Siren (Alternating 960Hz <-> 770Hz)
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sawtooth';
+
+      // 4 cycles of alternating siren
+      for (let i = 0; i < 4; i++) {
+        const t = now + i * 0.5;
+        osc.frequency.setValueAtTime(960, t);
+        osc.frequency.linearRampToValueAtTime(770, t + 0.25);
+        osc.frequency.linearRampToValueAtTime(960, t + 0.5);
+      }
+
+      gain.gain.setValueAtTime(0.32, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 2.2);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 2.3);
+      this.alarmOscillators.push(osc);
+    }
+
+    // Mobile vibration if supported
+    if (typeof window !== 'undefined' && 'navigator' in window && navigator.vibrate) {
+      try {
+        navigator.vibrate([300, 150, 300, 150, 400]);
+      } catch (e) {}
+    }
+  }
+
+  /**
+   * Stop any actively ringing alarm
+   */
+  stopAlarmSound() {
+    if (this.alarmOscillators && Array.isArray(this.alarmOscillators)) {
+      this.alarmOscillators.forEach((osc) => {
+        try {
+          osc.stop();
+          osc.disconnect();
+        } catch (e) {}
+      });
+      this.alarmOscillators = [];
+    }
+    if (typeof window !== 'undefined' && 'navigator' in window && navigator.vibrate) {
+      try {
+        navigator.vibrate(0);
+      } catch (e) {}
+    }
+  }
 }
 
 export const soundService = new SoundService();

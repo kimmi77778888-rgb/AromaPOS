@@ -22,6 +22,7 @@ import { CustomerDisplay } from './components/pos/CustomerDisplay';
 import { UserAccountModal } from './components/auth/UserAccountModal';
 import { StoreSettingsModal } from './components/common/StoreSettingsModal';
 import { MobileBottomNav } from './components/common/MobileBottomNav';
+import { EmergencyAlarmModal } from './components/common/EmergencyAlarmModal';
 
 export const AppContent = () => {
   const { 
@@ -151,6 +152,9 @@ export const AppContent = () => {
         onSuccess={overrideModal.onSuccess}
         onClose={closeManagerOverride}
       />
+
+      {/* Emergency Sound Alarm Modal */}
+      <EmergencyAlarmModal />
 
       {/* Notification Toast */}
       <Toast />

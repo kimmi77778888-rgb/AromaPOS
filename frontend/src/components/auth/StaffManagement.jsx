@@ -59,7 +59,8 @@ import {
   Compass,
   Radio,
   FlaskConical,
-  LayoutGrid
+  LayoutGrid,
+  BellRing
 } from 'lucide-react';
 import { LiveDeviceMap } from '../security/LiveDeviceMap';
 import { RemoteDeviceModal } from '../security/RemoteDeviceModal';
@@ -71,7 +72,7 @@ import { FaceScannerModal } from './FaceScannerModal';
 import { UserAvatar } from '../common/UserAvatar';
 
 export const StaffManagement = () => {
-  const { staffList, auditLogs, loginSessions = [], terminateLoginSession, clearDemoSessions, restoreDemoSessions, loadStaffAndAudits, showToast, user } = useApp();
+  const { staffList, auditLogs, loginSessions = [], terminateLoginSession, clearDemoSessions, restoreDemoSessions, triggerDeviceAlarm, loadStaffAndAudits, showToast, user } = useApp();
   const { isKhmer } = useLanguage();
 
   // Navigation Subtabs: roster | matrix | roles | audit | shifts
@@ -1717,6 +1718,26 @@ export const StaffManagement = () => {
                   <span>{isKhmer ? 'ផែនទីពេញ' : 'Fullscreen'}</span>
                 </button>
 
+                {/* Broadcast Emergency Alarm to All Devices Button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (triggerDeviceAlarm) {
+                      triggerDeviceAlarm({
+                        targetSessionId: 'ALL',
+                        targetUserName: isKhmer ? 'គ្រប់ឧបករណ៍ទាំងអស់' : 'All Devices & Staff',
+                        message: isKhmer ? 'ការហៅបន្ទាន់ពីអ្នកគ្រប់គ្រង!' : 'Urgent Call from Manager Admin!',
+                        soundType: 'SIREN'
+                      });
+                    }
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-rose-600/20 hover:bg-rose-600/30 border border-rose-500/40 text-rose-300 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-xs"
+                  title={isKhmer ? 'បន្លឺសំឡេងរោទ៍ Alarm ទៅកាន់គ្រប់ឧបករណ៍ដែលបាន Login' : 'Broadcast emergency sound alarm to all logged-in devices'}
+                >
+                  <BellRing className="w-3.5 h-3.5 text-rose-400 animate-bounce" />
+                  <span>{isKhmer ? 'រោទ៍គ្រប់ឧបករណ៍' : 'All Alarm'}</span>
+                </button>
+
                 {/* Refresh Action */}
                 <button
                   type="button"
@@ -1925,6 +1946,25 @@ export const StaffManagement = () => {
                               >
                                 <Smartphone className="w-3 h-3" />
                                 <span>{isKhmer ? 'បើកឧបករណ៍' : 'Open Device'}</span>
+                              </button>
+
+                              {/* Quick Sound Alarm Trigger */}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (triggerDeviceAlarm) {
+                                    triggerDeviceAlarm({
+                                      targetSessionId: sess.id,
+                                      targetUserName: sess.userName,
+                                      message: `Urgent Attention Required from Manager on ${sess.deviceModel || 'device'}!`,
+                                      soundType: 'SIREN'
+                                    });
+                                  }
+                                }}
+                                className="p-1 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 border border-rose-800/50 text-rose-300 hover:text-rose-100 transition cursor-pointer"
+                                title={isKhmer ? 'បន្លឺសំឡេងរោទ៍ Alarm ទៅកាន់ឧបករណ៍នេះ' : 'Send Sound Alarm to this device'}
+                              >
+                                <BellRing className="w-3.5 h-3.5 text-rose-400" />
                               </button>
 
                               <button
@@ -2249,6 +2289,25 @@ export const StaffManagement = () => {
                               >
                                 <Smartphone className="w-3.5 h-3.5" />
                                 <span className="hidden xl:inline">{isKhmer ? 'បើក' : 'Open'}</span>
+                              </button>
+
+                              {/* Quick Sound Alarm Button */}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (triggerDeviceAlarm) {
+                                    triggerDeviceAlarm({
+                                      targetSessionId: sess.id,
+                                      targetUserName: sess.userName,
+                                      message: `Urgent Attention Required from Manager on ${sess.deviceModel || 'device'}!`,
+                                      soundType: 'SIREN'
+                                    });
+                                  }
+                                }}
+                                className="p-1 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 border border-rose-800/50 text-rose-300 hover:text-rose-100 transition cursor-pointer"
+                                title={isKhmer ? 'បន្លឺសំឡេងរោទ៍ Alarm' : 'Trigger Sound Alarm'}
+                              >
+                                <BellRing className="w-3.5 h-3.5 text-rose-400" />
                               </button>
 
                               {/* Inspect Hardware / Specs Modal */}

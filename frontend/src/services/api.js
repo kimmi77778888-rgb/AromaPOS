@@ -6,7 +6,7 @@ import { getDeviceInfo, resolveClientIp, classifyIp, resolveClientLocation, getF
 const API_HOST = typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_API_URL 
   ? process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '') 
   : '';
-const BASE_URL = API_HOST ? `${API_HOST}/api` : '/api';
+export const BASE_URL = API_HOST ? `${API_HOST}/api` : '/api';
 
 const STORAGE_PRODUCTS_KEY = 'aromapos_products';
 const STORAGE_ORDERS_KEY = 'aromapos_orders';
@@ -2349,6 +2349,75 @@ export const api = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(crumb)
+      }).catch(() => {});
+    } catch (e) {}
+  },
+
+  async fetchActiveAlarms() {
+    try {
+      const res = await fetch(`${BASE_URL}/auth/alarm/active`);
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (e) {}
+    return [];
+  },
+
+  async broadcastSoundAlarm(alarmData) {
+    const alarm = {
+      id: `alarm-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+      targetSessionId: alarmData?.targetSessionId || 'ALL',
+      targetUserName: alarmData?.targetUserName || 'All Staff',
+      senderName: alarmData?.senderName || 'Manager Admin',
+      message: alarmData?.message || 'Urgent Staff Attention Required at Register!',
+      soundType: alarmData?.soundType || 'SIREN',
+      timestamp: new Date().toISOString()
+    };
+
+    // 1. Local BroadcastChannel for live tabs/windows
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        const bc = new BroadcastChannel('aromapos_alarms');
+        bc.postMessage({ type: 'TRIGGER_ALARM', alarm });
+        setTimeout(() => bc.close(), 1000);
+      }
+    } catch (e) {}
+
+    // 2. Storage event for cross-tab sync
+    try {
+      storage.setItem('aromapos_incoming_alarm', JSON.stringify({ ...alarm, trigger: Date.now() }));
+    } catch (e) {}
+
+    // 3. Server-wide broadcast for multi-device sync
+    try {
+      fetch(`${BASE_URL}/auth/alarm`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(alarm)
+      }).catch(() => {});
+    } catch (e) {}
+
+    return alarm;
+  },
+
+  async silenceSoundAlarm(alarmId = 'ALL') {
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        const bc = new BroadcastChannel('aromapos_alarms');
+        bc.postMessage({ type: 'SILENCE_ALARM', alarmId });
+        setTimeout(() => bc.close(), 1000);
+      }
+    } catch (e) {}
+
+    try {
+      storage.removeItem('aromapos_incoming_alarm');
+    } catch (e) {}
+
+    try {
+      fetch(`${BASE_URL}/auth/alarm/silence`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ alarmId })
       }).catch(() => {});
     } catch (e) {}
   }

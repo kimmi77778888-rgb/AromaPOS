@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
+import { useApp } from '../../context/AppContext';
 import { api } from '../../services/api';
 import { startLiveDeviceTracking, getBrandBadge } from '../../utils/deviceDetector';
 import {
@@ -28,7 +29,8 @@ import {
   Activity,
   Gauge,
   Clock,
-  Car
+  Car,
+  BellRing
 } from 'lucide-react';
 
 const MAP_LAYERS = {
@@ -81,6 +83,7 @@ export const LiveDeviceMap = ({
   className = ''
 }) => {
   const { isKhmer } = useLanguage();
+  const { triggerDeviceAlarm } = useApp();
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersRef = useRef([]);
@@ -874,6 +877,26 @@ export const LiveDeviceMap = ({
               </span>
 
               <div className="flex items-center gap-1.5">
+                {/* Sound Alarm Button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (triggerDeviceAlarm) {
+                      triggerDeviceAlarm({
+                        targetSessionId: selectedSession.id,
+                        targetUserName: selectedSession.userName,
+                        message: `Urgent staff call from manager on ${selectedSession.deviceModel || 'device'}!`,
+                        soundType: 'SIREN'
+                      });
+                    }
+                  }}
+                  className="px-2.5 py-1.5 rounded-xl bg-rose-600/25 hover:bg-rose-600/40 border border-rose-500/40 text-rose-300 font-bold text-xs flex items-center gap-1 transition cursor-pointer shadow"
+                  title={isKhmer ? 'បន្លឺសំឡេងរោទ៍ Alarm' : 'Send Sound Alarm'}
+                >
+                  <BellRing className="w-3.5 h-3.5 text-rose-400" />
+                  <span className="hidden sm:inline">{isKhmer ? 'រោទ៍' : 'Alarm'}</span>
+                </button>
+
                 {onOpenRemoteDevice && (
                   <button
                     type="button"

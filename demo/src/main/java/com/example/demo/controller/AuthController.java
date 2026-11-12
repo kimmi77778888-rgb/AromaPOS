@@ -579,4 +579,22 @@ public class AuthController {
         }
         return ResponseEntity.notFound().build();
     }
+
+    @PostMapping("/alarm")
+    public ResponseEntity<?> broadcastAlarm(@RequestBody Map<String, Object> payload) {
+        Map<String, Object> alarm = authService.broadcastAlarm(payload);
+        return ResponseEntity.ok(Map.of("success", true, "alarm", alarm));
+    }
+
+    @GetMapping("/alarm/active")
+    public ResponseEntity<?> getActiveAlarms() {
+        return ResponseEntity.ok(authService.getActiveAlarms());
+    }
+
+    @PostMapping("/alarm/silence")
+    public ResponseEntity<?> silenceAlarm(@RequestBody Map<String, Object> payload) {
+        String alarmId = payload != null ? (String) payload.get("alarmId") : null;
+        authService.silenceAlarm(alarmId);
+        return ResponseEntity.ok(Map.of("success", true, "message", "Alarm silenced"));
+    }
 }

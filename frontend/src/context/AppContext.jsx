@@ -379,6 +379,90 @@ export const AppProvider = ({ children }) => {
     }, 3800);
   }, []);
 
+  // Emergency Sound Alarm Synchronizer & Receiver
+  const [activeAlarm, setActiveAlarm] = useState(null);
+
+  useEffect(() => {
+    let bc = null;
+    const handledAlarmIds = new Set();
+
+    const handleIncomingAlarm = (alarm) => {
+      if (!alarm || !alarm.id) return;
+      if (handledAlarmIds.has(alarm.id)) return;
+
+      const mySessionId = storage.getItem('aromapos_current_session_id');
+      const isTargeted =
+        alarm.targetSessionId === 'ALL' ||
+        alarm.targetSessionId === mySessionId ||
+        alarm.targetUserName === user?.name ||
+        !alarm.targetSessionId;
+
+      if (isTargeted) {
+        handledAlarmIds.add(alarm.id);
+        soundService.playEmergencyAlarmSound(alarm.soundType || 'SIREN');
+        setActiveAlarm(alarm);
+      }
+    };
+
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        bc = new BroadcastChannel('aromapos_alarms');
+        bc.onmessage = (event) => {
+          if (event.data?.type === 'TRIGGER_ALARM' && event.data.alarm) {
+            handleIncomingAlarm(event.data.alarm);
+          } else if (event.data?.type === 'SILENCE_ALARM') {
+            soundService.stopAlarmSound();
+            setActiveAlarm(null);
+          }
+        };
+      }
+    } catch (e) {}
+
+    const handleStorageChange = (e) => {
+      if (e.key === 'aromapos_incoming_alarm' && e.newValue) {
+        try {
+          const alarm = JSON.parse(e.newValue);
+          handleIncomingAlarm(alarm);
+        } catch (err) {}
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
+    // Periodic check for active server alarms
+    const pollInterval = setInterval(async () => {
+      try {
+        const alarms = await api.fetchActiveAlarms();
+        if (Array.isArray(alarms) && alarms.length > 0) {
+          const latest = alarms[0];
+          const ageMs = Date.now() - new Date(latest.timestamp || 0).getTime();
+          if (ageMs < 45000) {
+            handleIncomingAlarm(latest);
+          }
+        }
+      } catch (e) {}
+    }, 12000);
+
+    return () => {
+      if (bc) bc.close();
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(pollInterval);
+    };
+  }, [user]);
+
+  const triggerDeviceAlarm = useCallback(async (alarmData) => {
+    const alarm = await api.broadcastSoundAlarm(alarmData);
+    soundService.playEmergencyAlarmSound(alarm.soundType || 'SIREN');
+    showToast(`🚨 បានបន្លឺសំឡេងរោទ៍ Alarm ទៅកាន់: ${alarm.targetUserName || 'គ្រប់ឧបករណ៍'}`, 'error');
+    return alarm;
+  }, [showToast]);
+
+  const silenceAlarm = useCallback(async (alarmId = 'ALL') => {
+    soundService.stopAlarmSound();
+    setActiveAlarm(null);
+    await api.silenceSoundAlarm(alarmId);
+    showToast('🔇 បានបញ្ឈប់សំឡេងរោទ៍ Alarm', 'info');
+  }, [showToast]);
+
   // Silent Background Data Synchronizer (Live Mode)
   const refreshDataSilently = useCallback(async (notifyNewOrders = false) => {
     setLiveSyncStatus('syncing');
@@ -1730,7 +1814,10 @@ export const AppProvider = ({ children }) => {
         refreshDataSilently,
         theme,
         setTheme,
-        toggleTheme
+        toggleTheme,
+        activeAlarm,
+        triggerDeviceAlarm,
+        silenceAlarm
       }}
     >
       {children}
