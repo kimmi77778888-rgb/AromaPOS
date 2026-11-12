@@ -62,6 +62,7 @@ import {
   LayoutGrid
 } from 'lucide-react';
 import { LiveDeviceMap } from '../security/LiveDeviceMap';
+import { RemoteDeviceModal } from '../security/RemoteDeviceModal';
 import { getBrandBadge } from '../../utils/deviceDetector';
 import { ROLE_PERMISSIONS, SYSTEM_PERMISSIONS } from '../../services/coffeeData';
 import { StaffShiftList } from './StaffShiftList';
@@ -106,6 +107,7 @@ export const StaffManagement = () => {
   const [loginBrandFilter, setLoginBrandFilter] = useState('ALL');
   const [loginSourceFilter, setLoginSourceFilter] = useState('ALL'); // 'ALL' | 'REAL' | 'DEMO'
   const [inspectedSession, setInspectedSession] = useState(null);
+  const [remoteDeviceSession, setRemoteDeviceSession] = useState(null);
   const [copiedSessionIp, setCopiedSessionIp] = useState(null);
 
   const handleCopySessionIp = (ip, id) => {
@@ -1735,6 +1737,7 @@ export const StaffManagement = () => {
               <LiveDeviceMap
                 sessions={filteredSessions.length > 0 ? filteredSessions : loginSessions}
                 focusedSessionId={inspectedSession?.id}
+                onOpenRemoteDevice={setRemoteDeviceSession}
                 className="border-0 rounded-none h-[640px]"
               />
             ) : sessionViewMode === 'cards' ? (
@@ -1913,6 +1916,17 @@ export const StaffManagement = () => {
                             </span>
 
                             <div className="flex items-center gap-1.5">
+                              {/* Open Device Screen Mirror Button */}
+                              <button
+                                type="button"
+                                onClick={() => setRemoteDeviceSession(sess)}
+                                className="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-[11px] flex items-center gap-1 transition cursor-pointer shadow-sm shadow-amber-500/10"
+                                title={isKhmer ? 'បើកមើលអេក្រង់ឧបករណ៍នេះពីចម្ងាយ' : 'Open remote device screen mirror'}
+                              >
+                                <Smartphone className="w-3 h-3" />
+                                <span>{isKhmer ? 'បើកឧបករណ៍' : 'Open Device'}</span>
+                              </button>
+
                               <button
                                 type="button"
                                 onClick={() => {
@@ -2226,6 +2240,17 @@ export const StaffManagement = () => {
                           {/* 8. Actions */}
                           <td className="py-3.5 px-5 text-right">
                             <div className="flex items-center justify-end gap-1.5">
+                              {/* Open Device Remote Screen Button */}
+                              <button
+                                type="button"
+                                onClick={() => setRemoteDeviceSession(sess)}
+                                className="px-2 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 font-bold text-[11px] flex items-center gap-1 transition cursor-pointer"
+                                title={isKhmer ? 'បើកមើលអេក្រង់ឧបករណ៍នេះ' : 'Open Remote Device Screen'}
+                              >
+                                <Smartphone className="w-3.5 h-3.5" />
+                                <span className="hidden xl:inline">{isKhmer ? 'បើក' : 'Open'}</span>
+                              </button>
+
                               {/* Inspect Hardware / Specs Modal */}
                               <button
                                 type="button"
@@ -2943,6 +2968,15 @@ export const StaffManagement = () => {
           }}
         />
       )}
+      {/* ─────────────────────────────────────────────────────────────
+          13. REMOTE DEVICE SCREEN MIRROR & TELEMETRY MODAL
+      ────────────────────────────────────────────────────────────── */}
+      <RemoteDeviceModal
+        session={remoteDeviceSession}
+        isOpen={Boolean(remoteDeviceSession)}
+        onClose={() => setRemoteDeviceSession(null)}
+        onTerminate={handleTerminateSession}
+      />
     </div>
   );
 };

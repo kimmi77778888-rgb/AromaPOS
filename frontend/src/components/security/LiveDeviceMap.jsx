@@ -77,6 +77,7 @@ export const LiveDeviceMap = ({
   isModal = false,
   isOpen = true,
   onClose = () => {},
+  onOpenRemoteDevice = null,
   className = ''
 }) => {
   const { isKhmer } = useLanguage();
@@ -872,16 +873,30 @@ export const LiveDeviceMap = ({
                 Status: <strong className={selectedSession.status === 'ACTIVE' ? 'text-emerald-400' : 'text-stone-400'}>{selectedSession.status}</strong>
               </span>
 
-              <a
-                href={selectedSession.mapsUrl || `https://www.google.com/maps?q=${selectedSession.effectiveLat},${selectedSession.effectiveLon}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-amber-950 transition"
-              >
-                <Navigation className="w-3.5 h-3.5" />
-                <span>{isKhmer ? 'Google Maps' : 'Google Maps'}</span>
-                <ExternalLink className="w-3 h-3" />
-              </a>
+              <div className="flex items-center gap-1.5">
+                {onOpenRemoteDevice && (
+                  <button
+                    type="button"
+                    onClick={() => onOpenRemoteDevice(selectedSession)}
+                    className="px-3 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-md"
+                    title={isKhmer ? 'បើកមើលអេក្រង់ឧបករណ៍នេះ' : 'Open Remote Device Screen'}
+                  >
+                    <Smartphone className="w-3.5 h-3.5" />
+                    <span>{isKhmer ? 'បើកឧបករណ៍' : 'Open Device'}</span>
+                  </button>
+                )}
+
+                <a
+                  href={selectedSession.mapsUrl || `https://www.google.com/maps?q=${selectedSession.effectiveLat},${selectedSession.effectiveLon}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-amber-950 transition"
+                >
+                  <Navigation className="w-3.5 h-3.5" />
+                  <span>Google Maps</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
             </div>
           </div>
         )}
