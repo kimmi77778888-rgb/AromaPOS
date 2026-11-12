@@ -61,6 +61,168 @@ export const detectBrowser = () => {
 };
 
 /**
+ * Detect hardware device brand (Apple, Samsung, Google, Xiaomi, Oppo, Vivo, Huawei, etc.)
+ */
+export const detectDeviceBrand = () => {
+  if (typeof window === 'undefined') return 'Universal Device';
+  const ua = window.navigator.userAgent || '';
+  const platform = window.navigator.platform || '';
+  const vendor = window.navigator.vendor || '';
+
+  // 1. Check navigator.userAgentData hints if available (modern Chromium browsers)
+  if (typeof navigator !== 'undefined' && navigator.userAgentData) {
+    const brands = navigator.userAgentData.brands || [];
+    for (const b of brands) {
+      const name = (b.brand || '').toLowerCase();
+      if (name.includes('samsung')) return 'Samsung';
+      if (name.includes('google')) return 'Google';
+      if (name.includes('xiaomi')) return 'Xiaomi';
+      if (name.includes('oppo')) return 'OPPO';
+      if (name.includes('vivo')) return 'vivo';
+      if (name.includes('huawei')) return 'Huawei';
+    }
+  }
+
+  // 2. Apple Devices (iPhone, iPad, Mac)
+  if (/iPhone|iPad|iPod|Macintosh|Mac OS X|MacIntel/i.test(ua) || /Apple/i.test(vendor) || (platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
+    return 'Apple';
+  }
+
+  // 3. Samsung Galaxy Devices
+  if (/Samsung|SM-[A-Z0-9]+|GT-[A-Z0-9]+|SCH-[A-Z0-9]+|SEC_S|SAMSUNG/i.test(ua)) {
+    return 'Samsung';
+  }
+
+  // 4. Google Pixel Devices
+  if (/Pixel|Google/i.test(ua)) {
+    return 'Google';
+  }
+
+  // 5. Xiaomi, Redmi, POCO
+  if (/Xiaomi|Redmi|POCO|Mi\s|2[0-9]{3}[0-9A-Z]+/i.test(ua)) {
+    return 'Xiaomi';
+  }
+
+  // 6. OPPO / Realme / OnePlus (BBK family)
+  if (/OPPO|CPH[0-9]+|Find\s?X|Reno/i.test(ua)) {
+    return 'OPPO';
+  }
+  if (/OnePlus|ONEPLUS|GM19|KB20|IN20/i.test(ua)) {
+    return 'OnePlus';
+  }
+  if (/Realme|RMX[0-9]+/i.test(ua)) {
+    return 'Realme';
+  }
+
+  // 7. Vivo / iQOO
+  if (/vivo|V[0-9]{4}|iQOO/i.test(ua)) {
+    return 'vivo';
+  }
+
+  // 8. Huawei / Honor
+  if (/Huawei|HONOR|HW-|HMA-|ALP-|VOG-|ELE-|CLT-/i.test(ua)) {
+    return 'Huawei';
+  }
+
+  // 9. Sony Xperia
+  if (/Sony|Xperia|SO-[0-9]+/i.test(ua)) {
+    return 'Sony';
+  }
+
+  // 10. Motorola / Lenovo
+  if (/Motorola|Moto/i.test(ua)) {
+    return 'Motorola';
+  }
+  if (/Lenovo|ThinkPad|IdeaPad/i.test(ua)) {
+    return 'Lenovo';
+  }
+
+  // 11. Asus
+  if (/ASUS|ROG\sPhone|ZenFone/i.test(ua)) {
+    return 'ASUS';
+  }
+
+  // 12. POS Terminals & Smart Kiosks
+  if (/Sunmi|EloTouch|Posiflex|PAX/i.test(ua)) {
+    return 'Sunmi POS';
+  }
+
+  // 13. PC Vendors
+  if (/Dell/i.test(ua)) return 'Dell';
+  if (/HP|Hewlett-Packard/i.test(ua)) return 'HP';
+  if (/Acer/i.test(ua)) return 'Acer';
+
+  // 14. Operating System level fallback
+  if (/Windows/i.test(ua)) {
+    const isTouch = (window.navigator?.maxTouchPoints || 0) > 0;
+    const width = window.innerWidth || 1280;
+    if (isTouch && width >= 1024) return 'Sunmi POS';
+    return 'Microsoft Windows';
+  }
+  if (/Android/i.test(ua)) {
+    return 'Android Universal';
+  }
+  if (/Linux/i.test(ua)) {
+    return 'Linux Workstation';
+  }
+
+  return 'Universal Device';
+};
+
+/**
+ * Return brand visual styling badge, logo icon, and color theme
+ */
+export const getBrandBadge = (brand = '') => {
+  const b = (brand || '').toLowerCase();
+  if (b.includes('apple')) {
+    return { name: 'Apple', icon: '🍎', color: 'bg-stone-900 text-stone-100 border-stone-700' };
+  }
+  if (b.includes('samsung')) {
+    return { name: 'Samsung', icon: '🪐', color: 'bg-blue-950/80 text-blue-300 border-blue-700/60' };
+  }
+  if (b.includes('google') || b.includes('pixel')) {
+    return { name: 'Google', icon: '🌐', color: 'bg-emerald-950/80 text-emerald-300 border-emerald-700/60' };
+  }
+  if (b.includes('xiaomi') || b.includes('redmi') || b.includes('poco')) {
+    return { name: 'Xiaomi', icon: '⚡', color: 'bg-orange-950/80 text-orange-300 border-orange-700/60' };
+  }
+  if (b.includes('oppo')) {
+    return { name: 'OPPO', icon: '🟢', color: 'bg-emerald-950/80 text-emerald-300 border-emerald-700/60' };
+  }
+  if (b.includes('vivo')) {
+    return { name: 'vivo', icon: '🔷', color: 'bg-indigo-950/80 text-indigo-300 border-indigo-700/60' };
+  }
+  if (b.includes('huawei')) {
+    return { name: 'Huawei', icon: '🌺', color: 'bg-rose-950/80 text-rose-300 border-rose-700/60' };
+  }
+  if (b.includes('oneplus')) {
+    return { name: 'OnePlus', icon: '🔴', color: 'bg-red-950/80 text-red-300 border-red-700/60' };
+  }
+  if (b.includes('sony')) {
+    return { name: 'Sony', icon: '🎮', color: 'bg-purple-950/80 text-purple-300 border-purple-700/60' };
+  }
+  if (b.includes('sunmi') || b.includes('pos')) {
+    return { name: 'Sunmi POS', icon: '📠', color: 'bg-amber-950/80 text-amber-300 border-amber-700/60' };
+  }
+  if (b.includes('dell')) {
+    return { name: 'Dell', icon: '💻', color: 'bg-sky-950/80 text-sky-300 border-sky-700/60' };
+  }
+  if (b.includes('hp')) {
+    return { name: 'HP', icon: '💻', color: 'bg-cyan-950/80 text-cyan-300 border-cyan-700/60' };
+  }
+  if (b.includes('lenovo')) {
+    return { name: 'Lenovo', icon: '💻', color: 'bg-rose-950/80 text-rose-300 border-rose-700/60' };
+  }
+  if (b.includes('asus')) {
+    return { name: 'ASUS', icon: '💻', color: 'bg-indigo-950/80 text-indigo-300 border-indigo-700/60' };
+  }
+  if (b.includes('microsoft') || b.includes('windows')) {
+    return { name: 'Microsoft', icon: '🪟', color: 'bg-sky-950/80 text-sky-300 border-sky-700/60' };
+  }
+  return { name: brand || 'Device', icon: '📱', color: 'bg-stone-900 text-stone-300 border-stone-800' };
+};
+
+/**
  * Detect device type: Phone | Tablet | POS Touch Station | Desktop
  */
 export const detectDeviceType = () => {
@@ -197,6 +359,7 @@ export const getDeviceInfo = () => {
   const os = detectOS();
   const browser = detectBrowser();
   const deviceType = detectDeviceType();
+  const brand = detectDeviceBrand();
   const screen = `${window.screen?.width || window.innerWidth || 1920}x${window.screen?.height || window.innerHeight || 1080}`;
   
   let terminalId = 'AROMA-POS-01';
@@ -206,26 +369,37 @@ export const getDeviceInfo = () => {
   } catch (e) {}
 
   const ipAddress = cachedPublicIp || '192.168.1.108 (LAN Station #01)';
-  let modelName = `${os} (${deviceType})`;
-  if (deviceType === 'Phone') {
-    if (/iPhone/i.test(os) || /iPhone/i.test(navigator.userAgent || '')) {
-      modelName = 'Apple iPhone (iOS Mobile)';
-    } else if (/Android/i.test(os) || /Android/i.test(navigator.userAgent || '')) {
-      modelName = 'Android Smartphone (Mobile)';
-    } else {
-      modelName = 'Smartphone (Mobile)';
-    }
+  let modelName = `${brand} (${deviceType})`;
+  if (brand === 'Apple') {
+    if (deviceType === 'Phone') modelName = 'Apple iPhone (iOS Mobile)';
+    else if (deviceType === 'Tablet') modelName = 'Apple iPad (iPadOS)';
+    else modelName = 'Apple Mac (macOS)';
+  } else if (brand === 'Samsung') {
+    if (deviceType === 'Phone') modelName = 'Samsung Galaxy (Android Mobile)';
+    else if (deviceType === 'Tablet') modelName = 'Samsung Galaxy Tab';
+    else modelName = 'Samsung Smart Device';
+  } else if (brand === 'Google') {
+    modelName = 'Google Pixel (Android Mobile)';
+  } else if (brand === 'Xiaomi') {
+    modelName = 'Xiaomi / Redmi (Android Mobile)';
+  } else if (brand === 'OPPO') {
+    modelName = 'OPPO Smartphone (ColorOS)';
+  } else if (brand === 'Sunmi POS') {
+    modelName = 'Sunmi POS Touch Station';
+  } else if (brand === 'Dell') {
+    modelName = 'Dell Workstation (Windows)';
+  } else if (deviceType === 'Phone') {
+    modelName = `${brand} Smartphone (${os})`;
   } else if (deviceType === 'Tablet') {
-    if (/iPad/i.test(os) || /iPad/i.test(navigator.userAgent || '')) {
-      modelName = 'Apple iPad (Tablet)';
-    } else {
-      modelName = 'Android Tablet (Pad)';
-    }
+    modelName = `${brand} Tablet (${os})`;
+  } else {
+    modelName = `${brand} PC (${os})`;
   }
 
-  const deviceSummary = `${deviceType} • ${modelName} (${browser})`;
+  const deviceSummary = `${brand} • ${deviceType} • ${modelName} (${browser})`;
 
   return {
+    brand,
     deviceType,
     deviceModel: modelName,
     os,

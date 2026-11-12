@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
 import { api } from '../../services/api';
-import { startLiveDeviceTracking } from '../../utils/deviceDetector';
+import { startLiveDeviceTracking, getBrandBadge } from '../../utils/deviceDetector';
 import {
   MapPin,
   Navigation,
@@ -805,6 +805,21 @@ export const LiveDeviceMap = ({
             <div className="grid grid-cols-2 gap-2 pt-3 text-xs">
               <div className="p-2 rounded-xl bg-stone-900/80 border border-stone-850">
                 <span className="text-[10px] uppercase font-bold text-stone-500 block">
+                  {isKhmer ? 'ម៉ាកយីហោ (Brand)' : 'Device Brand'}
+                </span>
+                {(() => {
+                  const b = getBrandBadge(selectedSession.brand || selectedSession.deviceModel);
+                  return (
+                    <span className="font-extrabold text-amber-300 text-[11px] truncate flex items-center gap-1.5 mt-0.5">
+                      <span>{b.icon}</span>
+                      <strong className="text-stone-100">{b.name}</strong>
+                    </span>
+                  );
+                })()}
+              </div>
+
+              <div className="p-2 rounded-xl bg-stone-900/80 border border-stone-850">
+                <span className="text-[10px] uppercase font-bold text-stone-500 block">
                   {isKhmer ? 'អាសយដ្ឋាន IP' : 'IP Address'}
                 </span>
                 <span className="font-mono font-bold text-cyan-300 text-[11px] truncate block mt-0.5">
@@ -831,7 +846,7 @@ export const LiveDeviceMap = ({
                 </span>
               </div>
 
-              <div className="p-2 rounded-xl bg-stone-900/80 border border-stone-850">
+              <div className="p-2 rounded-xl bg-stone-900/80 border border-stone-850 col-span-2">
                 <span className="text-[10px] uppercase font-bold text-stone-500 block">
                   {isKhmer ? 'អ្នកផ្គត់ផ្គង់ ISP' : 'ISP Provider'}
                 </span>

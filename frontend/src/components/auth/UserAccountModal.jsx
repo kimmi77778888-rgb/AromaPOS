@@ -452,15 +452,15 @@ export const UserAccountModal = ({ isOpen, onClose }) => {
                   </button>
                 </div>
 
-                {/* Device Type & OS */}
+                {/* Device Brand, Model & OS */}
                 <div className="p-2.5 rounded-xl bg-stone-900/80 border border-stone-850 flex items-center gap-2 min-w-0">
                   <Monitor className="w-4 h-4 text-amber-400 shrink-0" />
                   <div className="truncate">
                     <span className="text-[10px] uppercase font-bold text-stone-500 block">
-                      {isKhmer ? 'ប្រភេទឧបករណ៍ & OS' : 'Device & Operating System'}
+                      {isKhmer ? 'ម៉ាកយីហោ (Brand) & ឧបករណ៍' : 'Device Brand & Operating System'}
                     </span>
                     <span className="font-bold text-stone-100 text-xs truncate block">
-                      {deviceAudit?.os || 'Windows 11'} • {deviceAudit?.deviceType || 'Desktop'}
+                      {deviceAudit?.brand ? `${deviceAudit.brand} • ` : ''}{deviceAudit?.deviceModel || deviceAudit?.os || 'Windows 11'}
                     </span>
                   </div>
                 </div>

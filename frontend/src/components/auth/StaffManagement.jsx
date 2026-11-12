@@ -60,6 +60,7 @@ import {
   Radio
 } from 'lucide-react';
 import { LiveDeviceMap } from '../security/LiveDeviceMap';
+import { getBrandBadge } from '../../utils/deviceDetector';
 import { ROLE_PERMISSIONS, SYSTEM_PERMISSIONS } from '../../services/coffeeData';
 import { StaffShiftList } from './StaffShiftList';
 import { CreateUserModal } from './CreateUserModal';
@@ -100,6 +101,7 @@ export const StaffManagement = () => {
   const [loginStatusFilter, setLoginStatusFilter] = useState('ALL');
   const [loginLocationFilter, setLoginLocationFilter] = useState('ALL');
   const [loginDeviceTypeFilter, setLoginDeviceTypeFilter] = useState('ALL');
+  const [loginBrandFilter, setLoginBrandFilter] = useState('ALL');
   const [inspectedSession, setInspectedSession] = useState(null);
   const [copiedSessionIp, setCopiedSessionIp] = useState(null);
 
@@ -129,6 +131,8 @@ export const StaffManagement = () => {
         (sess.userName || '').toLowerCase().includes(q) ||
         (sess.userRole || '').toLowerCase().includes(q) ||
         (sess.ipAddress || '').toLowerCase().includes(q) ||
+        (sess.brand || '').toLowerCase().includes(q) ||
+        (sess.deviceModel || '').toLowerCase().includes(q) ||
         (sess.os || '').toLowerCase().includes(q) ||
         (sess.browser || '').toLowerCase().includes(q) ||
         (sess.deviceType || '').toLowerCase().includes(q) ||
@@ -169,9 +173,13 @@ export const StaffManagement = () => {
           (sess.deviceModel || '').toLowerCase().includes('kiosk')
         ));
 
-      return matchQuery && matchMethod && matchStatus && matchLocation && matchDevice;
+      const matchBrand = loginBrandFilter === 'ALL' || 
+        (sess.brand || '').toLowerCase().includes(loginBrandFilter.toLowerCase()) ||
+        (sess.deviceModel || '').toLowerCase().includes(loginBrandFilter.toLowerCase());
+
+      return matchQuery && matchMethod && matchStatus && matchLocation && matchDevice && matchBrand;
     });
-  }, [loginSessions, loginSearchQuery, loginMethodFilter, loginStatusFilter, loginLocationFilter, loginDeviceTypeFilter]);
+  }, [loginSessions, loginSearchQuery, loginMethodFilter, loginStatusFilter, loginLocationFilter, loginDeviceTypeFilter, loginBrandFilter]);
 
   // Custom Roles state (allows creating brand new roles)
   const [customRoles, setCustomRoles] = useState([
@@ -1544,6 +1552,23 @@ export const StaffManagement = () => {
                   <option value="POS Touch Station">{isKhmer ? '📠 ស្ថានីយគិតលុយ (POS Station)' : '📠 POS Touch Station'}</option>
                 </select>
 
+                {/* Brand Filter (Apple, Samsung, Google, Xiaomi, etc.) */}
+                <select
+                  value={loginBrandFilter}
+                  onChange={(e) => setLoginBrandFilter(e.target.value)}
+                  className="bg-stone-900 border border-stone-800 rounded-xl px-3 py-1.5 text-xs text-stone-200 font-semibold focus:outline-none cursor-pointer"
+                >
+                  <option value="ALL">{isKhmer ? 'គ្រប់ម៉ាកទាំងអស់ (All Brands)' : 'All Brands'}</option>
+                  <option value="Apple">🍎 Apple (iPhone/iPad/Mac)</option>
+                  <option value="Samsung">🪐 Samsung (Galaxy)</option>
+                  <option value="Google">🌐 Google Pixel</option>
+                  <option value="Xiaomi">⚡ Xiaomi / Redmi</option>
+                  <option value="OPPO">🟢 OPPO / OnePlus</option>
+                  <option value="Sunmi POS">📠 Sunmi / POS Kiosk</option>
+                  <option value="Microsoft">🪟 Microsoft Windows</option>
+                  <option value="Dell">💻 Dell Workstation</option>
+                </select>
+
                 {/* Method Filter */}
                 <select
                   value={loginMethodFilter}
@@ -1648,7 +1673,7 @@ export const StaffManagement = () => {
                     <th className="py-3.5 px-5">{isKhmer ? 'បុគ្គលិក' : 'Team Member'}</th>
                     <th className="py-3.5 px-4">{isKhmer ? 'ទីតាំងឧបករណ៍' : 'Device Location'}</th>
                     <th className="py-3.5 px-4">{isKhmer ? 'អាសយដ្ឋាន IP' : 'Client IP Address'}</th>
-                    <th className="py-3.5 px-4">{isKhmer ? 'ឧបករណ៍ & OS' : 'Device & Platform'}</th>
+                    <th className="py-3.5 px-4">{isKhmer ? 'ឧបករណ៍, ម៉ាកយីហោ & OS' : 'Device, Brand & Platform'}</th>
                     <th className="py-3.5 px-4">{isKhmer ? 'ស្ថានីយ & Resolution' : 'Station & Resolution'}</th>
                     <th className="py-3.5 px-4">{isKhmer ? 'វិធីសាស្ត្រ Login' : 'Auth Method'}</th>
                     <th className="py-3.5 px-4">{isKhmer ? 'ពេលវេលា Login' : 'Login Time'}</th>
@@ -1677,6 +1702,7 @@ export const StaffManagement = () => {
                             setLoginStatusFilter('ALL');
                             setLoginLocationFilter('ALL');
                             setLoginDeviceTypeFilter('ALL');
+                            setLoginBrandFilter('ALL');
                           }}
                           className="mt-4 px-4 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 font-bold text-xs inline-flex items-center gap-2 transition cursor-pointer shadow-lg hover:border-amber-400"
                         >
@@ -1780,29 +1806,42 @@ export const StaffManagement = () => {
                             </div>
                           </td>
 
-                          {/* 4. Device & Platform */}
+                          {/* 4. Device, Brand & Platform */}
                           <td className="py-3.5 px-4">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2.5">
                               {sess.deviceType === 'Phone' || sess.deviceType === 'Mobile' ? (
-                                <div className="w-7 h-7 rounded-lg bg-emerald-950/80 border border-emerald-700/70 flex items-center justify-center text-emerald-400 shrink-0 shadow-xs" title="Smartphone / Mobile Device">
-                                  <Smartphone className="w-3.5 h-3.5" />
+                                <div className="w-8 h-8 rounded-xl bg-emerald-950/80 border border-emerald-700/70 flex items-center justify-center text-emerald-400 shrink-0 shadow-xs" title="Smartphone / Mobile Device">
+                                  <Smartphone className="w-4 h-4" />
                                 </div>
                               ) : sess.deviceType === 'Tablet' ? (
-                                <div className="w-7 h-7 rounded-lg bg-sky-950/80 border border-sky-700/70 flex items-center justify-center text-sky-400 shrink-0 shadow-xs" title="Tablet / iPad">
-                                  <Tablet className="w-3.5 h-3.5" />
+                                <div className="w-8 h-8 rounded-xl bg-sky-950/80 border border-sky-700/70 flex items-center justify-center text-sky-400 shrink-0 shadow-xs" title="Tablet / iPad">
+                                  <Tablet className="w-4 h-4" />
                                 </div>
                               ) : sess.deviceType === 'POS Touch Station' || sess.deviceType === 'POS Station' ? (
-                                <div className="w-7 h-7 rounded-lg bg-purple-950/80 border border-purple-700/70 flex items-center justify-center text-purple-400 shrink-0 shadow-xs" title="POS Station">
-                                  <Terminal className="w-3.5 h-3.5" />
+                                <div className="w-8 h-8 rounded-xl bg-purple-950/80 border border-purple-700/70 flex items-center justify-center text-purple-400 shrink-0 shadow-xs" title="POS Station">
+                                  <Terminal className="w-4 h-4" />
                                 </div>
                               ) : (
-                                <div className="w-7 h-7 rounded-lg bg-stone-950 border border-stone-800 flex items-center justify-center text-amber-400 shrink-0" title="Desktop / Workstation">
-                                  <Monitor className="w-3.5 h-3.5" />
+                                <div className="w-8 h-8 rounded-xl bg-stone-950 border border-stone-800 flex items-center justify-center text-amber-400 shrink-0" title="Desktop / Workstation">
+                                  <Monitor className="w-4 h-4" />
                                 </div>
                               )}
-                              <div className="truncate max-w-[175px]">
+                              <div className="truncate max-w-[210px]">
                                 <div className="flex items-center gap-1.5 truncate">
-                                  <span className="font-bold text-xs text-stone-200 block truncate">
+                                  {/* Distinct Brand Badge Tag */}
+                                  {(() => {
+                                    const b = getBrandBadge(sess.brand || sess.deviceModel);
+                                    return (
+                                      <span
+                                        className={`px-1.5 py-0.5 rounded text-[10px] font-extrabold border flex items-center gap-1 shrink-0 shadow-2xs ${b.color}`}
+                                        title={`Brand: ${b.name}`}
+                                      >
+                                        <span>{b.icon}</span>
+                                        <span>{b.name}</span>
+                                      </span>
+                                    );
+                                  })()}
+                                  <span className="font-bold text-xs text-stone-100 truncate">
                                     {sess.deviceModel || sess.os || 'Workstation'}
                                   </span>
                                   {(sess.deviceType === 'Phone' || sess.deviceType === 'Mobile') && (
@@ -1811,9 +1850,11 @@ export const StaffManagement = () => {
                                     </span>
                                   )}
                                 </div>
-                                <span className="text-[10px] text-stone-500 block truncate">
-                                  {sess.browser || 'Browser'} • {sess.os}
-                                </span>
+                                <div className="flex items-center gap-1.5 text-[10px] text-stone-400 mt-0.5">
+                                  <span className="text-stone-300 font-semibold truncate">{sess.browser || 'Browser'}</span>
+                                  <span>•</span>
+                                  <span className="text-stone-400 truncate">{sess.os}</span>
+                                </div>
                               </div>
                             </div>
                           </td>

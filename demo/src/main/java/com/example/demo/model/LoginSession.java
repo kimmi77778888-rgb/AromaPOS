@@ -13,6 +13,7 @@ public class LoginSession {
     private String ipLabel;
     private String deviceType; // Phone, Tablet, Desktop, POS Touch Station
     private String deviceModel;
+    private String brand; // Apple, Samsung, Google, Xiaomi, Microsoft, etc.
     private String os;
     private String browser;
     private String screen;
@@ -33,11 +34,35 @@ public class LoginSession {
 
     public LoginSession() {
         this.status = "ACTIVE";
+        this.brand = "Universal Device";
         this.timestamp = LocalDateTime.now().toString();
         this.lastActive = LocalDateTime.now().toString();
     }
 
+    private static String deriveBrand(String model, String os) {
+        String s = ((model != null ? model : "") + " " + (os != null ? os : "")).toLowerCase();
+        if (s.contains("iphone") || s.contains("ipad") || s.contains("apple") || s.contains("mac") || s.contains("ios")) return "Apple";
+        if (s.contains("samsung") || s.contains("galaxy")) return "Samsung";
+        if (s.contains("pixel") || s.contains("google")) return "Google";
+        if (s.contains("xiaomi") || s.contains("redmi") || s.contains("poco")) return "Xiaomi";
+        if (s.contains("oppo")) return "OPPO";
+        if (s.contains("vivo")) return "vivo";
+        if (s.contains("huawei") || s.contains("honor")) return "Huawei";
+        if (s.contains("sunmi") || s.contains("pos") || s.contains("kiosk")) return "Sunmi POS";
+        if (s.contains("dell")) return "Dell";
+        if (s.contains("hp") || s.contains("hewlett")) return "HP";
+        if (s.contains("lenovo") || s.contains("thinkpad")) return "Lenovo";
+        if (s.contains("asus") || s.contains("zenfone")) return "ASUS";
+        if (s.contains("windows")) return "Microsoft Windows";
+        if (s.contains("linux")) return "Linux Workstation";
+        return "Universal Device";
+    }
+
     public LoginSession(String id, String userId, String userName, String userRole, String userAvatar, String ipAddress, String ipType, String ipLabel, String deviceType, String deviceModel, String os, String browser, String screen, String terminalId, String location, String city, String country, String countryCode, String flag, Double latitude, Double longitude, String isp, String mapsUrl, String loginMethod, String status, String timestamp, String lastActive) {
+        this(id, userId, userName, userRole, userAvatar, ipAddress, ipType, ipLabel, deviceType, deviceModel, deriveBrand(deviceModel, os), os, browser, screen, terminalId, location, city, country, countryCode, flag, latitude, longitude, isp, mapsUrl, loginMethod, status, timestamp, lastActive);
+    }
+
+    public LoginSession(String id, String userId, String userName, String userRole, String userAvatar, String ipAddress, String ipType, String ipLabel, String deviceType, String deviceModel, String brand, String os, String browser, String screen, String terminalId, String location, String city, String country, String countryCode, String flag, Double latitude, Double longitude, String isp, String mapsUrl, String loginMethod, String status, String timestamp, String lastActive) {
         this.id = id;
         this.userId = userId;
         this.userName = userName;
@@ -48,6 +73,7 @@ public class LoginSession {
         this.ipLabel = ipLabel != null ? ipLabel : "Public IPv4";
         this.deviceType = deviceType != null ? deviceType : "Desktop";
         this.deviceModel = deviceModel;
+        this.brand = brand != null && !brand.isBlank() ? brand : deriveBrand(deviceModel, os);
         this.os = os;
         this.browser = browser;
         this.screen = screen;
@@ -96,6 +122,12 @@ public class LoginSession {
 
     public String getDeviceModel() { return deviceModel; }
     public void setDeviceModel(String deviceModel) { this.deviceModel = deviceModel; }
+
+    public String getBrand() {
+        if (brand != null && !brand.isBlank()) return brand;
+        return deriveBrand(deviceModel, os);
+    }
+    public void setBrand(String brand) { this.brand = brand; }
 
     public String getOs() { return os; }
     public void setOs(String os) { this.os = os; }
@@ -148,3 +180,4 @@ public class LoginSession {
     public String getLastActive() { return lastActive; }
     public void setLastActive(String lastActive) { this.lastActive = lastActive; }
 }
+
