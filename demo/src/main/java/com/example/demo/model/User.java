@@ -25,6 +25,7 @@ public class User {
     private java.util.List<String> permissions = new java.util.ArrayList<>();
     private String lastLoginIp;
     private String lastLoginDevice;
+    private String lastLoginLocation;
     private String lastLoginAt;
     private String lastLoginMethod;
 
@@ -210,6 +211,14 @@ public class User {
 
     public void setLastLoginDevice(String lastLoginDevice) {
         this.lastLoginDevice = lastLoginDevice;
+    }
+
+    public String getLastLoginLocation() {
+        return lastLoginLocation;
+    }
+
+    public void setLastLoginLocation(String lastLoginLocation) {
+        this.lastLoginLocation = lastLoginLocation;
     }
 
     public String getLastLoginAt() {

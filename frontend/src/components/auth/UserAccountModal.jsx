@@ -22,7 +22,10 @@ import {
   Activity,
   Terminal,
   Copy,
-  CheckCheck
+  CheckCheck,
+  MapPin,
+  Navigation,
+  ExternalLink
 } from 'lucide-react';
 import { UserAvatar } from '../common/UserAvatar';
 import { api, isRealAvatar } from '../../services/api';
@@ -484,6 +487,32 @@ export const UserAccountModal = ({ isOpen, onClose }) => {
                       {deviceAudit?.terminalId || 'AROMA-POS-01'} ({deviceAudit?.screen || '1920x1080'})
                     </span>
                   </div>
+                </div>
+
+                {/* Device Physical Geolocation */}
+                <div className="p-2.5 rounded-xl bg-stone-900/80 border border-stone-850 flex items-center justify-between sm:col-span-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <MapPin className="w-4 h-4 text-rose-400 shrink-0" />
+                    <div className="truncate">
+                      <span className="text-[10px] uppercase font-bold text-stone-500 block">
+                        {isKhmer ? 'ទីតាំងឧបករណ៍ & ភូមិសាស្ត្រ' : 'Device Geolocation & Physical Location'}
+                      </span>
+                      <span className="font-bold text-stone-100 text-xs truncate block">
+                        {deviceAudit?.location || user?.lastLoginLocation || 'Phnom Penh, Cambodia 🇰🇭'}
+                      </span>
+                    </div>
+                  </div>
+                  <a
+                    href={deviceAudit?.mapsUrl || 'https://www.google.com/maps?q=11.5564,104.9282'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-2.5 py-1 rounded-lg bg-stone-800 hover:bg-stone-750 text-amber-400 hover:text-amber-300 font-bold text-[10px] flex items-center gap-1 transition shrink-0"
+                    title={isKhmer ? 'មើលលើផែនទី Google Maps' : 'View on Google Maps'}
+                  >
+                    <Navigation className="w-3 h-3" />
+                    <span>{isKhmer ? 'មើលផែនទី' : 'Maps'}</span>
+                    <ExternalLink className="w-2.5 h-2.5" />
+                  </a>
                 </div>
               </div>
 

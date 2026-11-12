@@ -151,10 +151,14 @@ public class AuthService {
     }
 
     public Optional<User> authenticate(String email, String password) {
-        return authenticate(email, password, null, null);
+        return authenticate(email, password, null, null, null);
     }
 
     public Optional<User> authenticate(String email, String password, String ipAddress, String deviceInfo) {
+        return authenticate(email, password, ipAddress, deviceInfo, null);
+    }
+
+    public Optional<User> authenticate(String email, String password, String ipAddress, String deviceInfo, String location) {
         if (email == null || password == null) return Optional.empty();
         String pass = password.trim();
         String mail = email.trim();
@@ -171,26 +175,33 @@ public class AuthService {
             User u = userOpt.get();
             String ip = (ipAddress != null && !ipAddress.isBlank()) ? ipAddress : "127.0.0.1 (POS Station)";
             String device = (deviceInfo != null && !deviceInfo.isBlank()) ? deviceInfo : "Standard POS Station";
+            String loc = (location != null && !location.isBlank()) ? location : "Phnom Penh, Cambodia 🇰🇭";
             u.setLastLoginIp(ip);
             u.setLastLoginDevice(device);
+            u.setLastLoginLocation(loc);
             u.setLastLoginAt(LocalDateTime.now().toString());
             u.setLastLoginMethod("PASSWORD");
 
-            recordAudit("LOGIN_SUCCESS", "User authenticated into terminal from " + ip, u.getName() + " (" + u.getRole() + ")", ip, device, "PASSWORD");
+            recordAudit("LOGIN_SUCCESS", "User authenticated into terminal from " + ip + " [" + loc + "]", u.getName() + " (" + u.getRole() + ")", ip, device, "PASSWORD", loc);
             return Optional.of(u);
         } else {
             String ip = (ipAddress != null && !ipAddress.isBlank()) ? ipAddress : "127.0.0.1";
             String device = (deviceInfo != null && !deviceInfo.isBlank()) ? deviceInfo : "Standard POS Station";
-            recordAudit("LOGIN_FAILED", "Failed credential verification for: " + mail, "ANONYMOUS", ip, device, "PASSWORD");
+            String loc = (location != null && !location.isBlank()) ? location : "Phnom Penh, Cambodia 🇰🇭";
+            recordAudit("LOGIN_FAILED", "Failed credential verification for: " + mail, "ANONYMOUS", ip, device, "PASSWORD", loc);
             return Optional.empty();
         }
     }
 
     public Optional<User> authenticatePin(String pin) {
-        return authenticatePin(pin, null, null);
+        return authenticatePin(pin, null, null, null);
     }
 
     public Optional<User> authenticatePin(String pin, String ipAddress, String deviceInfo) {
+        return authenticatePin(pin, ipAddress, deviceInfo, null);
+    }
+
+    public Optional<User> authenticatePin(String pin, String ipAddress, String deviceInfo, String location) {
         if (pin == null || pin.isBlank()) return Optional.empty();
         String p = pin.trim();
         Optional<User> userOpt = users.stream()
@@ -201,26 +212,33 @@ public class AuthService {
             User u = userOpt.get();
             String ip = (ipAddress != null && !ipAddress.isBlank()) ? ipAddress : "127.0.0.1 (POS Station)";
             String device = (deviceInfo != null && !deviceInfo.isBlank()) ? deviceInfo : "POS Station Touch Screen";
+            String loc = (location != null && !location.isBlank()) ? location : "Phnom Penh, Cambodia 🇰🇭";
             u.setLastLoginIp(ip);
             u.setLastLoginDevice(device);
+            u.setLastLoginLocation(loc);
             u.setLastLoginAt(LocalDateTime.now().toString());
             u.setLastLoginMethod("PIN");
 
-            recordAudit("PIN_LOGIN_SUCCESS", "POS Terminal unlocked via 4-digit PIN from " + ip, u.getName() + " (" + u.getRole() + ")", ip, device, "PIN");
+            recordAudit("PIN_LOGIN_SUCCESS", "POS Terminal unlocked via 4-digit PIN from " + ip + " [" + loc + "]", u.getName() + " (" + u.getRole() + ")", ip, device, "PIN", loc);
             return Optional.of(u);
         } else {
             String ip = (ipAddress != null && !ipAddress.isBlank()) ? ipAddress : "127.0.0.1";
             String device = (deviceInfo != null && !deviceInfo.isBlank()) ? deviceInfo : "POS Station Touch Screen";
-            recordAudit("PIN_LOGIN_FAILED", "Invalid terminal PIN code attempt", "ANONYMOUS", ip, device, "PIN");
+            String loc = (location != null && !location.isBlank()) ? location : "Phnom Penh, Cambodia 🇰🇭";
+            recordAudit("PIN_LOGIN_FAILED", "Invalid terminal PIN code attempt", "ANONYMOUS", ip, device, "PIN", loc);
             return Optional.empty();
         }
     }
 
     public Optional<User> authenticateFace(String staffIdOrName) {
-        return authenticateFace(staffIdOrName, null, null);
+        return authenticateFace(staffIdOrName, null, null, null);
     }
 
     public Optional<User> authenticateFace(String staffIdOrName, String ipAddress, String deviceInfo) {
+        return authenticateFace(staffIdOrName, ipAddress, deviceInfo, null);
+    }
+
+    public Optional<User> authenticateFace(String staffIdOrName, String ipAddress, String deviceInfo, String location) {
         if (staffIdOrName == null || staffIdOrName.isBlank()) return Optional.empty();
         String target = staffIdOrName.trim();
         Optional<User> userOpt = users.stream()
@@ -231,17 +249,20 @@ public class AuthService {
             User u = userOpt.get();
             String ip = (ipAddress != null && !ipAddress.isBlank()) ? ipAddress : "127.0.0.1 (POS Station)";
             String device = (deviceInfo != null && !deviceInfo.isBlank()) ? deviceInfo : "Touchless Biometric Camera";
+            String loc = (location != null && !location.isBlank()) ? location : "Phnom Penh, Cambodia 🇰🇭";
             u.setLastLoginIp(ip);
             u.setLastLoginDevice(device);
+            u.setLastLoginLocation(loc);
             u.setLastLoginAt(LocalDateTime.now().toString());
             u.setLastLoginMethod("FACE_BIOMETRIC");
 
-            recordAudit("FACE_LOGIN_SUCCESS", "Touchless Face ID biometrics verified from " + ip, u.getName() + " (" + u.getRole() + ")", ip, device, "FACE_BIOMETRIC");
+            recordAudit("FACE_LOGIN_SUCCESS", "Touchless Face ID biometrics verified from " + ip + " [" + loc + "]", u.getName() + " (" + u.getRole() + ")", ip, device, "FACE_BIOMETRIC", loc);
             return Optional.of(u);
         } else {
             String ip = (ipAddress != null && !ipAddress.isBlank()) ? ipAddress : "127.0.0.1";
             String device = (deviceInfo != null && !deviceInfo.isBlank()) ? deviceInfo : "Touchless Biometric Camera";
-            recordAudit("FACE_LOGIN_FAILED", "Face biometric match failed for target: " + target, "ANONYMOUS", ip, device, "FACE_BIOMETRIC");
+            String loc = (location != null && !location.isBlank()) ? location : "Phnom Penh, Cambodia 🇰🇭";
+            recordAudit("FACE_LOGIN_FAILED", "Face biometric match failed for target: " + target, "ANONYMOUS", ip, device, "FACE_BIOMETRIC", loc);
             return Optional.empty();
         }
     }
@@ -444,6 +465,10 @@ public class AuthService {
     }
 
     public void recordAudit(String action, String details, String performedBy, String ipAddress, String deviceInfo, String loginMethod) {
+        recordAudit(action, details, performedBy, ipAddress, deviceInfo, loginMethod, null);
+    }
+
+    public void recordAudit(String action, String details, String performedBy, String ipAddress, String deviceInfo, String loginMethod, String location) {
         AuditLog log = new AuditLog(
                 "aud-" + System.currentTimeMillis() + "-" + (int)(Math.random() * 1000),
                 "sys",
@@ -455,7 +480,8 @@ public class AuthService {
                 0.0,
                 ipAddress,
                 deviceInfo,
-                loginMethod
+                loginMethod,
+                location
         );
         logAudit(log);
     }

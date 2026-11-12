@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useLanguage } from '../../context/LanguageContext';
-import { Coffee, Lock, Mail, Eye, EyeOff, ArrowRight, ShieldCheck, ScanFace, Globe, Monitor } from 'lucide-react';
+import { Coffee, Lock, Mail, Eye, EyeOff, ArrowRight, ShieldCheck, ScanFace, Globe, Monitor, MapPin } from 'lucide-react';
 import { LanguageSwitcher } from '../common/LanguageSwitcher';
 import { FaceScannerModal } from './FaceScannerModal';
-import { resolveClientIp, getDeviceInfo } from '../../utils/deviceDetector';
+import { getFullDeviceAuditSnapshot } from '../../utils/deviceDetector';
 
 export const LoginScreen = () => {
   const { login, faceLogin } = useApp();
@@ -20,9 +20,8 @@ export const LoginScreen = () => {
   const [clientAudit, setClientAudit] = useState(null);
 
   React.useEffect(() => {
-    resolveClientIp().then((ip) => {
-      const dev = getDeviceInfo();
-      setClientAudit({ ip, ...dev });
+    getFullDeviceAuditSnapshot().then((audit) => {
+      setClientAudit(audit);
     }).catch(() => {});
   }, []);
 
@@ -279,6 +278,11 @@ export const LoginScreen = () => {
                 <span className="text-cyan-400 font-bold">IP: {clientAudit?.ipAddress || '192.168.1.108'}</span>
                 <span>•</span>
                 <span className="text-stone-400">{clientAudit?.os || 'Windows 11'}</span>
+                <span>•</span>
+                <span className="text-rose-400 font-bold flex items-center gap-1 font-sans">
+                  <MapPin className="w-2.5 h-2.5" />
+                  <span>{clientAudit?.location || 'Phnom Penh, Cambodia 🇰🇭'}</span>
+                </span>
               </div>
             </div>
           </div>

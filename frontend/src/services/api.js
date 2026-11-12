@@ -1,7 +1,7 @@
 import { INITIAL_PRODUCTS, INITIAL_ORDERS, DEMO_USERS, INITIAL_INGREDIENTS, CATEGORIES } from './coffeeData';
 import { storage } from '../utils/storage';
 import { checkFaceUniqueness } from '../utils/faceBiometrics';
-import { getDeviceInfo, resolveClientIp, classifyIp } from '../utils/deviceDetector';
+import { getDeviceInfo, resolveClientIp, classifyIp, resolveClientLocation } from '../utils/deviceDetector';
 
 const API_HOST = typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_API_URL 
   ? process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '') 
@@ -240,6 +240,15 @@ export const getStoredLoginSessions = () => {
       browser: "Google Chrome 124",
       screen: "1920x1080",
       terminalId: "AROMA-POS-01",
+      location: "Phnom Penh, Cambodia 🇰🇭",
+      city: "Phnom Penh",
+      country: "Cambodia",
+      countryCode: "KH",
+      flag: "🇰🇭",
+      latitude: 11.5564,
+      longitude: 104.9282,
+      isp: "Smart Axiata Co., Ltd.",
+      mapsUrl: "https://www.google.com/maps?q=11.5564,104.9282",
       loginMethod: "PASSWORD",
       status: "ACTIVE",
       timestamp: new Date(now - 15 * 60 * 1000).toISOString(),
@@ -260,6 +269,15 @@ export const getStoredLoginSessions = () => {
       browser: "Google Chrome 122",
       screen: "1920x1080",
       terminalId: "AROMA-POS-01",
+      location: "BKK1 Store, Phnom Penh 🇰🇭",
+      city: "Phnom Penh",
+      country: "Cambodia",
+      countryCode: "KH",
+      flag: "🇰🇭",
+      latitude: 11.5529,
+      longitude: 104.9244,
+      isp: "Store POS LAN / CamNet",
+      mapsUrl: "https://www.google.com/maps?q=11.5529,104.9244",
       loginMethod: "PIN",
       status: "ACTIVE",
       timestamp: new Date(now - 60 * 60 * 1000).toISOString(),
@@ -280,6 +298,15 @@ export const getStoredLoginSessions = () => {
       browser: "Apple Safari 17",
       screen: "1024x768",
       terminalId: "AROMA-PAD-02",
+      location: "Toul Kork Branch, Phnom Penh 🇰🇭",
+      city: "Phnom Penh",
+      country: "Cambodia",
+      countryCode: "KH",
+      flag: "🇰🇭",
+      latitude: 11.5732,
+      longitude: 104.8988,
+      isp: "SINET Cambodia Fiber",
+      mapsUrl: "https://www.google.com/maps?q=11.5732,104.8988",
       loginMethod: "PIN",
       status: "CLOSED",
       timestamp: new Date(now - 140 * 60 * 1000).toISOString(),
@@ -300,6 +327,15 @@ export const getStoredLoginSessions = () => {
       browser: "Google Chrome 121",
       screen: "1280x800",
       terminalId: "AROMA-KDS-01",
+      location: "BKK1 Kitchen Station 🇰🇭",
+      city: "Phnom Penh",
+      country: "Cambodia",
+      countryCode: "KH",
+      flag: "🇰🇭",
+      latitude: 11.5529,
+      longitude: 104.9244,
+      isp: "Store POS LAN",
+      mapsUrl: "https://www.google.com/maps?q=11.5529,104.9244",
       loginMethod: "FACE_BIOMETRIC",
       status: "CLOSED",
       timestamp: new Date(now - 220 * 60 * 1000).toISOString(),
@@ -320,6 +356,15 @@ export const getStoredLoginSessions = () => {
       browser: "Apple Safari 17",
       screen: "2560x1440",
       terminalId: "SEC-STATION-HQ",
+      location: "Siem Reap Regional Office 🇰🇭",
+      city: "Siem Reap",
+      country: "Cambodia",
+      countryCode: "KH",
+      flag: "🇰🇭",
+      latitude: 13.3633,
+      longitude: 103.8564,
+      isp: "Metfone Viettel Cambodia",
+      mapsUrl: "https://www.google.com/maps?q=13.3633,103.8564",
       loginMethod: "PASSWORD",
       status: "CLOSED",
       timestamp: new Date(now - 340 * 60 * 1000).toISOString(),
@@ -334,11 +379,12 @@ export const saveStoredLoginSessions = (sessions) => {
   } catch (e) {}
 };
 
-export const recordLoginSession = async (user, loginMethod = 'PASSWORD', clientIpOverride = null, deviceInfoOverride = null) => {
+export const recordLoginSession = async (user, loginMethod = 'PASSWORD', clientIpOverride = null, deviceInfoOverride = null, locationOverride = null) => {
   if (!user) return null;
   try {
     const liveIp = clientIpOverride || await resolveClientIp();
     const info = deviceInfoOverride || getDeviceInfo();
+    const loc = locationOverride || await resolveClientLocation(liveIp);
     const classification = classifyIp(liveIp);
 
     const newSession = {
@@ -357,6 +403,15 @@ export const recordLoginSession = async (user, loginMethod = 'PASSWORD', clientI
       screen: info.screen || '1920x1080',
       terminalId: info.terminalId || 'AROMA-POS-01',
       loginMethod,
+      location: loc.displayLocation || 'Phnom Penh, Cambodia 🇰🇭',
+      city: loc.city || 'Phnom Penh',
+      country: loc.country || 'Cambodia',
+      countryCode: loc.countryCode || 'KH',
+      flag: loc.flag || '🇰🇭',
+      latitude: loc.latitude || 11.5564,
+      longitude: loc.longitude || 104.9282,
+      isp: loc.isp || 'Smart Axiata / CamNet',
+      mapsUrl: loc.mapsUrl || `https://www.google.com/maps?q=${loc.latitude || 11.5564},${loc.longitude || 104.9282}`,
       status: 'ACTIVE',
       timestamp: new Date().toISOString(),
       lastActive: new Date().toISOString()
@@ -374,6 +429,7 @@ export const recordLoginSession = async (user, loginMethod = 'PASSWORD', clientI
           ...u,
           lastLoginIp: liveIp,
           lastLoginDevice: `${info.deviceType} • ${info.os} (${info.browser})`,
+          lastLoginLocation: newSession.location,
           lastLoginAt: newSession.timestamp,
           lastLoginMethod
         };
@@ -389,6 +445,7 @@ export const recordLoginSession = async (user, loginMethod = 'PASSWORD', clientI
         ...currentStored,
         lastLoginIp: liveIp,
         lastLoginDevice: `${info.deviceType} • ${info.os} (${info.browser})`,
+        lastLoginLocation: newSession.location,
         lastLoginAt: newSession.timestamp,
         lastLoginMethod
       });
@@ -424,6 +481,7 @@ export const api = {
     const p = String(password || '').trim();
     const liveIp = await resolveClientIp();
     const devInfo = getDeviceInfo();
+    const liveLoc = await resolveClientLocation(liveIp);
 
     // 1. Instant local authentication (0ms response, immune to sleeping server or 401s)
     const staffList = getStoredStaff();
@@ -444,11 +502,12 @@ export const api = {
         (found.pinCode && p === found.pinCode);
 
       if (isMatch) {
-        await recordLoginSession(found, 'PASSWORD', liveIp, devInfo);
+        await recordLoginSession(found, 'PASSWORD', liveIp, devInfo, liveLoc);
         const updatedFound = {
           ...found,
           lastLoginIp: liveIp,
           lastLoginDevice: devInfo.deviceSummary,
+          lastLoginLocation: liveLoc.displayLocation,
           lastLoginAt: new Date().toISOString(),
           lastLoginMethod: 'PASSWORD'
         };
@@ -461,11 +520,12 @@ export const api = {
             userName: found.name,
             userRole: found.role,
             action: 'LOGIN_SUCCESS',
-            details: `User ${found.name} (${found.role}) authenticated securely from IP ${liveIp} via ${devInfo.deviceSummary}`,
+            details: `User ${found.name} (${found.role}) authenticated securely from IP ${liveIp} [${liveLoc.displayLocation}] via ${devInfo.deviceSummary}`,
             authorizedBy: 'Credential-Auth',
             amount: 0,
             ipAddress: liveIp,
             deviceInfo: devInfo.deviceSummary,
+            location: liveLoc.displayLocation,
             loginMethod: 'PASSWORD'
           };
           saveStoredAuditLogs([logEntry, ...getStoredAuditLogs()]);
@@ -476,11 +536,11 @@ export const api = {
           fetch(`${BASE_URL}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: found.email, password: p, ipAddress: liveIp, deviceInfo: devInfo.deviceSummary })
+            body: JSON.stringify({ email: found.email, password: p, ipAddress: liveIp, deviceInfo: devInfo.deviceSummary, location: liveLoc.displayLocation })
           }).catch(() => {});
         } catch (e) {}
 
-        return { success: true, user: updatedFound, token: 'local-token-' + found.id, ipAddress: liveIp, deviceInfo: devInfo };
+        return { success: true, user: updatedFound, token: 'local-token-' + found.id, ipAddress: liveIp, deviceInfo: devInfo, location: liveLoc };
       }
 
       try {
@@ -491,11 +551,12 @@ export const api = {
           userName: found.name,
           userRole: found.role,
           action: 'LOGIN_FAILED',
-          details: `Incorrect password attempt for user ${found.email} from IP ${liveIp}`,
+          details: `Incorrect password attempt for user ${found.email} from IP ${liveIp} [${liveLoc.displayLocation}]`,
           authorizedBy: 'Security-Shield',
           amount: 0,
           ipAddress: liveIp,
           deviceInfo: devInfo.deviceSummary,
+          location: liveLoc.displayLocation,
           loginMethod: 'PASSWORD'
         };
         saveStoredAuditLogs([failLog, ...getStoredAuditLogs()]);
@@ -508,13 +569,13 @@ export const api = {
       const res = await fetch(`${BASE_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, ipAddress: liveIp, deviceInfo: devInfo.deviceSummary })
+        body: JSON.stringify({ email, password, ipAddress: liveIp, deviceInfo: devInfo.deviceSummary, location: liveLoc.displayLocation })
       });
       if (res.ok) {
         const data = await res.json();
-        await recordLoginSession(data.user, 'PASSWORD', liveIp, devInfo);
+        await recordLoginSession(data.user, 'PASSWORD', liveIp, devInfo, liveLoc);
         saveStoredUser(data.user);
-        return { success: true, user: data.user, token: data.token, ipAddress: liveIp, deviceInfo: devInfo };
+        return { success: true, user: data.user, token: data.token, ipAddress: liveIp, deviceInfo: devInfo, location: liveLoc };
       }
     } catch (err) {}
 
@@ -525,17 +586,19 @@ export const api = {
     const p = (pin || '').trim();
     const liveIp = await resolveClientIp();
     const devInfo = getDeviceInfo();
+    const liveLoc = await resolveClientLocation(liveIp);
     const staffList = getStoredStaff();
     const found = staffList.find((u) => 
       (u.pin && u.pin === p) || 
       (u.pinCode && u.pinCode === p)
     );
     if (found) {
-      await recordLoginSession(found, 'PIN', liveIp, devInfo);
+      await recordLoginSession(found, 'PIN', liveIp, devInfo, liveLoc);
       const updatedFound = {
         ...found,
         lastLoginIp: liveIp,
         lastLoginDevice: devInfo.deviceSummary,
+        lastLoginLocation: liveLoc.displayLocation,
         lastLoginAt: new Date().toISOString(),
         lastLoginMethod: 'PIN'
       };
@@ -548,11 +611,12 @@ export const api = {
           userName: found.name,
           userRole: found.role,
           action: 'PIN_LOGIN_SUCCESS',
-          details: `POS Terminal unlocked with PIN by ${found.name} (${found.role}) from IP ${liveIp}`,
+          details: `POS Terminal unlocked with PIN by ${found.name} (${found.role}) from IP ${liveIp} [${liveLoc.displayLocation}]`,
           authorizedBy: 'Station-PIN',
           amount: 0,
           ipAddress: liveIp,
           deviceInfo: devInfo.deviceSummary,
+          location: liveLoc.displayLocation,
           loginMethod: 'PIN'
         };
         saveStoredAuditLogs([logEntry, ...getStoredAuditLogs()]);
@@ -562,23 +626,23 @@ export const api = {
         fetch(`${BASE_URL}/auth/pin-login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ pin: p, ipAddress: liveIp, deviceInfo: devInfo.deviceSummary })
+          body: JSON.stringify({ pin: p, ipAddress: liveIp, deviceInfo: devInfo.deviceSummary, location: liveLoc.displayLocation })
         }).catch(() => {});
       } catch (e) {}
-      return { success: true, user: updatedFound, token: 'local-token-' + found.id, ipAddress: liveIp, deviceInfo: devInfo };
+      return { success: true, user: updatedFound, token: 'local-token-' + found.id, ipAddress: liveIp, deviceInfo: devInfo, location: liveLoc };
     }
 
     try {
       const res = await fetch(`${BASE_URL}/auth/pin-login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pin: p, ipAddress: liveIp, deviceInfo: devInfo.deviceSummary })
+        body: JSON.stringify({ pin: p, ipAddress: liveIp, deviceInfo: devInfo.deviceSummary, location: liveLoc.displayLocation })
       });
       if (res.ok) {
         const data = await res.json();
-        await recordLoginSession(data.user, 'PIN', liveIp, devInfo);
+        await recordLoginSession(data.user, 'PIN', liveIp, devInfo, liveLoc);
         saveStoredUser(data.user);
-        return { success: true, user: data.user, token: data.token, ipAddress: liveIp, deviceInfo: devInfo };
+        return { success: true, user: data.user, token: data.token, ipAddress: liveIp, deviceInfo: devInfo, location: liveLoc };
       }
     } catch (e) {}
 
@@ -642,28 +706,30 @@ export const api = {
   async faceLogin(staffId) {
     const liveIp = await resolveClientIp();
     const devInfo = getDeviceInfo();
+    const liveLoc = await resolveClientLocation(liveIp);
     try {
       const res = await fetch(`${BASE_URL}/auth/face-login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ staffId, ipAddress: liveIp, deviceInfo: devInfo.deviceSummary })
+        body: JSON.stringify({ staffId, ipAddress: liveIp, deviceInfo: devInfo.deviceSummary, location: liveLoc.displayLocation })
       });
       if (res.ok) {
         const data = await res.json();
-        await recordLoginSession(data.user, 'FACE_BIOMETRIC', liveIp, devInfo);
+        await recordLoginSession(data.user, 'FACE_BIOMETRIC', liveIp, devInfo, liveLoc);
         saveStoredUser(data.user);
-        return { success: true, user: data.user, token: data.token, ipAddress: liveIp, deviceInfo: devInfo };
+        return { success: true, user: data.user, token: data.token, ipAddress: liveIp, deviceInfo: devInfo, location: liveLoc };
       }
     } catch (e) {}
 
     const staffList = getStoredStaff();
     const found = staffList.find((u) => u.id === staffId || u.name.toLowerCase() === (staffId || '').toLowerCase());
     if (found) {
-      await recordLoginSession(found, 'FACE_BIOMETRIC', liveIp, devInfo);
+      await recordLoginSession(found, 'FACE_BIOMETRIC', liveIp, devInfo, liveLoc);
       const updatedFound = {
         ...found,
         lastLoginIp: liveIp,
         lastLoginDevice: devInfo.deviceSummary,
+        lastLoginLocation: liveLoc.displayLocation,
         lastLoginAt: new Date().toISOString(),
         lastLoginMethod: 'FACE_BIOMETRIC'
       };
@@ -676,18 +742,20 @@ export const api = {
           userName: found.name,
           userRole: found.role,
           action: 'FACE_LOGIN_SUCCESS',
-          details: `Touchless Face ID biometrics verified for ${found.name} (${found.role}) from IP ${liveIp}`,
+          details: `Touchless Face ID biometrics verified for ${found.name} (${found.role}) from IP ${liveIp} [${liveLoc.displayLocation}]`,
           authorizedBy: 'Biometric-FaceID',
           amount: 0,
           ipAddress: liveIp,
           deviceInfo: devInfo.deviceSummary,
+          location: liveLoc.displayLocation,
           loginMethod: 'FACE_BIOMETRIC'
         };
         saveStoredAuditLogs([logEntry, ...getStoredAuditLogs()]);
       } catch (e) {}
-      return { success: true, user: updatedFound, token: 'local-face-token-' + found.id, ipAddress: liveIp, deviceInfo: devInfo };
+      return { success: true, user: updatedFound, token: 'local-token-' + found.id, ipAddress: liveIp, deviceInfo: devInfo, location: liveLoc };
     }
-    throw new Error('Biometric Face Recognition did not match an active staff member.');
+
+    throw new Error('No enrolled Face ID profile found matching this identity.');
   },
 
   async faceOverride({ managerId, action, details, cashierId, cashierName, amount = 0 }) {

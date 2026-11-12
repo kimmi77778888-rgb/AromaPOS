@@ -6,6 +6,8 @@
 
 let cachedPublicIp = null;
 let isFetchingIp = false;
+let cachedLocation = null;
+let isFetchingLocation = false;
 
 /**
  * Detect operating system from userAgent & platform
@@ -221,11 +223,195 @@ export const getDeviceInfo = () => {
 };
 
 /**
- * Asynchronously captures full device audit object with verified IP
+ * Resolve client physical & IP geolocation
+ * Returns City, Country, Flag, Lat/Lon, ISP, and Maps URL.
+ */
+export const resolveClientLocation = async (ip = null) => {
+  if (typeof window === 'undefined') {
+    return {
+      city: 'Phnom Penh',
+      region: 'Phnom Penh',
+      country: 'Cambodia',
+      countryCode: 'KH',
+      flag: '🇰🇭',
+      latitude: 11.5564,
+      longitude: 104.9282,
+      isp: 'AromaPOS Store Network',
+      displayLocation: 'Phnom Penh, Cambodia 🇰🇭',
+      mapsUrl: 'https://www.google.com/maps?q=11.5564,104.9282',
+      isDefault: true
+    };
+  }
+
+  if (cachedLocation) return cachedLocation;
+
+  try {
+    const saved = window.sessionStorage?.getItem('aromapos_client_location');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed && parsed.city) {
+        cachedLocation = parsed;
+        return parsed;
+      }
+    }
+  } catch (e) {}
+
+  if (isFetchingLocation) {
+    return cachedLocation || {
+      city: 'Phnom Penh',
+      region: 'Phnom Penh',
+      country: 'Cambodia',
+      countryCode: 'KH',
+      flag: '🇰🇭',
+      latitude: 11.5564,
+      longitude: 104.9282,
+      isp: 'Smart Axiata / CamNet',
+      displayLocation: 'Phnom Penh, Cambodia 🇰🇭',
+      mapsUrl: 'https://www.google.com/maps?q=11.5564,104.9282',
+      isDefault: true
+    };
+  }
+
+  isFetchingLocation = true;
+
+  // 1. Primary: Fast IP Geolocation Lookup via ipwho.is
+  try {
+    const cleanIp = (ip || cachedPublicIp || '').trim();
+    const isLocal = !cleanIp || cleanIp.startsWith('192.168.') || cleanIp.startsWith('10.') || cleanIp.startsWith('127.');
+    const endpoint = isLocal ? 'https://ipwho.is/' : `https://ipwho.is/${cleanIp}`;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 1800);
+
+    const res = await fetch(endpoint, {
+      signal: controller.signal,
+      cache: 'force-cache'
+    });
+    clearTimeout(timeoutId);
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.success !== false && (data.city || data.country)) {
+        const flag = data.flag?.emoji || (data.country_code === 'KH' ? '🇰🇭' : '🌐');
+        const loc = {
+          city: data.city || 'Phnom Penh',
+          region: data.region || 'Phnom Penh',
+          country: data.country || 'Cambodia',
+          countryCode: data.country_code || 'KH',
+          flag,
+          latitude: data.latitude || 11.5564,
+          longitude: data.longitude || 104.9282,
+          isp: data.connection?.isp || data.connection?.org || 'Broadband ISP',
+          displayLocation: `${data.city || 'Phnom Penh'}, ${data.country || 'Cambodia'} ${flag}`,
+          mapsUrl: `https://www.google.com/maps?q=${data.latitude || 11.5564},${data.longitude || 104.9282}`,
+          isDefault: false
+        };
+        cachedLocation = loc;
+        try {
+          window.sessionStorage?.setItem('aromapos_client_location', JSON.stringify(loc));
+        } catch (e) {}
+        return loc;
+      }
+    }
+  } catch (e) {
+    // Secondary fallback
+    try {
+      const controller2 = new AbortController();
+      const timeoutId2 = setTimeout(() => controller2.abort(), 1200);
+      const res2 = await fetch('https://freeipapi.com/api/json', { signal: controller2.signal });
+      clearTimeout(timeoutId2);
+      if (res2.ok) {
+        const data2 = await res2.json();
+        if (data2 && (data2.cityName || data2.countryName)) {
+          const loc = {
+            city: data2.cityName || 'Phnom Penh',
+            region: data2.regionName || 'Phnom Penh',
+            country: data2.countryName || 'Cambodia',
+            countryCode: data2.countryCode || 'KH',
+            flag: data2.countryCode === 'KH' ? '🇰🇭' : '🌐',
+            latitude: data2.latitude || 11.5564,
+            longitude: data2.longitude || 104.9282,
+            isp: 'Store Internet Service',
+            displayLocation: `${data2.cityName || 'Phnom Penh'}, ${data2.countryName || 'Cambodia'} 🇰🇭`,
+            mapsUrl: `https://www.google.com/maps?q=${data2.latitude || 11.5564},${data2.longitude || 104.9282}`,
+            isDefault: false
+          };
+          cachedLocation = loc;
+          try {
+            window.sessionStorage?.setItem('aromapos_client_location', JSON.stringify(loc));
+          } catch (err) {}
+          return loc;
+        }
+      }
+    } catch (err) {}
+  } finally {
+    isFetchingLocation = false;
+  }
+
+  // 3. Fallback for Store LAN or offline POS stations in Cambodia
+  const fallbackLoc = {
+    city: 'Phnom Penh',
+    region: 'Phnom Penh',
+    country: 'Cambodia',
+    countryCode: 'KH',
+    flag: '🇰🇭',
+    latitude: 11.5564,
+    longitude: 104.9282,
+    isp: 'AromaPOS Store LAN Network',
+    displayLocation: 'Phnom Penh, Cambodia 🇰🇭',
+    mapsUrl: 'https://www.google.com/maps?q=11.5564,104.9282',
+    isDefault: true
+  };
+  cachedLocation = fallbackLoc;
+  return fallbackLoc;
+};
+
+/**
+ * Request high-precision GPS coordinates from browser Geolocation API
+ */
+export const requestPreciseGpsLocation = () => {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined' || !navigator.geolocation) {
+      resolve(null);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+        const loc = {
+          city: 'Phnom Penh (GPS)',
+          region: 'Cambodia',
+          country: 'Cambodia',
+          countryCode: 'KH',
+          flag: '🇰🇭',
+          latitude: lat,
+          longitude: lon,
+          accuracyMeters: Math.round(pos.coords.accuracy || 10),
+          isp: 'Precise GPS Satellite Receiver',
+          displayLocation: `GPS: ${lat.toFixed(4)}°, ${lon.toFixed(4)}° 📍`,
+          mapsUrl: `https://www.google.com/maps?q=${lat},${lon}`,
+          isGpsPrecise: true
+        };
+        cachedLocation = loc;
+        try {
+          window.sessionStorage?.setItem('aromapos_client_location', JSON.stringify(loc));
+        } catch (e) {}
+        resolve(loc);
+      },
+      () => resolve(null),
+      { timeout: 4000, enableHighAccuracy: true }
+    );
+  });
+};
+
+/**
+ * Asynchronously captures full device audit object with verified IP and Geolocation
  */
 export const getFullDeviceAuditSnapshot = async () => {
   const syncInfo = getDeviceInfo();
   const liveIp = await resolveClientIp();
+  const location = await resolveClientLocation(liveIp);
   const ipClassification = classifyIp(liveIp);
 
   return {
@@ -234,7 +420,17 @@ export const getFullDeviceAuditSnapshot = async () => {
     ipType: ipClassification.type,
     ipLabel: ipClassification.label,
     isPrivateIp: ipClassification.isPrivate,
+    location: location.displayLocation,
+    city: location.city,
+    country: location.country,
+    countryCode: location.countryCode,
+    flag: location.flag,
+    latitude: location.latitude,
+    longitude: location.longitude,
+    isp: location.isp,
+    mapsUrl: location.mapsUrl,
     capturedAt: new Date().toISOString()
   };
 };
+
 

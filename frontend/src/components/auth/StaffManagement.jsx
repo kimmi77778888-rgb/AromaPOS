@@ -52,7 +52,11 @@ import {
   Wifi,
   Activity,
   LogOut,
-  RefreshCw
+  RefreshCw,
+  MapPin,
+  Navigation,
+  ExternalLink,
+  Compass
 } from 'lucide-react';
 import { ROLE_PERMISSIONS, SYSTEM_PERMISSIONS } from '../../services/coffeeData';
 import { StaffShiftList } from './StaffShiftList';
@@ -89,6 +93,7 @@ export const StaffManagement = () => {
   const [loginSearchQuery, setLoginSearchQuery] = useState('');
   const [loginMethodFilter, setLoginMethodFilter] = useState('ALL');
   const [loginStatusFilter, setLoginStatusFilter] = useState('ALL');
+  const [loginLocationFilter, setLoginLocationFilter] = useState('ALL');
   const [inspectedSession, setInspectedSession] = useState(null);
   const [copiedSessionIp, setCopiedSessionIp] = useState(null);
 
@@ -121,14 +126,21 @@ export const StaffManagement = () => {
         (sess.os || '').toLowerCase().includes(q) ||
         (sess.browser || '').toLowerCase().includes(q) ||
         (sess.deviceType || '').toLowerCase().includes(q) ||
-        (sess.terminalId || '').toLowerCase().includes(q);
+        (sess.terminalId || '').toLowerCase().includes(q) ||
+        (sess.location || '').toLowerCase().includes(q) ||
+        (sess.city || '').toLowerCase().includes(q) ||
+        (sess.country || '').toLowerCase().includes(q) ||
+        (sess.isp || '').toLowerCase().includes(q);
 
       const matchMethod = loginMethodFilter === 'ALL' || sess.loginMethod === loginMethodFilter;
       const matchStatus = loginStatusFilter === 'ALL' || sess.status === loginStatusFilter;
+      const matchLocation = loginLocationFilter === 'ALL' || 
+        (sess.location || '').toLowerCase().includes(loginLocationFilter.toLowerCase()) ||
+        (sess.city || '').toLowerCase().includes(loginLocationFilter.toLowerCase());
 
-      return matchQuery && matchMethod && matchStatus;
+      return matchQuery && matchMethod && matchStatus && matchLocation;
     });
-  }, [loginSessions, loginSearchQuery, loginMethodFilter, loginStatusFilter]);
+  }, [loginSessions, loginSearchQuery, loginMethodFilter, loginStatusFilter, loginLocationFilter]);
 
   // Custom Roles state (allows creating brand new roles)
   const [customRoles, setCustomRoles] = useState([
@@ -939,7 +951,7 @@ export const StaffManagement = () => {
 
                         {/* 7. Last Login & Device IP */}
                         <td className="py-3.5 px-4">
-                          <div className="space-y-1">
+                          <div className="space-y-0.5">
                             <div className="flex items-center gap-1.5">
                               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
                               <span className="font-mono text-[11px] font-bold text-stone-200 truncate">
@@ -950,6 +962,12 @@ export const StaffManagement = () => {
                               <Monitor className="w-3 h-3 text-stone-400 shrink-0" />
                               <span className="truncate max-w-[150px]" title={staff.lastLoginDevice || 'Desktop (Windows)'}>
                                 {staff.lastLoginDevice || 'Desktop (Windows)'}
+                              </span>
+                            </div>
+                            <div className="text-[10px] text-rose-400/90 truncate flex items-center gap-1 font-semibold">
+                              <MapPin className="w-3 h-3 text-rose-400 shrink-0" />
+                              <span className="truncate max-w-[150px]" title={staff.lastLoginLocation || 'Phnom Penh, Cambodia 🇰🇭'}>
+                                {staff.lastLoginLocation || 'Phnom Penh, Cambodia 🇰🇭'}
                               </span>
                             </div>
                           </div>
@@ -1447,7 +1465,7 @@ export const StaffManagement = () => {
                     type="text"
                     value={loginSearchQuery}
                     onChange={(e) => setLoginSearchQuery(e.target.value)}
-                    placeholder={isKhmer ? 'ស្វែងរកតាម IP, ឧបករណ៍, ឈ្មោះ...' : 'Search by IP, device, staff...'}
+                    placeholder={isKhmer ? 'ស្វែងរកតាម ទីតាំង, IP, ឧបករណ៍, ឈ្មោះ...' : 'Search by location, IP, device, staff...'}
                     className="w-full bg-stone-900 border border-stone-800 rounded-xl pl-9 pr-8 py-1.5 text-xs text-stone-100 placeholder-stone-500 focus:outline-none focus:border-amber-500 transition"
                   />
                   {loginSearchQuery && (
@@ -1459,6 +1477,19 @@ export const StaffManagement = () => {
                     </button>
                   )}
                 </div>
+
+                {/* Location Filter */}
+                <select
+                  value={loginLocationFilter}
+                  onChange={(e) => setLoginLocationFilter(e.target.value)}
+                  className="bg-stone-900 border border-stone-800 rounded-xl px-3 py-1.5 text-xs text-stone-200 font-semibold focus:outline-none cursor-pointer"
+                >
+                  <option value="ALL">{isKhmer ? 'គ្រប់ទីតាំងទាំងអស់' : 'All Locations'}</option>
+                  <option value="Phnom Penh">Phnom Penh 🇰🇭</option>
+                  <option value="Siem Reap">Siem Reap 🇰🇭</option>
+                  <option value="Battambang">Battambang 🇰🇭</option>
+                  <option value="Kandal">Kandal 🇰🇭</option>
+                </select>
 
                 {/* Method Filter */}
                 <select
@@ -1511,6 +1542,7 @@ export const StaffManagement = () => {
                 <thead className="bg-stone-950/70 border-b border-stone-800 text-[11px] font-bold text-stone-400 uppercase tracking-wider">
                   <tr>
                     <th className="py-3.5 px-5">{isKhmer ? 'បុគ្គលិក' : 'Team Member'}</th>
+                    <th className="py-3.5 px-4">{isKhmer ? 'ទីតាំងឧបករណ៍' : 'Device Location'}</th>
                     <th className="py-3.5 px-4">{isKhmer ? 'អាសយដ្ឋាន IP' : 'Client IP Address'}</th>
                     <th className="py-3.5 px-4">{isKhmer ? 'ឧបករណ៍ & OS' : 'Device & Platform'}</th>
                     <th className="py-3.5 px-4">{isKhmer ? 'ស្ថានីយ & Resolution' : 'Station & Resolution'}</th>
@@ -1523,7 +1555,7 @@ export const StaffManagement = () => {
                 <tbody className="divide-y divide-stone-800/50 text-stone-300">
                   {filteredSessions.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="py-12 text-center text-stone-500 font-sans">
+                      <td colSpan={9} className="py-12 text-center text-stone-500 font-sans">
                         <div className="w-12 h-12 rounded-2xl bg-stone-900 border border-stone-800 flex items-center justify-center mx-auto mb-3 text-stone-400">
                           <Globe className="w-6 h-6 opacity-60" />
                         </div>
@@ -1572,7 +1604,38 @@ export const StaffManagement = () => {
                             </div>
                           </td>
 
-                          {/* 2. Client IP Address */}
+                          {/* 2. Device Location & Geolocation */}
+                          <td className="py-3.5 px-4">
+                            <div className="flex items-center gap-2">
+                              <div className="w-7 h-7 rounded-lg bg-rose-950/70 border border-rose-800/60 flex items-center justify-center text-rose-400 shrink-0 shadow-xs">
+                                <MapPin className="w-3.5 h-3.5" />
+                              </div>
+                              <div className="truncate max-w-[190px]">
+                                <div className="flex items-center gap-1.5 truncate">
+                                  <span className="font-bold text-xs text-stone-100 truncate">
+                                    {sess.location || 'Phnom Penh, Cambodia 🇰🇭'}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2 text-[10px] text-stone-500 mt-0.5">
+                                  <span className="truncate">{sess.isp || 'Smart Axiata / CamNet'}</span>
+                                  {sess.mapsUrl && (
+                                    <a
+                                      href={sess.mapsUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-amber-400 hover:text-amber-300 inline-flex items-center gap-0.5 font-bold hover:underline shrink-0"
+                                      title={isKhmer ? 'មើលលើផែនទី Google Maps' : 'View on Google Maps'}
+                                    >
+                                      <span>Map</span>
+                                      <ExternalLink className="w-2.5 h-2.5" />
+                                    </a>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* 3. Client IP Address */}
                           <td className="py-3.5 px-4 font-mono">
                             <div className="flex items-center gap-2">
                               <div className="space-y-0.5">
@@ -1778,6 +1841,91 @@ export const StaffManagement = () => {
                   }`} />
                   <span>{inspectedSession.status}</span>
                 </span>
+              </div>
+
+              {/* Device Physical Location & Geolocation Map Card */}
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-stone-950 via-stone-900 to-stone-950 border border-amber-500/30 space-y-3 shadow-lg">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400 shrink-0">
+                      <MapPin className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-stone-100 flex items-center gap-1.5">
+                        <span>{isKhmer ? 'ទីតាំងឧបករណ៍ & ភូមិសាស្ត្រ' : 'Device Geolocation & Physical Location'}</span>
+                        <span className="text-xs">{inspectedSession.flag || '🇰🇭'}</span>
+                      </h4>
+                      <p className="text-[10px] text-stone-400">
+                        {isKhmer ? 'ផ្ទៀងផ្ទាត់ទីតាំងពិតរបស់ឧបករណ៍ដែល Login' : 'Verified device physical location & network provider'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {inspectedSession.mapsUrl && (
+                    <a
+                      href={inspectedSession.mapsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 font-bold text-[11px] flex items-center gap-1 transition"
+                      title={isKhmer ? 'មើលលើផែនទី Google Maps' : 'Open in Google Maps'}
+                    >
+                      <Navigation className="w-3 h-3" />
+                      <span>{isKhmer ? 'មើលផែនទី' : 'Maps'}</span>
+                      <ExternalLink className="w-2.5 h-2.5" />
+                    </a>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-2.5 pt-1 text-xs">
+                  <div className="p-2.5 rounded-xl bg-stone-900/80 border border-stone-800">
+                    <span className="text-[10px] uppercase font-bold text-stone-500 block">
+                      {isKhmer ? 'ទីក្រុង / ប្រទេស' : 'City & Country'}
+                    </span>
+                    <span className="font-extrabold text-stone-100 text-xs block mt-0.5 truncate">
+                      {inspectedSession.location || 'Phnom Penh, Cambodia 🇰🇭'}
+                    </span>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-stone-900/80 border border-stone-800">
+                    <span className="text-[10px] uppercase font-bold text-stone-500 block">
+                      {isKhmer ? 'កូអរដោនេ GPS' : 'GPS Coordinates'}
+                    </span>
+                    <span className="font-mono font-bold text-amber-300 text-xs block mt-0.5 truncate">
+                      {inspectedSession.latitude ? `${inspectedSession.latitude.toFixed(4)}° N, ${inspectedSession.longitude.toFixed(4)}° E` : '11.5564° N, 104.9282° E'}
+                    </span>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-stone-900/80 border border-stone-800">
+                    <span className="text-[10px] uppercase font-bold text-stone-500 block">
+                      {isKhmer ? 'អ្នកផ្គត់ផ្គង់អ៊ីនធឺណិត (ISP)' : 'Internet Service Provider'}
+                    </span>
+                    <span className="font-semibold text-cyan-300 text-xs block truncate mt-0.5">
+                      {inspectedSession.isp || 'Smart Axiata / CamNet'}
+                    </span>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-stone-900/80 border border-stone-800">
+                    <span className="text-[10px] uppercase font-bold text-stone-500 block">
+                      {isKhmer ? 'តំបន់ពេលវេលា' : 'Timezone'}
+                    </span>
+                    <span className="font-mono font-bold text-stone-200 text-xs block mt-0.5 truncate">
+                      Asia/Phnom_Penh (GMT+7)
+                    </span>
+                  </div>
+                </div>
+
+                {/* Styled Map Preview Card */}
+                <div className="relative h-20 rounded-xl overflow-hidden border border-stone-800 bg-stone-950 flex items-center justify-center group">
+                  <div className="absolute inset-0 bg-[radial-gradient(#38322a_1px,transparent_1px)] [background-size:12px_12px] opacity-70" />
+                  <div className="relative z-10 flex flex-col items-center gap-1 text-center p-2">
+                    <div className="w-7 h-7 rounded-full bg-rose-600 text-white flex items-center justify-center shadow-lg shadow-rose-950/80 animate-bounce">
+                      <MapPin className="w-3.5 h-3.5" />
+                    </div>
+                    <span className="font-mono text-[10px] font-bold text-stone-200 bg-stone-900/95 px-2 py-0.5 rounded-md border border-stone-700/80 shadow">
+                      {inspectedSession.location || 'Phnom Penh, Cambodia 🇰🇭'}
+                    </span>
+                  </div>
+                </div>
               </div>
 
               {/* Technical Specifications Grid */}

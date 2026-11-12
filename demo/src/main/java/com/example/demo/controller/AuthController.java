@@ -61,6 +61,7 @@ public class AuthController {
         private String password;
         private String ipAddress;
         private String deviceInfo;
+        private String location;
 
         public String getEmail() { return email; }
         public void setEmail(String email) { this.email = email; }
@@ -70,12 +71,15 @@ public class AuthController {
         public void setIpAddress(String ipAddress) { this.ipAddress = ipAddress; }
         public String getDeviceInfo() { return deviceInfo; }
         public void setDeviceInfo(String deviceInfo) { this.deviceInfo = deviceInfo; }
+        public String getLocation() { return location; }
+        public void setLocation(String location) { this.location = location; }
     }
 
     public static class PinLoginRequest {
         private String pin;
         private String ipAddress;
         private String deviceInfo;
+        private String location;
 
         public String getPin() { return pin; }
         public void setPin(String pin) { this.pin = pin; }
@@ -83,6 +87,8 @@ public class AuthController {
         public void setIpAddress(String ipAddress) { this.ipAddress = ipAddress; }
         public String getDeviceInfo() { return deviceInfo; }
         public void setDeviceInfo(String deviceInfo) { this.deviceInfo = deviceInfo; }
+        public String getLocation() { return location; }
+        public void setLocation(String location) { this.location = location; }
     }
 
     public static class ManagerOverrideRequest {
@@ -112,6 +118,7 @@ public class AuthController {
         private String facePhoto;
         private String ipAddress;
         private String deviceInfo;
+        private String location;
 
         public String getStaffId() { return staffId; }
         public void setStaffId(String staffId) { this.staffId = staffId; }
@@ -121,6 +128,8 @@ public class AuthController {
         public void setIpAddress(String ipAddress) { this.ipAddress = ipAddress; }
         public String getDeviceInfo() { return deviceInfo; }
         public void setDeviceInfo(String deviceInfo) { this.deviceInfo = deviceInfo; }
+        public String getLocation() { return location; }
+        public void setLocation(String location) { this.location = location; }
     }
 
     public static class FaceOverrideRequest {
@@ -153,8 +162,9 @@ public class AuthController {
 
         String clientIp = extractClientIp(servletRequest, request.getIpAddress());
         String deviceInfo = extractDeviceInfo(servletRequest, request.getDeviceInfo());
+        String location = request.getLocation() != null && !request.getLocation().isBlank() ? request.getLocation().trim() : "Phnom Penh, Cambodia 🇰🇭";
 
-        Optional<User> user = authService.authenticate(request.getEmail(), request.getPassword(), clientIp, deviceInfo);
+        Optional<User> user = authService.authenticate(request.getEmail(), request.getPassword(), clientIp, deviceInfo, location);
         if (user.isPresent()) {
             User u = user.get();
             Map<String, Object> resp = new HashMap<>();
@@ -163,6 +173,7 @@ public class AuthController {
             resp.put("user", u);
             resp.put("clientIp", clientIp);
             resp.put("deviceInfo", deviceInfo);
+            resp.put("location", u.getLastLoginLocation());
             resp.put("authMethod", "PASSWORD");
             return ResponseEntity.ok(resp);
         }
@@ -179,8 +190,9 @@ public class AuthController {
 
         String clientIp = extractClientIp(servletRequest, request.getIpAddress());
         String deviceInfo = extractDeviceInfo(servletRequest, request.getDeviceInfo());
+        String location = request.getLocation() != null && !request.getLocation().isBlank() ? request.getLocation().trim() : "Phnom Penh, Cambodia 🇰🇭";
 
-        Optional<User> user = authService.authenticatePin(request.getPin(), clientIp, deviceInfo);
+        Optional<User> user = authService.authenticatePin(request.getPin(), clientIp, deviceInfo, location);
         if (user.isPresent()) {
             User u = user.get();
             Map<String, Object> resp = new HashMap<>();
@@ -189,11 +201,14 @@ public class AuthController {
             resp.put("user", u);
             resp.put("clientIp", clientIp);
             resp.put("deviceInfo", deviceInfo);
+            resp.put("location", u.getLastLoginLocation());
             resp.put("authMethod", "PIN");
             return ResponseEntity.ok(resp);
         }
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of("message", "Invalid 4-digit PIN code"));
+    }
                 .body(Map.of("message", "Invalid 4-digit PIN code"));
     }
 
@@ -227,8 +242,9 @@ public class AuthController {
 
         String clientIp = extractClientIp(servletRequest, request.getIpAddress());
         String deviceInfo = extractDeviceInfo(servletRequest, request.getDeviceInfo());
+        String location = request.getLocation() != null && !request.getLocation().isBlank() ? request.getLocation().trim() : "Phnom Penh, Cambodia 🇰🇭";
 
-        Optional<User> user = authService.authenticateFace(request.getStaffId(), clientIp, deviceInfo);
+        Optional<User> user = authService.authenticateFace(request.getStaffId(), clientIp, deviceInfo, location);
         if (user.isPresent()) {
             User u = user.get();
             Map<String, Object> resp = new HashMap<>();
@@ -237,6 +253,7 @@ public class AuthController {
             resp.put("user", u);
             resp.put("clientIp", clientIp);
             resp.put("deviceInfo", deviceInfo);
+            resp.put("location", u.getLastLoginLocation());
             resp.put("authMethod", "FACE_BIOMETRIC");
             return ResponseEntity.ok(resp);
         }
@@ -382,6 +399,11 @@ public class AuthController {
         return ResponseEntity.ok(Map.of(
                 "ipAddress", ip,
                 "userAgent", userAgent != null ? userAgent : "Standard Browser",
+                "location", "Phnom Penh, Cambodia 🇰🇭",
+                "city", "Phnom Penh",
+                "country", "Cambodia",
+                "latitude", 11.5564,
+                "longitude", 104.9282,
                 "serverTime", java.time.LocalDateTime.now().toString(),
                 "status", "SECURE_TLS"
         ));
