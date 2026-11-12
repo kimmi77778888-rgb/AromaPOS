@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { useLanguage } from '../context/LanguageContext';
 import { LanguageSwitcher } from './common/LanguageSwitcher';
+import { ThemeSwitcher } from './common/ThemeSwitcher';
 import { 
   Clock, 
   PlusCircle, 
@@ -277,6 +278,9 @@ export const Header = ({ onOpenAddProduct }) => {
           <Clock className="w-3.5 h-3.5 text-amber-500" />
           <span>{currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
         </div>
+
+        {/* Clean Theme Switcher (Black / White) */}
+        <ThemeSwitcher size="sm" variant="pill" />
 
         {/* Clean Language Switcher with Vector Flags */}
         <LanguageSwitcher size="sm" />

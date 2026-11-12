@@ -24,12 +24,15 @@ import {
   Sparkles,
   Store,
   FileSpreadsheet,
-  X
+  X,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { ROLE_PERMISSIONS } from '../services/coffeeData';
 import { soundService } from '../services/soundService';
 import { LanguageSwitcher } from './common/LanguageSwitcher';
+import { ThemeSwitcher } from './common/ThemeSwitcher';
 import { UserAvatar } from './common/UserAvatar';
 import { StoreLogo } from './common/StoreLogo';
 
@@ -284,6 +287,17 @@ export const Sidebar = () => {
               </div>
             </div>
 
+            {/* Clean Theme (Black / White) Switcher Row */}
+            <div className="flex items-center justify-between p-2 rounded-xl bg-stone-900/60 border border-stone-800/80">
+              <div className="flex items-center gap-1.5 text-xs text-stone-400">
+                <Sun className="w-3.5 h-3.5 text-amber-500" />
+                <span className="text-[11px] font-semibold tracking-wide">
+                  {isKhmer ? 'ពណ៍ស្បែក' : 'Theme'}
+                </span>
+              </div>
+              <ThemeSwitcher size="sm" variant="pill" />
+            </div>
+
             {/* Clean Khmer / English Flag Switcher Row */}
             <div className="flex items-center justify-between p-2 rounded-xl bg-stone-900/60 border border-stone-800/80">
               <div className="flex items-center gap-1.5 text-xs text-stone-400">
@@ -309,6 +323,11 @@ export const Sidebar = () => {
             >
               {isSoundOn ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
             </button>
+
+            {/* Theme Toggle in mini mode */}
+            <div className="my-0.5">
+              <ThemeSwitcher size="sm" variant="button" showLabels={false} />
+            </div>
 
             {/* Clean Mini Language Switcher in collapsed mode */}
             <div className="my-0.5">

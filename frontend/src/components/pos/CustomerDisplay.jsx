@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
 import { LanguageSwitcher } from '../common/LanguageSwitcher';
+import { ThemeSwitcher } from '../common/ThemeSwitcher';
 import { StoreLogo } from '../common/StoreLogo';
 import { storage } from '../../utils/storage';
 import { 
@@ -117,6 +118,9 @@ export const CustomerDisplay = ({ standalone = false, onClose = null }) => {
               {currentTime.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}
             </div>
           </div>
+
+          {/* Clean Theme Switcher (Black / White) */}
+          <ThemeSwitcher size="sm" variant="pill" />
 
           {/* Bilingual Language Selector with Clean SVG Flags */}
           <LanguageSwitcher />

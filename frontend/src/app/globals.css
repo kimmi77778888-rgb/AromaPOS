@@ -269,5 +269,116 @@
   transform: scale(0.96);
 }
 
+/* =========================================================================
+   CLEAN LIGHT / WHITE THEME OVERRIDES (Aroma Artisan Light Cafe Aesthetic)
+   Seamlessly transforms the POS into a bright, clean, warm white/ivory cafe theme.
+   ========================================================================= */
+html.theme-white,
+html[data-theme="white"] {
+  --color-stone-950: #f8f6f2;
+  --color-stone-900: #ffffff;
+  --color-stone-850: #f1ede8;
+  --color-stone-800: #e5dfd7;
+  --color-stone-700: #d4ccc2;
+  --color-stone-600: #a69d93;
+  --color-stone-500: #8c8278;
+  --color-stone-400: #665e56;
+  --color-stone-300: #443e38;
+  --color-stone-200: #2b2622;
+  --color-stone-100: #171513;
+  --color-stone-50: #090807;
+  color-scheme: light;
+}
+
+html.theme-white body,
+html[data-theme="white"] body {
+  background-color: #f8f6f2 !important;
+  color: #171513 !important;
+}
+
+/* Ensure badges and buttons with colored backgrounds retain dark text in White Theme */
+html.theme-white [class*="bg-amber-"],
+html.theme-white [class*="bg-emerald-"],
+html.theme-white [class*="bg-cyan-"],
+html.theme-white .bg-amber-500,
+html.theme-white .bg-amber-600,
+html.theme-white .bg-emerald-500,
+html.theme-white .bg-emerald-600 {
+  --color-stone-950: #0c0a09;
+  --color-stone-900: #1c1917;
+}
+
+/* Light Theme Scrollbars */
+html.theme-white ::-webkit-scrollbar-track {
+  background: rgba(230, 225, 220, 0.7);
+}
+html.theme-white ::-webkit-scrollbar-thumb {
+  background: rgba(180, 130, 80, 0.4);
+  border-radius: 9999px;
+}
+html.theme-white ::-webkit-scrollbar-thumb:hover {
+  background: rgba(217, 119, 6, 0.75);
+}
+
+/* Light Theme Glassmorphism */
+html.theme-white .glass-panel {
+  background: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+}
+
+html.theme-white .glass-card {
+  background: rgba(255, 255, 255, 0.96) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border: 1px solid rgba(0, 0, 0, 0.07) !important;
+  box-shadow: 0 2px 10px -2px rgba(0, 0, 0, 0.04);
+}
+
+/* Light Theme Segmented Tabs */
+html.theme-white .segmented-tab-container {
+  background: rgba(235, 230, 224, 0.85) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+html.theme-white .segmented-tab-inactive {
+  color: #57534e !important;
+}
+html.theme-white .segmented-tab-inactive:hover {
+  color: #1c1917 !important;
+  background: rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Light Theme KPI Cards */
+html.theme-white .modern-kpi-card {
+  background: #ffffff !important;
+  border: 1px solid #e5dfd7 !important;
+  box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.05) !important;
+}
+html.theme-white .modern-kpi-card:hover {
+  border-color: rgba(245, 158, 11, 0.45) !important;
+  box-shadow: 0 10px 24px -4px rgba(0, 0, 0, 0.08), 0 0 16px -2px rgba(245, 158, 11, 0.15) !important;
+}
+
+/* Light Theme Table Row Hover */
+html.theme-white .modern-table-row:hover {
+  background-color: rgba(0, 0, 0, 0.035) !important;
+}
+
+/* Light Theme Keyboard Shortcuts */
+html.theme-white .kbd-shortcut {
+  background: rgba(235, 230, 224, 0.95) !important;
+  color: #443e38 !important;
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Light Theme Hover States */
+html.theme-white .pos-card-hover:hover {
+  box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(245, 158, 11, 0.35) !important;
+}
+
+
 
 

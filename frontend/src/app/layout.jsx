@@ -27,6 +27,24 @@ export default function RootLayout({ children }) {
           href="https://fonts.googleapis.com/css2?family=Battambang:wght@400;700&family=Kantumruy+Pro:ital,wght@0,300..700;1,300..700&family=Koh+Santepheap:wght@300;400;700;900&family=Noto+Sans+Khmer:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Siemreap&display=swap"
           rel="stylesheet"
         />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var t = localStorage.getItem('aromapos_theme');
+                  if (t === 'white') {
+                    document.documentElement.classList.add('theme-white');
+                    document.documentElement.setAttribute('data-theme', 'white');
+                  } else {
+                    document.documentElement.classList.add('theme-black');
+                    document.documentElement.setAttribute('data-theme', 'black');
+                  }
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
       </head>
       <body className="bg-stone-950 text-stone-100 antialiased selection:bg-amber-600/30 selection:text-amber-200">
         <AntiTamperGuard />

@@ -274,6 +274,91 @@ export const AppProvider = ({ children }) => {
     }
   }, [isLiveMode]);
 
+  // Application Color Theme: 'black' (default rich espresso dark) vs 'white' (clean artisan cafe light)
+  const [theme, setTheme] = useState(() => {
+    try {
+      const saved = storage.getItem('aromapos_theme');
+      return saved === 'white' ? 'white' : 'black';
+    } catch {
+      return 'black';
+    }
+  });
+
+  const toggleTheme = useCallback(() => {
+    setTheme((prev) => {
+      const next = prev === 'black' ? 'white' : 'black';
+      try {
+        storage.setItem('aromapos_theme', next);
+      } catch {}
+      return next;
+    });
+  }, []);
+
+  // Synchronize theme classes on document root & body and broadcast to other tabs
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const root = document.documentElement;
+    const body = document.body;
+
+    if (theme === 'white') {
+      root.classList.add('theme-white');
+      root.classList.remove('theme-black');
+      root.setAttribute('data-theme', 'white');
+      if (body) {
+        body.classList.add('theme-white');
+        body.classList.remove('theme-black');
+      }
+    } else {
+      root.classList.add('theme-black');
+      root.classList.remove('theme-white');
+      root.setAttribute('data-theme', 'black');
+      if (body) {
+        body.classList.add('theme-black');
+        body.classList.remove('theme-white');
+      }
+    }
+
+    try {
+      storage.setItem('aromapos_theme', theme);
+    } catch {}
+
+    // Cross-tab broadcast to Customer Display & other windows
+    try {
+      if (typeof BroadcastChannel !== 'undefined') {
+        const bc = new BroadcastChannel('aroma_customer_channel');
+        bc.postMessage({ type: 'THEME_SYNC', theme });
+        bc.close();
+      }
+    } catch {}
+  }, [theme]);
+
+  // Listen for theme sync events across tabs
+  useEffect(() => {
+    let bc;
+    try {
+      if (typeof BroadcastChannel !== 'undefined') {
+        bc = new BroadcastChannel('aroma_customer_channel');
+        bc.onmessage = (event) => {
+          if (event.data?.type === 'THEME_SYNC' && event.data.theme) {
+            setTheme(event.data.theme);
+          }
+        };
+      }
+    } catch {}
+
+    const handleStorageChange = (e) => {
+      if (e.key === 'aromapos_theme' && (e.newValue === 'white' || e.newValue === 'black')) {
+        setTheme(e.newValue);
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      if (bc) bc.close();
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
   // Clean up any legacy black-and-white mode classes
   useEffect(() => {
     try {
@@ -1634,7 +1719,10 @@ export const AppProvider = ({ children }) => {
         lastSyncTime,
         liveRefreshInterval,
         setLiveRefreshInterval,
-        refreshDataSilently
+        refreshDataSilently,
+        theme,
+        setTheme,
+        toggleTheme
       }}
     >
       {children}

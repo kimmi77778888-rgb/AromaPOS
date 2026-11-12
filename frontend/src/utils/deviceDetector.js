@@ -237,3 +237,4 @@ export const getFullDeviceAuditSnapshot = async () => {
     capturedAt: new Date().toISOString()
   };
 };
+
