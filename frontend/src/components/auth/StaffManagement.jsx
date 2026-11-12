@@ -56,8 +56,10 @@ import {
   MapPin,
   Navigation,
   ExternalLink,
-  Compass
+  Compass,
+  Radio
 } from 'lucide-react';
+import { LiveDeviceMap } from '../security/LiveDeviceMap';
 import { ROLE_PERMISSIONS, SYSTEM_PERMISSIONS } from '../../services/coffeeData';
 import { StaffShiftList } from './StaffShiftList';
 import { CreateUserModal } from './CreateUserModal';
@@ -90,6 +92,9 @@ export const StaffManagement = () => {
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
   // Login Sessions & Device IP State
+  const [sessionViewMode, setSessionViewMode] = useState('table'); // 'table' or 'map'
+  const [isLiveMapModalOpen, setIsLiveMapModalOpen] = useState(false);
+  const [liveMapTargetSessionId, setLiveMapTargetSessionId] = useState(null);
   const [loginSearchQuery, setLoginSearchQuery] = useState('');
   const [loginMethodFilter, setLoginMethodFilter] = useState('ALL');
   const [loginStatusFilter, setLoginStatusFilter] = useState('ALL');
@@ -1521,6 +1526,49 @@ export const StaffManagement = () => {
                   {filteredSessions.length} / {loginSessions.length}
                 </span>
 
+                {/* View Mode Switcher (Table vs Real-Time Live Map) */}
+                <div className="flex items-center p-0.5 rounded-xl bg-stone-900 border border-stone-800 text-xs font-bold">
+                  <button
+                    type="button"
+                    onClick={() => setSessionViewMode('table')}
+                    className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 cursor-pointer ${
+                      sessionViewMode === 'table'
+                        ? 'bg-amber-500 text-stone-950 font-black shadow'
+                        : 'text-stone-400 hover:text-stone-200'
+                    }`}
+                  >
+                    <Monitor className="w-3.5 h-3.5" />
+                    <span>{isKhmer ? 'តារាង' : 'Table'}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSessionViewMode('map')}
+                    className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 cursor-pointer ${
+                      sessionViewMode === 'map'
+                        ? 'bg-amber-500 text-stone-950 font-black shadow'
+                        : 'text-stone-400 hover:text-stone-200'
+                    }`}
+                  >
+                    <MapPin className="w-3.5 h-3.5" />
+                    <span>{isKhmer ? 'ផែនទីផ្ទាល់' : 'Live Map'}</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  </button>
+                </div>
+
+                {/* Popout Fullscreen Live Map Button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLiveMapTargetSessionId(null);
+                    setIsLiveMapModalOpen(true);
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer"
+                  title={isKhmer ? 'បើកផែនទីពេញអេក្រង់' : 'Open Fullscreen Live Map'}
+                >
+                  <Globe className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>{isKhmer ? 'ផែនទីពេញ' : 'Fullscreen'}</span>
+                </button>
+
                 {/* Refresh Action */}
                 <button
                   type="button"
@@ -1536,9 +1584,17 @@ export const StaffManagement = () => {
               </div>
             </div>
 
-            {/* Sessions Table */}
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
+            {/* View Mode: Interactive Live Map vs Table View */}
+            {sessionViewMode === 'map' ? (
+              <LiveDeviceMap
+                sessions={filteredSessions.length > 0 ? filteredSessions : loginSessions}
+                focusedSessionId={inspectedSession?.id}
+                className="border-0 rounded-none h-[640px]"
+              />
+            ) : (
+              /* Sessions Table */
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
                 <thead className="bg-stone-950/70 border-b border-stone-800 text-[11px] font-bold text-stone-400 uppercase tracking-wider">
                   <tr>
                     <th className="py-3.5 px-5">{isKhmer ? 'បុគ្គលិក' : 'Team Member'}</th>
@@ -1788,6 +1844,7 @@ export const StaffManagement = () => {
                 </tbody>
               </table>
             </div>
+            )}
           </div>
         </div>
       )}
@@ -1927,16 +1984,33 @@ export const StaffManagement = () => {
                   </div>
                 </div>
 
-                {/* Styled Map Preview Card */}
-                <div className="relative h-20 rounded-xl overflow-hidden border border-stone-800 bg-stone-950 flex items-center justify-center group">
-                  <div className="absolute inset-0 bg-[radial-gradient(#38322a_1px,transparent_1px)] [background-size:12px_12px] opacity-70" />
-                  <div className="relative z-10 flex flex-col items-center gap-1 text-center p-2">
-                    <div className="w-7 h-7 rounded-full bg-rose-600 text-white flex items-center justify-center shadow-lg shadow-rose-950/80 animate-bounce">
-                      <MapPin className="w-3.5 h-3.5" />
+                {/* Styled Map Preview Card - Click to launch Interactive Live Map */}
+                <div
+                  onClick={() => {
+                    setLiveMapTargetSessionId(inspectedSession.id);
+                    setIsLiveMapModalOpen(true);
+                  }}
+                  className="relative h-22 rounded-xl overflow-hidden border border-stone-800 hover:border-amber-500/50 bg-stone-950 flex items-center justify-between px-4 group cursor-pointer transition shadow-inner"
+                  title={isKhmer ? 'ចុចដើម្បីបើកផែនទីបន្តផ្ទាល់អន្តរកម្ម' : 'Click to view on interactive real-time map'}
+                >
+                  <div className="absolute inset-0 bg-[radial-gradient(#38322a_1px,transparent_1px)] [background-size:12px_12px] opacity-70 group-hover:opacity-100 transition" />
+                  <div className="relative z-10 flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-rose-600/20 border border-rose-500/40 text-rose-400 flex items-center justify-center shadow-lg group-hover:scale-110 transition shrink-0">
+                      <MapPin className="w-5 h-5 animate-bounce" />
                     </div>
-                    <span className="font-mono text-[10px] font-bold text-stone-200 bg-stone-900/95 px-2 py-0.5 rounded-md border border-stone-700/80 shadow">
-                      {inspectedSession.location || 'Phnom Penh, Cambodia 🇰🇭'}
-                    </span>
+                    <div className="min-w-0">
+                      <span className="font-mono text-xs font-bold text-stone-100 block truncate">
+                        {inspectedSession.location || 'Phnom Penh, Cambodia 🇰🇭'}
+                      </span>
+                      <span className="text-[10px] text-amber-400 font-semibold flex items-center gap-1 mt-0.5">
+                        <Radio className="w-2.5 h-2.5 text-emerald-400 animate-pulse" />
+                        <span>{isKhmer ? 'ចុចដើម្បីបើកមើលលើផែនទីបន្តផ្ទាល់' : 'Click to view on real-time map'}</span>
+                      </span>
+                    </div>
+                  </div>
+                  <div className="relative z-10 px-2.5 py-1.5 rounded-xl bg-amber-500 group-hover:bg-amber-400 text-stone-950 font-extrabold text-[11px] flex items-center gap-1 shadow-lg transition shrink-0">
+                    <Globe className="w-3.5 h-3.5" />
+                    <span>{isKhmer ? 'ផែនទីផ្ទាល់' : 'Live Map'}</span>
                   </div>
                 </div>
               </div>
@@ -2441,6 +2515,22 @@ export const StaffManagement = () => {
         targetStaff={faceScanStaffTarget}
         onSuccess={handleFaceScanComplete}
       />
+
+      {/* ─────────────────────────────────────────────────────────────
+          12. REAL-TIME INTERACTIVE DEVICE GEOLOCATION MAP MODAL
+      ────────────────────────────────────────────────────────────── */}
+      {isLiveMapModalOpen && (
+        <LiveDeviceMap
+          sessions={loginSessions}
+          focusedSessionId={liveMapTargetSessionId}
+          isModal={true}
+          isOpen={isLiveMapModalOpen}
+          onClose={() => {
+            setIsLiveMapModalOpen(false);
+            setLiveMapTargetSessionId(null);
+          }}
+        />
+      )}
     </div>
   );
 };

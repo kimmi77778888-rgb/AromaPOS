@@ -29,10 +29,12 @@ import {
 } from 'lucide-react';
 import { UserAvatar } from '../common/UserAvatar';
 import { api, isRealAvatar } from '../../services/api';
+import { LiveDeviceMap } from '../security/LiveDeviceMap';
 
 export const UserAccountModal = ({ isOpen, onClose }) => {
   const { user, updateUserProfile, showToast } = useApp();
   const { isKhmer } = useLanguage();
+  const [isLiveMapOpen, setIsLiveMapOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -502,17 +504,28 @@ export const UserAccountModal = ({ isOpen, onClose }) => {
                       </span>
                     </div>
                   </div>
-                  <a
-                    href={deviceAudit?.mapsUrl || 'https://www.google.com/maps?q=11.5564,104.9282'}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-2.5 py-1 rounded-lg bg-stone-800 hover:bg-stone-750 text-amber-400 hover:text-amber-300 font-bold text-[10px] flex items-center gap-1 transition shrink-0"
-                    title={isKhmer ? 'មើលលើផែនទី Google Maps' : 'View on Google Maps'}
-                  >
-                    <Navigation className="w-3 h-3" />
-                    <span>{isKhmer ? 'មើលផែនទី' : 'Maps'}</span>
-                    <ExternalLink className="w-2.5 h-2.5" />
-                  </a>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setIsLiveMapOpen(true)}
+                      className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 font-bold text-[10px] flex items-center gap-1 transition cursor-pointer"
+                      title={isKhmer ? 'បើកផែនទីផ្កាយរណបបន្តផ្ទាល់' : 'View Real-Time Live Map'}
+                    >
+                      <Globe className="w-3 h-3 text-emerald-400" />
+                      <span>{isKhmer ? 'ផែនទីផ្ទាល់' : 'Live Map'}</span>
+                    </button>
+                    <a
+                      href={deviceAudit?.mapsUrl || 'https://www.google.com/maps?q=11.5564,104.9282'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-2.5 py-1 rounded-lg bg-stone-800 hover:bg-stone-750 text-amber-400 hover:text-amber-300 font-bold text-[10px] flex items-center gap-1 transition"
+                      title={isKhmer ? 'មើលលើផែនទី Google Maps' : 'View on Google Maps'}
+                    >
+                      <Navigation className="w-3 h-3" />
+                      <span>{isKhmer ? 'មើលផែនទី' : 'Maps'}</span>
+                      <ExternalLink className="w-2.5 h-2.5" />
+                    </a>
+                  </div>
                 </div>
               </div>
 
@@ -548,6 +561,27 @@ export const UserAccountModal = ({ isOpen, onClose }) => {
           </form>
         </div>
       </div>
+
+      {isLiveMapOpen && (
+        <LiveDeviceMap
+          sessions={[{
+            id: 'current-session',
+            userName: user?.name,
+            userRole: user?.role,
+            userAvatar: user?.avatar,
+            ipAddress: deviceAudit?.ipAddress || user?.lastLoginIp || '127.0.0.1',
+            latitude: deviceAudit?.latitude || 11.5564,
+            longitude: deviceAudit?.longitude || 104.9282,
+            location: deviceAudit?.location || user?.lastLoginLocation || 'Phnom Penh, Cambodia 🇰🇭',
+            isp: deviceAudit?.isp || 'Broadband ISP',
+            deviceModel: deviceAudit?.deviceSummary || user?.lastLoginDevice || 'Desktop PC',
+            status: 'ACTIVE'
+          }]}
+          isModal={true}
+          isOpen={isLiveMapOpen}
+          onClose={() => setIsLiveMapOpen(false)}
+        />
+      )}
     </>
   );
 };
