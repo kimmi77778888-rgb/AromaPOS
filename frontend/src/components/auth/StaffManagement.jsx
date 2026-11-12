@@ -1497,12 +1497,12 @@ export const StaffManagement = () => {
                   onChange={(e) => setLoginMethodFilter(e.target.value)}
                   className="bg-stone-900 border border-stone-800 rounded-xl px-3 py-1.5 text-xs text-stone-200 font-semibold focus:outline-none cursor-pointer"
                 >
-                  <option value="ALL">All Methods</option>
-                  <option value="PASSWORD">Password</option>
-                  <option value="PIN">4-Digit PIN</option>
-                  <option value="FACE_BIOMETRIC">Face Biometrics</option>
-                  <option value="SCREEN_UNLOCK">Screen Unlock</option>
-                  <option value="SCREEN_HANDOVER">Station Handover</option>
+                  <option value="ALL">{isKhmer ? 'វិធីសាស្ត្រទាំងអស់' : 'All Methods'}</option>
+                  <option value="PASSWORD">{isKhmer ? 'ពាក្យសម្ងាត់ (Password)' : 'Password'}</option>
+                  <option value="PIN">{isKhmer ? 'លេខកូដសម្ងាត់ (PIN ៤ ខ្ទង់)' : '4-Digit PIN'}</option>
+                  <option value="FACE_BIOMETRIC">{isKhmer ? 'ស្កេនផ្ទៃមុខ (Face ID)' : 'Face Biometrics'}</option>
+                  <option value="SCREEN_UNLOCK">{isKhmer ? 'ដោះសោស្ថានីយ (Unlock)' : 'Screen Unlock'}</option>
+                  <option value="SCREEN_HANDOVER">{isKhmer ? 'ផ្ទេរវេនស្ថានីយ (Handover)' : 'Station Handover'}</option>
                 </select>
 
                 {/* Status Filter */}
@@ -1511,9 +1511,9 @@ export const StaffManagement = () => {
                   onChange={(e) => setLoginStatusFilter(e.target.value)}
                   className="bg-stone-900 border border-stone-800 rounded-xl px-3 py-1.5 text-xs text-stone-200 font-semibold focus:outline-none cursor-pointer"
                 >
-                  <option value="ALL">All Statuses</option>
-                  <option value="ACTIVE">Active Only</option>
-                  <option value="CLOSED">Closed Only</option>
+                  <option value="ALL">{isKhmer ? 'ស្ថានភាពទាំងអស់' : 'All Statuses'}</option>
+                  <option value="ACTIVE">{isKhmer ? 'កំពុងដំណើរការ (Active)' : 'Active Only'}</option>
+                  <option value="CLOSED">{isKhmer ? 'បានបិទ (Closed)' : 'Closed Only'}</option>
                 </select>
 
                 {/* Counter Pill */}
@@ -1563,8 +1563,21 @@ export const StaffManagement = () => {
                           {isKhmer ? 'រកមិនឃើញប្រវត្តិ Login តាមលក្ខខណ្ឌ' : 'No login sessions match your filters'}
                         </p>
                         <p className="text-xs text-stone-500 mt-1">
-                          {isKhmer ? 'សូមសាកល្បងសម្អាតពាក្យស្វែងរក ឬប្តូរតម្រង' : 'Try clearing your search query or reset filters'}
+                          {isKhmer ? 'សូមសាកល្បងសម្អាតពាក្យស្វែងរក ឬចុចប៊ូតុងខាងក្រោមដើម្បីកំណត់តម្រងឡើងវិញ' : 'Try clearing your search query or click the button below to reset filters'}
                         </p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setLoginSearchQuery('');
+                            setLoginMethodFilter('ALL');
+                            setLoginStatusFilter('ALL');
+                            setLoginLocationFilter('ALL');
+                          }}
+                          className="mt-4 px-4 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 font-bold text-xs inline-flex items-center gap-2 transition cursor-pointer shadow-lg hover:border-amber-400"
+                        >
+                          <RotateCcw className="w-3.5 h-3.5" />
+                          <span>{isKhmer ? 'កំណត់តម្រងឡើងវិញ (បង្ហាញ Session ទាំងអស់)' : 'Reset Filters (Show All Sessions)'}</span>
+                        </button>
                       </td>
                     </tr>
                   ) : (
