@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useApp } from '../../context/AppContext';
 import { 
@@ -13,7 +13,10 @@ import {
   ShieldCheck,
   Coffee,
   LogIn,
-  UserPlus
+  UserPlus,
+  Camera,
+  Upload,
+  Trash2
 } from 'lucide-react';
 
 const PHNOM_PENH_DISTRICTS = [
@@ -61,12 +64,42 @@ export const CustomerAuthModal = ({
   const [password, setPassword] = useState('');
   const [district, setDistrict] = useState(PHNOM_PENH_DISTRICTS[0]);
   const [address, setAddress] = useState('');
+  const [regAvatar, setRegAvatar] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+
+  const regFileInputRef = useRef(null);
 
   if (!isOpen) return null;
 
   const carrier = detectCarrier(phone);
+
+  const handleRegImageUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setErrorMsg(isKhmer ? 'សូមជ្រើសរើសឯកសារជារូបភាព (JPG, PNG, WebP)!' : 'Please choose an image file (JPG, PNG, WebP)!');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const size = 360;
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        const minSide = Math.min(img.width, img.height);
+        const sx = (img.width - minSide) / 2;
+        const sy = (img.height - minSide) / 2;
+        ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, size, size);
+        setRegAvatar(canvas.toDataURL('image/jpeg', 0.88));
+      };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -93,7 +126,8 @@ export const CustomerAuthModal = ({
           phone: phone.trim(),
           password: password.trim(),
           address: address.trim(),
-          district
+          district,
+          avatar: regAvatar
         });
         setIsLoading(false);
         if (onAuthSuccess) onAuthSuccess(newCust);
@@ -294,6 +328,55 @@ export const CustomerAuthModal = ({
                     placeholder="e.g. #45, Street 288, Sangkat BKK1"
                     className="w-full bg-stone-950 border border-stone-800 rounded-xl px-3 py-2 text-xs text-stone-100 placeholder-stone-600 focus:outline-none focus:border-amber-500"
                   />
+                </div>
+
+                {/* Real Profile Photo Upload (Optional) */}
+                <div className="space-y-1.5 pt-1">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-stone-300 flex items-center gap-1.5">
+                      <Camera className="w-3.5 h-3.5 text-amber-400" />
+                      <span>{isKhmer ? 'រូបថតផ្ទាល់ខ្លួនពិត (Real Profile Photo)' : 'Real Profile Photo'}</span>
+                    </label>
+                    {regAvatar && (
+                      <button
+                        type="button"
+                        onClick={() => setRegAvatar('')}
+                        className="text-[10px] text-rose-400 hover:underline flex items-center gap-0.5 cursor-pointer"
+                      >
+                        <Trash2 className="w-2.5 h-2.5" />
+                        <span>{isKhmer ? 'លុប' : 'Remove'}</span>
+                      </button>
+                    )}
+                  </div>
+                  
+                  <input
+                    type="file"
+                    ref={regFileInputRef}
+                    accept="image/*"
+                    onChange={handleRegImageUpload}
+                    className="hidden"
+                  />
+
+                  <div 
+                    onClick={() => regFileInputRef.current?.click()}
+                    className="p-2.5 rounded-xl bg-stone-950 border border-dashed border-stone-800 hover:border-amber-500/60 cursor-pointer transition flex items-center gap-3"
+                  >
+                    {regAvatar ? (
+                      <img src={regAvatar} alt="Upload Preview" className="w-10 h-10 rounded-xl object-cover border border-amber-500 shadow" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-xl bg-stone-900 border border-stone-800 flex items-center justify-center text-stone-500">
+                        <Upload className="w-4 h-4 text-amber-400" />
+                      </div>
+                    )}
+                    <div className="text-left flex-1 min-w-0">
+                      <p className="text-xs font-bold text-stone-200 truncate">
+                        {regAvatar ? (isKhmer ? '✅ បានជ្រើសរើសរូបថតពិត' : '✅ Real photo ready') : (isKhmer ? 'ចុចដើម្បីបង្ហោះរូបថតពីទូរស័ព្ទ / កុំព្យូទ័រ' : 'Upload real photo from device')}
+                      </p>
+                      <p className="text-[10px] text-stone-500">
+                        {isKhmer ? 'JPG, PNG, WebP ឬថតផ្ទាល់ពីទូរស័ព្ទ' : 'JPG, PNG, WebP or Camera'}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}

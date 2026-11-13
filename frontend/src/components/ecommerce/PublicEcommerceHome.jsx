@@ -203,11 +203,17 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
               className="py-1.5 px-3 rounded-2xl bg-amber-950/60 hover:bg-amber-900/60 border border-amber-600/60 text-amber-300 font-bold text-xs flex items-center gap-2 transition cursor-pointer shadow-sm"
               title="My Account & Purchase History"
             >
-              <img
-                src={customerUser.avatar || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=100&q=80'}
-                alt={customerUser.name}
-                className="w-5 h-5 rounded-full object-cover border border-amber-400"
-              />
+              {customerUser.avatar && !customerUser.avatar.includes('images.unsplash.com') ? (
+                <img
+                  src={customerUser.avatar}
+                  alt={customerUser.name}
+                  className="w-5 h-5 rounded-full object-cover border border-amber-400"
+                />
+              ) : (
+                <div className="w-5 h-5 rounded-full bg-amber-500 text-stone-950 font-black text-[10px] flex items-center justify-center">
+                  {(customerUser.name || 'U').charAt(0).toUpperCase()}
+                </div>
+              )}
               <span className="hidden md:inline truncate max-w-[90px]">{customerUser.name}</span>
               <span className="text-[10px] font-mono text-amber-400 font-black">⭐ {customerUser.points || 0}</span>
             </button>

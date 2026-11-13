@@ -191,10 +191,16 @@ export const AppProvider = ({ children }) => {
   const [customerUser, setCustomerUser] = useState(() => {
     try {
       const saved = storage.getItem('aromapos_customer_user');
-      return saved ? JSON.parse(saved) : null;
-    } catch (e) {
-      return null;
-    }
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Clear any legacy fake Unsplash stock avatars to allow real photo upload
+        if (parsed.avatar && parsed.avatar.includes('images.unsplash.com')) {
+          parsed.avatar = '';
+        }
+        return parsed;
+      }
+    } catch (e) {}
+    return null;
   });
 
   useEffect(() => {
@@ -1077,7 +1083,7 @@ export const AppProvider = ({ children }) => {
       tier: 'Aroma Coffee Club VIP',
       points: 100, // 100 Welcome Points
       stamps: 1, // 1st digital coffee stamp
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
+      avatar: accountData.avatar || '',
       visits: 1,
       createdAt: new Date().toISOString()
     };
@@ -1122,7 +1128,7 @@ export const AppProvider = ({ children }) => {
       tier: 'Gold VIP Member',
       points: 150,
       stamps: 3,
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
+      avatar: '',
       visits: 3,
       createdAt: new Date().toISOString()
     };

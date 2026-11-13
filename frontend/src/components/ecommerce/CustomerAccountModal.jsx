@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useApp } from '../../context/AppContext';
 import { downloadInvoice } from '../../utils/invoiceDownloader';
@@ -23,7 +23,11 @@ import {
   Edit3,
   Save,
   Check,
-  Mail
+  Mail,
+  Camera,
+  Upload,
+  Trash2,
+  Image as ImageIcon
 } from 'lucide-react';
 
 const PHNOM_PENH_DISTRICTS = [
@@ -40,13 +44,6 @@ const PHNOM_PENH_DISTRICTS = [
   'Dangkao'
 ];
 
-const AVATAR_PRESETS = [
-  'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=150&q=80',
-  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
-  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80',
-  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80'
-];
-
 export const CustomerAccountModal = ({
   isOpen,
   onClose,
@@ -59,13 +56,17 @@ export const CustomerAccountModal = ({
   const [activeTab, setActiveTab] = useState('ORDERS'); // 'ORDERS' | 'PROFILE' | 'ADDRESS'
   const [historyFilter, setHistoryFilter] = useState('ALL'); // 'ALL' | 'ACTIVE' | 'COMPLETED'
 
+  const fileInputRef = useRef(null);
+
   // Profile Edit State
   const [profileName, setProfileName] = useState(customerUser?.name || '');
   const [profilePhone, setProfilePhone] = useState(customerUser?.phone || '');
   const [profileEmail, setProfileEmail] = useState(customerUser?.email || '');
   const [profileDistrict, setProfileDistrict] = useState(customerUser?.district || 'Boeng Keng Kang');
   const [profileAddress, setProfileAddress] = useState(customerUser?.address || '');
-  const [profileAvatar, setProfileAvatar] = useState(customerUser?.avatar || AVATAR_PRESETS[0]);
+  const [profileAvatar, setProfileAvatar] = useState(
+    customerUser?.avatar && !customerUser.avatar.includes('images.unsplash.com') ? customerUser.avatar : ''
+  );
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
@@ -76,9 +77,52 @@ export const CustomerAccountModal = ({
       setProfileEmail(customerUser.email || '');
       setProfileDistrict(customerUser.district || 'Boeng Keng Kang');
       setProfileAddress(customerUser.address || '');
-      setProfileAvatar(customerUser.avatar || AVATAR_PRESETS[0]);
+      const validAvatar = customerUser.avatar && !customerUser.avatar.includes('images.unsplash.com') ? customerUser.avatar : '';
+      setProfileAvatar(validAvatar);
     }
   }, [customerUser]);
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert(isKhmer ? 'សូមជ្រើសរើសឯកសារជារូបភាព (JPG, PNG, WebP)!' : 'Please select an image file (JPG, PNG, WebP)!');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const size = 360;
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        const minSide = Math.min(img.width, img.height);
+        const sx = (img.width - minSide) / 2;
+        const sy = (img.height - minSide) / 2;
+        ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, size, size);
+
+        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.88);
+        setProfileAvatar(compressedBase64);
+
+        if (updateCustomerProfile) {
+          updateCustomerProfile({ avatar: compressedBase64 });
+        }
+      };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveAvatar = () => {
+    setProfileAvatar('');
+    if (updateCustomerProfile) {
+      updateCustomerProfile({ avatar: '' });
+    }
+  };
 
   // Combine live context orders with localStorage to guarantee immediate visibility
   const allOrders = React.useMemo(() => {
@@ -221,14 +265,43 @@ export const CustomerAccountModal = ({
         className="relative w-full max-w-2xl bg-stone-900 border border-stone-800 rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[92vh]"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Hidden File Input for Real Photo Upload from Device / Camera */}
+        <input
+          type="file"
+          ref={fileInputRef}
+          accept="image/*"
+          onChange={handleImageUpload}
+          className="hidden"
+        />
+
         {/* Header Profile Banner */}
         <div className="p-4 sm:p-6 bg-gradient-to-r from-stone-950 via-stone-900 to-amber-950/40 border-b border-stone-800 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3 sm:gap-4">
-            <img
-              src={customerUser.avatar || AVATAR_PRESETS[0]}
-              alt={customerUser.name}
-              className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl object-cover border-2 border-amber-500/50 shadow-md"
-            />
+            {/* Clickable Real Photo with Camera Overlay */}
+            <div 
+              className="relative group cursor-pointer shrink-0"
+              onClick={() => fileInputRef.current?.click()}
+              title={isKhmer ? 'ចុចទីនេះដើម្បីប្តូររូបថតពិត (Upload Real Photo)' : 'Click to upload real photo'}
+            >
+              {customerUser.avatar && !customerUser.avatar.includes('images.unsplash.com') ? (
+                <img
+                  src={customerUser.avatar}
+                  alt={customerUser.name}
+                  className="w-13 h-13 sm:w-16 sm:h-16 rounded-2xl object-cover border-2 border-amber-500 shadow-lg group-hover:border-amber-400 transition"
+                />
+              ) : (
+                <div className="w-13 h-13 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-700 text-stone-950 font-black text-xl flex items-center justify-center border-2 border-amber-400 shadow-lg">
+                  {(customerUser.name || 'U').charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div 
+                className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-stone-900 border border-amber-500 text-amber-400 flex items-center justify-center shadow hover:scale-110 transition cursor-pointer"
+                title={isKhmer ? 'បង្ហោះរូបថតពិត' : 'Upload photo'}
+              >
+                <Camera className="w-3.5 h-3.5" />
+              </div>
+            </div>
+
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="font-black text-base sm:text-xl text-white">
@@ -534,30 +607,72 @@ export const CustomerAccountModal = ({
           {/* TAB 2: EDIT PROFILE */}
           {activeTab === 'PROFILE' && (
             <form onSubmit={handleSaveProfile} className="space-y-4">
-              {/* Avatar Selector */}
-              <div className="p-4 rounded-2xl bg-stone-950 border border-stone-850 space-y-3">
-                <label className="text-xs font-bold text-stone-300 block">
-                  {isKhmer ? 'រូបតំណាងគណនី (Profile Avatar)' : 'Profile Avatar'}
-                </label>
-                <div className="flex items-center gap-3">
-                  <img
-                    src={profileAvatar}
-                    alt="Current Avatar"
-                    className="w-14 h-14 rounded-2xl object-cover border-2 border-amber-500 shadow-md"
-                  />
-                  <div className="flex items-center gap-2">
-                    {AVATAR_PRESETS.map((av, idx) => (
+              {/* Real Profile Photo Uploader Card */}
+              <div className="p-4 sm:p-5 rounded-2xl bg-stone-950 border border-stone-850 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-stone-200 flex items-center gap-1.5">
+                    <Camera className="w-4 h-4 text-amber-400" />
+                    <span>{isKhmer ? 'រូបថតផ្ទាល់ខ្លួនពិត (Real Profile Photo)' : 'Real Profile Photo'}</span>
+                  </label>
+                  <span className="text-[11px] text-stone-500">
+                    {isKhmer ? 'JPG, PNG, WebP ឬថតផ្ទាល់ពីទូរស័ព្ទ' : 'JPG, PNG, WebP or Camera'}
+                  </span>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-center gap-4">
+                  {/* Photo Preview Box */}
+                  <div 
+                    className="relative group cursor-pointer shrink-0"
+                    onClick={() => fileInputRef.current?.click()}
+                    title={isKhmer ? 'ចុចទីនេះដើម្បីជ្រើសរើសរូបថតពិត' : 'Click to select real photo'}
+                  >
+                    {profileAvatar ? (
+                      <img
+                        src={profileAvatar}
+                        alt="Uploaded Profile Photo"
+                        className="w-20 h-20 rounded-2xl object-cover border-2 border-amber-500 shadow-lg group-hover:border-amber-400 transition"
+                      />
+                    ) : (
+                      <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-stone-800 to-stone-900 text-amber-400 flex flex-col items-center justify-center border-2 border-stone-750 group-hover:border-amber-500/60 transition shadow">
+                        <User className="w-8 h-8 opacity-70" />
+                        <span className="text-[10px] font-bold text-stone-400 mt-1">No Photo</span>
+                      </div>
+                    )}
+
+                    <div className="absolute inset-0 bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 flex items-center justify-center transition text-white text-xs font-bold">
+                      <Camera className="w-5 h-5 text-amber-300" />
+                    </div>
+                  </div>
+
+                  {/* Upload / Remove Actions */}
+                  <div className="space-y-2 flex-1 w-full text-center sm:text-left">
+                    <p className="text-xs text-stone-300">
+                      {profileAvatar 
+                        ? (isKhmer ? '✅ រូបថតពិតរបស់អ្នកត្រូវបានផ្ទុក និងប្រើប្រាស់លើគណនី' : '✅ Real photo active on your account') 
+                        : (isKhmer ? 'សូមជ្រើសរើសរូបថតពិតប្រាកដពីទូរស័ព្ទ ឬកុំព្យូទ័ររបស់អ្នក' : 'Upload your real photo from your device gallery or camera')}
+                    </p>
+
+                    <div className="flex items-center gap-2 justify-center sm:justify-start flex-wrap">
                       <button
-                        key={idx}
                         type="button"
-                        onClick={() => setProfileAvatar(av)}
-                        className={`w-9 h-9 rounded-xl overflow-hidden border-2 transition cursor-pointer ${
-                          profileAvatar === av ? 'border-amber-400 scale-105 shadow' : 'border-stone-800 opacity-60 hover:opacity-100'
-                        }`}
+                        onClick={() => fileInputRef.current?.click()}
+                        className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs flex items-center gap-2 transition cursor-pointer shadow-md"
                       >
-                        <img src={av} alt={`Preset ${idx}`} className="w-full h-full object-cover" />
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>{isKhmer ? 'ជ្រើសរើសរូបថតពិត' : 'Upload Real Photo'}</span>
                       </button>
-                    ))}
+
+                      {profileAvatar && (
+                        <button
+                          type="button"
+                          onClick={handleRemoveAvatar}
+                          className="px-3 py-2 rounded-xl bg-stone-900 hover:bg-stone-850 border border-stone-800 hover:border-rose-700/60 text-rose-400 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>{isKhmer ? 'លុបរូប' : 'Remove'}</span>
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
