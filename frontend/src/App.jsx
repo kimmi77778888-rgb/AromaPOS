@@ -25,7 +25,7 @@ import { MobileBottomNav } from './components/common/MobileBottomNav';
 import { EmergencyAlarmModal } from './components/common/EmergencyAlarmModal';
 import { PublicEcommerceHome } from './components/ecommerce/PublicEcommerceHome';
 
-export const AppContent = () => {
+export const AppContent = ({ forcePos = false }) => {
   const { 
     isAuthenticated, 
     activeTab, 
@@ -63,8 +63,14 @@ export const AppContent = () => {
     return <CustomerDisplay standalone={true} />;
   }
 
+  // Check if POS was explicitly requested via prop, path (/pos), or URL query (?mode=pos / ?view=pos)
+  const isPosExplicit = forcePos || (typeof window !== 'undefined' && 
+    (window.location.pathname.startsWith('/pos') || 
+     new URLSearchParams(window.location.search).get('view') === 'pos' || 
+     new URLSearchParams(window.location.search).get('mode') === 'pos'));
+
   // 1. PUBLIC E-COMMERCE STOREFRONT (Homepage for customers)
-  if (appMode === 'ecommerce') {
+  if (appMode === 'ecommerce' && !isPosExplicit) {
     return (
       <>
         <PublicEcommerceHome onSwitchToPos={() => changeAppMode('pos')} />

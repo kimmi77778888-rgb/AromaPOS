@@ -19,6 +19,10 @@ export const AppProvider = ({ children }) => {
   // Omnichannel App Mode: 'ecommerce' (Public Storefront) vs 'pos' (Staff POS Terminal)
   const [appMode, setAppMode] = useState(() => {
     if (typeof window !== 'undefined') {
+      const path = window.location.pathname;
+      if (path.startsWith('/pos')) return 'pos';
+      if (path.startsWith('/shop')) return 'ecommerce';
+
       const urlParams = new URLSearchParams(window.location.search);
       const urlView = urlParams.get('view') || urlParams.get('mode');
       if (urlView === 'pos' || urlView === 'staff') return 'pos';
