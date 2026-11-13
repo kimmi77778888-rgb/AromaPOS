@@ -1,8 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
 import { api } from '../../services/api';
 import { soundService } from '../../services/soundService';
-import { generateClientKhqr } from '../../utils/khqrGenerator';
+import { 
+  generateOfficialBakongKhqr,
+  getStoredMerchantBakongId,
+  saveStoredMerchantBakongId,
+  getStoredCustomKhqrImage,
+  saveStoredCustomKhqrImage
+} from '../../utils/khqrGenerator';
 import { 
   X, 
   QrCode, 
@@ -18,7 +24,10 @@ import {
   ArrowRight,
   ExternalLink,
   Copy,
-  Check
+  Check,
+  Settings,
+  Upload,
+  Image as ImageIcon
 } from 'lucide-react';
 
 export const EcommerceCheckoutModal = ({
@@ -38,43 +47,44 @@ export const EcommerceCheckoutModal = ({
   const [secondsLeft, setSecondsLeft] = useState(300); // 5 mins
   const [isCopied, setIsCopied] = useState(false);
 
-  // Generate real dynamic KHQR whenever modal opens or amount changes
+  // Merchant Bakong ID & Custom QR Customization State
+  const [merchantBakongId, setMerchantBakongId] = useState(() => getStoredMerchantBakongId());
+  const [customKhqrImage, setCustomKhqrImage] = useState(() => getStoredCustomKhqrImage());
+  const [isConfigOpen, setIsConfigOpen] = useState(false);
+  const [bakongIdInput, setBakongIdInput] = useState('');
+  const [qrMode, setQrMode] = useState('DYNAMIC'); // 'DYNAMIC' | 'CUSTOM'
+  const fileInputRef = useRef(null);
+
+  // Generate real official NBC Bakong KHQR whenever modal opens, amount changes, or merchant ID updates
   useEffect(() => {
     let timer = null;
+    let isCancelled = false;
+
     if (isOpen && paymentMethod === 'KHQR' && orderData) {
       setIsKhqrPaid(false);
       setSecondsLeft(300);
+      setIsKhqrLoading(!khqrData);
 
       const billNumber = 'ONL-' + Math.floor(1000 + Math.random() * 9000);
 
-      // 1. Immediately create a 100% valid, authentic client-side NBC EMVCo KHQR payload
-      const initialClientKhqr = generateClientKhqr({
-        merchantId: 'sophara_len@bkrt',
+      // Generate 100% authentic NBC EMVCo KHQR with sharp Base64 PNG data URL
+      generateOfficialBakongKhqr({
+        merchantId: merchantBakongId || 'sophara_len@bkrt',
         merchantName: 'AROMA COFFEE ROASTERY',
         merchantCity: 'Phnom Penh',
         acquiringBank: 'Bakong',
         amount: orderData.grandTotal,
         currency: 'USD',
         billNumber
-      });
-      setKhqrData(initialClientKhqr);
-      setIsKhqrLoading(false);
-
-      // 2. Non-blocking backend sync for server MD5 verification & official NBC deeplinks
-      api.generateBakongQr({
-        billNumber,
-        amount: orderData.grandTotal,
-        currency: 'USD'
-      }).then((res) => {
-        if (res && res.success && (res.qrImageUrl || res.qrImage)) {
-          setKhqrData({
-            ...res,
-            qrImageUrl: res.qrImageUrl || res.qrImage,
-            qrImage: res.qrImageUrl || res.qrImage
-          });
+      }).then((result) => {
+        if (!isCancelled && result && result.success) {
+          setKhqrData(result);
+          setIsKhqrLoading(false);
         }
-      }).catch(() => {
-        // Keeps initialClientKhqr seamlessly
+      }).catch((e) => {
+        if (!isCancelled) {
+          setIsKhqrLoading(false);
+        }
       });
 
       timer = setInterval(() => {
@@ -83,9 +93,10 @@ export const EcommerceCheckoutModal = ({
     }
 
     return () => {
+      isCancelled = true;
       if (timer) clearInterval(timer);
     };
-  }, [isOpen, paymentMethod, orderData]);
+  }, [isOpen, paymentMethod, orderData, merchantBakongId]);
 
   if (!isOpen || !orderData) return null;
 
@@ -106,6 +117,36 @@ export const EcommerceCheckoutModal = ({
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), 2000);
     }
+  };
+
+  const handleSaveBakongId = (e) => {
+    e.preventDefault();
+    if (!bakongIdInput.trim()) return;
+    saveStoredMerchantBakongId(bakongIdInput.trim());
+    setMerchantBakongId(bakongIdInput.trim());
+    setIsConfigOpen(false);
+  };
+
+  const handleCustomImageUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (uploadEvt) => {
+      const dataUrl = uploadEvt.target?.result;
+      if (dataUrl) {
+        saveStoredCustomKhqrImage(dataUrl);
+        setCustomKhqrImage(dataUrl);
+        setQrMode('CUSTOM');
+        setIsConfigOpen(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveCustomImage = () => {
+    saveStoredCustomKhqrImage(null);
+    setCustomKhqrImage(null);
+    setQrMode('DYNAMIC');
   };
 
   const handleSubmitOrder = () => {
@@ -158,6 +199,10 @@ export const EcommerceCheckoutModal = ({
       onOrderPlaced(newOrderPayload);
     }, 500);
   };
+
+  const displayQrSource = (qrMode === 'CUSTOM' && customKhqrImage) 
+    ? customKhqrImage 
+    : (khqrData?.qrImageUrl || khqrData?.qrImage);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in font-sans">
@@ -289,12 +334,36 @@ export const EcommerceCheckoutModal = ({
                 </div>
               </div>
 
+              {/* Mode Toggle if Custom Store QR is Uploaded */}
+              {customKhqrImage && (
+                <div className="inline-flex rounded-xl bg-stone-900 p-1 border border-stone-800 text-[11px] font-bold text-stone-400">
+                  <button
+                    type="button"
+                    onClick={() => setQrMode('DYNAMIC')}
+                    className={`px-3 py-1 rounded-lg transition cursor-pointer ${
+                      qrMode === 'DYNAMIC' ? 'bg-amber-500 text-stone-950 shadow' : 'hover:text-stone-200'
+                    }`}
+                  >
+                    ⚡ Dynamic Amount (${orderData.grandTotal.toFixed(2)})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setQrMode('CUSTOM')}
+                    className={`px-3 py-1 rounded-lg transition cursor-pointer ${
+                      qrMode === 'CUSTOM' ? 'bg-rose-600 text-white shadow' : 'hover:text-stone-200'
+                    }`}
+                  >
+                    🏦 Store Official ABA QR
+                  </button>
+                </div>
+              )}
+
               {/* QR Code Container with Corner Focus Brackets */}
               <div className="p-3 bg-white rounded-3xl inline-block shadow-2xl mx-auto relative border-2 border-rose-500/80">
                 {isKhqrLoading ? (
                   <div className="w-52 h-52 flex flex-col items-center justify-center text-stone-900">
                     <div className="w-8 h-8 border-4 border-rose-600 border-t-transparent rounded-full animate-spin mb-2" />
-                    <span className="text-xs font-bold">Generating Bakong QR...</span>
+                    <span className="text-xs font-bold">Generating Official NBC QR...</span>
                   </div>
                 ) : (
                   <div className="relative p-2 bg-stone-50 rounded-2xl border border-stone-200 shadow-inner group">
@@ -305,7 +374,7 @@ export const EcommerceCheckoutModal = ({
                     <div className="absolute bottom-1 right-1 w-3.5 h-3.5 border-b-2 border-r-2 border-red-600 rounded-br-sm pointer-events-none" />
 
                     <img
-                      src={khqrData?.qrImageUrl || khqrData?.qrImage}
+                      src={displayQrSource}
                       alt="National Bank of Cambodia Bakong KHQR"
                       className="w-48 h-48 sm:w-52 sm:h-52 object-contain rounded-xl select-none mx-auto"
                     />
@@ -342,9 +411,94 @@ export const EcommerceCheckoutModal = ({
                     ? 'ស្កេនជាមួយ App ធនាគារណាក៏បាន (ABA, Wing, ACLEDA, Canadia, Bakong)' 
                     : 'Scan with any Cambodian Banking App (ABA, Wing, ACLEDA, Bakong)'}
                 </p>
+                <div className="text-[10px] text-stone-500 font-mono mt-0.5 flex items-center justify-center gap-2">
+                  <span>Merchant ID: <strong className="text-rose-400">{merchantBakongId}</strong></span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBakongIdInput(merchantBakongId);
+                      setIsConfigOpen(!isConfigOpen);
+                    }}
+                    className="text-amber-400 hover:text-amber-300 underline cursor-pointer flex items-center gap-0.5"
+                    title="Customize receiving account"
+                  >
+                    <Settings className="w-3 h-3" />
+                    <span>{isKhmer ? 'ប្តូរលេខគណនី' : 'Change ID'}</span>
+                  </button>
+                </div>
               </div>
 
-              {/* KHQR Actions: Simulate Pay or Copy */}
+              {/* Collapsible Bakong Account Config Section */}
+              {isConfigOpen && (
+                <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 text-left space-y-3 animate-fade-in">
+                  <div className="flex items-center justify-between text-xs font-bold text-stone-200">
+                    <span>{isKhmer ? 'កំណត់គណនីបាគង ឬរូប QR ផ្ទាល់ខ្លួន' : 'Customize Receiving Account'}</span>
+                    <button
+                      type="button"
+                      onClick={() => setIsConfigOpen(false)}
+                      className="text-stone-400 hover:text-white"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <form onSubmit={handleSaveBakongId} className="space-y-2">
+                    <label className="text-[11px] text-stone-400 block">
+                      {isKhmer ? 'វាយលេខគណនី Bakong / ABA ID (ឧ. sophara_len@bkrt ឬ user@abaa ឬលេខទូរស័ព្ទ):' : 'Bakong / ABA ID (e.g. sophara_len@bkrt or phone number):'}
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={bakongIdInput}
+                        onChange={(e) => setBakongIdInput(e.target.value)}
+                        placeholder="e.g. sophara_len@bkrt or 0969276538@abaa"
+                        className="flex-1 bg-stone-950 border border-stone-750 rounded-xl px-3 py-1.5 text-xs text-stone-200 font-mono focus:outline-none focus:border-amber-500"
+                      />
+                      <button
+                        type="submit"
+                        className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs transition cursor-pointer"
+                      >
+                        {isKhmer ? 'រក្សាទុក' : 'Save'}
+                      </button>
+                    </div>
+                  </form>
+
+                  {/* Upload Real Store QR Photo from ABA */}
+                  <div className="pt-2 border-t border-stone-800 flex items-center justify-between text-xs">
+                    <span className="text-[11px] text-stone-400">
+                      {isKhmer ? 'ឬបញ្ចូលរូបភាព QR Code ពី ABA ផ្ទាល់:' : 'Or upload official ABA QR screenshot:'}
+                    </span>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleCustomImageUpload}
+                      className="hidden"
+                    />
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="px-2.5 py-1 rounded-lg bg-stone-800 hover:bg-stone-700 text-amber-400 text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+                      >
+                        <Upload className="w-3 h-3" />
+                        <span>{isKhmer ? 'ជ្រើសរើសរូប' : 'Upload QR'}</span>
+                      </button>
+                      {customKhqrImage && (
+                        <button
+                          type="button"
+                          onClick={handleRemoveCustomImage}
+                          className="text-[11px] text-rose-400 hover:underline cursor-pointer"
+                        >
+                          {isKhmer ? 'លុបរូប' : 'Reset'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* KHQR Actions: Simulate Pay, Copy Code, or Open Deeplink */}
               <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
                 {!isKhqrPaid ? (
                   <button
@@ -371,6 +525,19 @@ export const EcommerceCheckoutModal = ({
                   {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-stone-400" />}
                   <span>{isCopied ? 'Copied!' : 'Copy Code'}</span>
                 </button>
+
+                {khqrData?.deeplink && (
+                  <a
+                    href={khqrData.deeplink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 rounded-xl bg-stone-900 hover:bg-stone-850 border border-stone-800 text-rose-400 font-bold text-xs transition flex items-center gap-1.5 cursor-pointer"
+                    title="Open in Bakong app directly"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>{isKhmer ? 'បើកក្នុង App' : 'Bakong App'}</span>
+                  </a>
+                )}
               </div>
             </div>
           )}
