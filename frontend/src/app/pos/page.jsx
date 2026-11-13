@@ -20,3 +20,4 @@ const AppContent = dynamic(
 export default function PosPage() {
   return <AppContent forcePos={true} />;
 }
+

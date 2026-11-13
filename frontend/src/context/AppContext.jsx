@@ -186,6 +186,26 @@ export const AppProvider = ({ children }) => {
   const [linkedCustomer, setLinkedCustomer] = useState(null);
   const [appliedPoints, setAppliedPoints] = useState(0);
 
+  // Registered Online E-Commerce Customer Account Session
+  const [customerUser, setCustomerUser] = useState(() => {
+    try {
+      const saved = storage.getItem('aromapos_customer_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      if (customerUser) {
+        storage.setItem('aromapos_customer_user', JSON.stringify(customerUser));
+      } else {
+        storage.removeItem('aromapos_customer_user');
+      }
+    } catch (e) {}
+  }, [customerUser]);
+
   useEffect(() => {
     try {
       storage.setItem('aromapos_customers', JSON.stringify(customers));
@@ -1036,6 +1056,70 @@ export const AppProvider = ({ children }) => {
       showToast('Removed loyalty points discount', 'info');
     }
   };
+
+  // E-Commerce Customer Auth & Account Methods
+  const registerCustomer = useCallback((accountData) => {
+    const cleanPhone = accountData.phone ? accountData.phone.trim() : '';
+    const newCust = {
+      id: `cust-${Date.now()}`,
+      name: accountData.name ? accountData.name.trim() : 'Coffee Lover',
+      phone: cleanPhone,
+      email: accountData.email ? accountData.email.trim() : '',
+      address: accountData.address ? accountData.address.trim() : '',
+      district: accountData.district || 'Khan Boeng Keng Kang',
+      tier: 'Aroma Coffee Club VIP',
+      points: 100, // 100 Welcome Points
+      stamps: 1, // 1st digital coffee stamp
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
+      visits: 1,
+      createdAt: new Date().toISOString()
+    };
+
+    setCustomers((prev) => [newCust, ...prev]);
+    setCustomerUser(newCust);
+    showToast(`🎉 ស្វាគមន៍ ${newCust.name}! ទទួលបាន ១០០ ពិន្ទុ & ត្រាកាហ្វេទី១`, 'success');
+    return newCust;
+  }, [showToast]);
+
+  const loginCustomer = useCallback((phoneOrEmail, password = '') => {
+    const raw = (phoneOrEmail || '').trim();
+    const cleanDigits = raw.replace(/[^0-9]/g, '');
+
+    const found = customers.find((c) => {
+      const cPhone = (c.phone || '').replace(/[^0-9]/g, '');
+      const matchPhone = cleanDigits && cPhone && (cPhone.includes(cleanDigits) || cleanDigits.includes(cPhone));
+      const matchEmail = c.email && c.email.toLowerCase() === raw.toLowerCase();
+      const matchName = c.name && c.name.toLowerCase() === raw.toLowerCase();
+      return matchPhone || matchEmail || matchName;
+    });
+
+    if (found) {
+      setCustomerUser(found);
+      showToast(`ស្វាគមន៍ការត្រឡប់មកវិញ ${found.name}!`, 'success');
+      return found;
+    }
+
+    // Auto-create registered member for effortless checkout
+    const newMember = {
+      id: `cust-${Date.now()}`,
+      name: raw.includes('@') ? raw.split('@')[0] : `Member ${raw.slice(-4)}`,
+      phone: raw,
+      email: raw.includes('@') ? raw : '',
+      tier: 'Aroma Member',
+      points: 100,
+      stamps: 1,
+      avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=150&q=80'
+    };
+    setCustomers((prev) => [newMember, ...prev]);
+    setCustomerUser(newMember);
+    showToast(`ចូលគណនីបានជោគជ័យ!`, 'success');
+    return newMember;
+  }, [customers, showToast]);
+
+  const logoutCustomer = useCallback(() => {
+    setCustomerUser(null);
+    showToast('បានចាកចេញពីគណនីអតិថិជនរួចរាល់', 'info');
+  }, [showToast]);
 
   // Live Totals Calculations with Loyalty Points, Combos, Happy Hour & Stamp Card Free Drink
   const cartTotals = useMemo(() => {
@@ -1919,7 +2003,12 @@ export const AppProvider = ({ children }) => {
         appMode,
         setAppMode,
         changeAppMode,
-        placeOnlineOrder
+        placeOnlineOrder,
+        customerUser,
+        setCustomerUser,
+        registerCustomer,
+        loginCustomer,
+        logoutCustomer
       }}
     >
       {children}

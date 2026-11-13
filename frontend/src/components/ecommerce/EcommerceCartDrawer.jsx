@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
+import { useApp } from '../../context/AppContext';
 import { 
   X, 
   Trash2, 
@@ -15,7 +16,9 @@ import {
   Clock, 
   ArrowRight,
   ShieldCheck,
-  CheckCircle2
+  CheckCircle2,
+  Lock,
+  Sparkles
 } from 'lucide-react';
 
 /**
@@ -59,9 +62,11 @@ export const EcommerceCartDrawer = ({
   cartItems,
   onUpdateQuantity,
   onRemoveItem,
-  onProceedToCheckout
+  onProceedToCheckout,
+  onRequireAuth
 }) => {
   const { isKhmer } = useLanguage();
+  const { customerUser } = useApp();
 
   const [orderType, setOrderType] = useState('DELIVERY'); // 'DELIVERY' | 'PICKUP'
   const [customerName, setCustomerName] = useState('');
@@ -70,6 +75,16 @@ export const EcommerceCartDrawer = ({
   const [streetAddress, setStreetAddress] = useState('');
   const [deliveryNotes, setDeliveryNotes] = useState('');
   const [selectedBranch, setSelectedBranch] = useState(STORE_BRANCHES[0].id);
+
+  // Sync details from authenticated customer account
+  useEffect(() => {
+    if (customerUser) {
+      if (customerUser.name) setCustomerName(customerUser.name);
+      if (customerUser.phone) setCustomerPhone(customerUser.phone);
+      if (customerUser.address) setStreetAddress(customerUser.address);
+      if (customerUser.district) setDistrict(customerUser.district);
+    }
+  }, [customerUser, isOpen]);
 
   // Promo Code State
   const [promoCodeInput, setPromoCodeInput] = useState('');
@@ -120,6 +135,14 @@ export const EcommerceCartDrawer = ({
   };
 
   const handleCheckoutClick = () => {
+    // 1. Mandatory Customer Account Verification before buying coffee
+    if (!customerUser) {
+      if (onRequireAuth) {
+        onRequireAuth();
+        return;
+      }
+    }
+
     if (!customerName.trim()) {
       alert(isKhmer ? 'សូមបញ្ចូលឈ្មោះរបស់អ្នក' : 'Please enter your name');
       return;
@@ -551,6 +574,28 @@ export const EcommerceCartDrawer = ({
               </div>
             </div>
 
+            {/* Customer Account Requirement Pill */}
+            {!customerUser ? (
+              <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between text-xs text-amber-300">
+                <div className="flex items-center gap-1.5">
+                  <Lock className="w-3.5 h-3.5 text-amber-400" />
+                  <span>{isKhmer ? 'តម្រូវឱ្យមានគណនីដើម្បីកុម្ម៉ង់' : 'Account required to order coffee'}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={onRequireAuth}
+                  className="font-bold underline text-amber-400 hover:text-amber-300 cursor-pointer"
+                >
+                  {isKhmer ? 'ចុះឈ្មោះ / ចូលគណនី' : 'Register / Sign In'}
+                </button>
+              </div>
+            ) : (
+              <div className="p-2 rounded-xl bg-emerald-950/40 border border-emerald-800/60 flex items-center justify-between text-xs text-emerald-300">
+                <span className="truncate">👤 {customerUser.name} ({customerUser.tier || 'Member'})</span>
+                <span className="font-mono font-bold text-amber-400 shrink-0 ml-1">{customerUser.points || 0} pts</span>
+              </div>
+            )}
+
             {/* Checkout Action Button */}
             <button
               type="button"
@@ -571,3 +616,4 @@ export const EcommerceCartDrawer = ({
     </div>
   );
 };
+

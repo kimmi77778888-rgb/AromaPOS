@@ -21,7 +21,8 @@ export const CustomerOrderTracker = ({
   onClose,
   activeOrder = null,
   allOrders = [],
-  onOrderAgain
+  onOrderAgain,
+  onOpenLiveMap
 }) => {
   const { isKhmer } = useLanguage();
   const [searchCode, setSearchCode] = useState('');
@@ -237,6 +238,18 @@ export const CustomerOrderTracker = ({
                 </div>
               </div>
 
+              {/* Live Delivery Map Trigger (For Delivery Orders) */}
+              {currentOrder.orderType === 'DELIVERY' && onOpenLiveMap && (
+                <button
+                  type="button"
+                  onClick={() => onOpenLiveMap(currentOrder)}
+                  className="w-full py-3 px-4 rounded-2xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs flex items-center justify-center gap-2 transition shadow-lg shadow-amber-950/20 cursor-pointer"
+                >
+                  <Bike className="w-4 h-4" />
+                  <span>{isKhmer ? '📍 មើលទីតាំងអ្នកដឹកជញ្ជូនលើផែនទីផ្ទាល់ (Live Delivery Map)' : '📍 View Live Delivery Location on Map'}</span>
+                </button>
+              )}
+
               {/* Items List in this Order */}
               <div className="space-y-2.5">
                 <h4 className="text-xs font-black uppercase tracking-wider text-stone-400">
@@ -317,3 +330,4 @@ export const CustomerOrderTracker = ({
     </div>
   );
 };
+

@@ -20,3 +20,4 @@ const PublicEcommerceHome = dynamic(
 export default function ShopPage() {
   return <PublicEcommerceHome onSwitchToPos={() => { window.location.href = '/pos'; }} />;
 }
+

@@ -24,13 +24,17 @@ import {
   Filter,
   Tag,
   Menu,
-  X
+  X,
+  User
 } from 'lucide-react';
 import { LanguageSwitcher } from '../common/LanguageSwitcher';
 import { EcommerceCustomizationModal } from './EcommerceCustomizationModal';
 import { EcommerceCartDrawer } from './EcommerceCartDrawer';
 import { EcommerceCheckoutModal } from './EcommerceCheckoutModal';
 import { CustomerOrderTracker } from './CustomerOrderTracker';
+import { CustomerAuthModal } from './CustomerAuthModal';
+import { CustomerAccountModal } from './CustomerAccountModal';
+import { LiveDeliveryMapModal } from './LiveDeliveryMapModal';
 
 const CATEGORIES = [
   { id: 'ALL', name: 'All Menu', nameKm: 'មុខទំនិញទាំងអស់', icon: Coffee },
@@ -44,7 +48,7 @@ const CATEGORIES = [
 
 export const PublicEcommerceHome = ({ onSwitchToPos }) => {
   const { isKhmer } = useLanguage();
-  const { products = [], orders = [], placeOnlineOrder } = useApp();
+  const { products = [], orders = [], placeOnlineOrder, customerUser } = useApp();
 
   // Navigation & Search State
   const [selectedCategory, setSelectedCategory] = useState('ALL');
@@ -59,6 +63,13 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [isTrackerOpen, setIsTrackerOpen] = useState(false);
   const [latestPlacedOrder, setLatestPlacedOrder] = useState(null);
+
+  // Customer Authentication & Account Modals State
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalPrompt, setAuthModalPrompt] = useState('');
+  const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
+  const [isLiveDeliveryMapOpen, setIsLiveDeliveryMapOpen] = useState(false);
+  const [activeDeliveryOrderForMap, setActiveDeliveryOrderForMap] = useState(null);
 
   // Cart Management
   const handleAddToCart = (customizedItem) => {
@@ -183,6 +194,37 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
           <div className="hidden sm:block">
             <LanguageSwitcher />
           </div>
+
+          {/* Customer Account Profile / Sign In Pill */}
+          {customerUser ? (
+            <button
+              type="button"
+              onClick={() => setIsAccountModalOpen(true)}
+              className="py-1.5 px-3 rounded-2xl bg-amber-950/60 hover:bg-amber-900/60 border border-amber-600/60 text-amber-300 font-bold text-xs flex items-center gap-2 transition cursor-pointer shadow-sm"
+              title="My Account & Purchase History"
+            >
+              <img
+                src={customerUser.avatar || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=100&q=80'}
+                alt={customerUser.name}
+                className="w-5 h-5 rounded-full object-cover border border-amber-400"
+              />
+              <span className="hidden md:inline truncate max-w-[90px]">{customerUser.name}</span>
+              <span className="text-[10px] font-mono text-amber-400 font-black">⭐ {customerUser.points || 0}</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setAuthModalPrompt(isKhmer ? 'ចុះឈ្មោះបង្កើតគណនី ដើម្បីទទួលបានត្រាកាហ្វេ & ១០០ ពិន្ទុ!' : 'Sign in or register to earn coffee stamps & points!');
+                setIsAuthModalOpen(true);
+              }}
+              className="py-2 px-3 rounded-2xl bg-stone-900 hover:bg-stone-850 border border-stone-800 text-stone-200 hover:text-white font-bold text-xs flex items-center gap-1.5 transition cursor-pointer"
+              title="Customer Sign In / Register"
+            >
+              <User className="w-3.5 h-3.5 text-amber-400" />
+              <span className="hidden md:inline">{isKhmer ? 'គណនីអតិថិជន' : 'Sign In'}</span>
+            </button>
+          )}
 
           {/* Cart Bag Button */}
           <button
@@ -708,6 +750,10 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
         onUpdateQuantity={handleUpdateCartQuantity}
         onRemoveItem={handleRemoveCartItem}
         onProceedToCheckout={handleProceedToCheckout}
+        onRequireAuth={() => {
+          setAuthModalPrompt(isKhmer ? 'សូមចុះឈ្មោះ ឬចូលគណនីមុនពេលទូទាត់ប្រាក់កាហ្វេ' : 'Please register or sign in to proceed to checkout');
+          setIsAuthModalOpen(true);
+        }}
       />
 
       {/* 3. Checkout & Payment Modal (Bakong KHQR & COD) */}
@@ -724,12 +770,54 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
         onClose={() => setIsTrackerOpen(false)}
         activeOrder={latestPlacedOrder}
         allOrders={orders}
+        onOpenLiveMap={(order) => {
+          setActiveDeliveryOrderForMap(order);
+          setIsLiveDeliveryMapOpen(true);
+        }}
         onOrderAgain={() => {
           setIsTrackerOpen(false);
           const menuEl = document.getElementById('menu');
           if (menuEl) menuEl.scrollIntoView({ behavior: 'smooth' });
         }}
       />
+
+      {/* 5. Customer Authentication Modal (Mandatory Registration/Login before Checkout) */}
+      <CustomerAuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        messagePrompt={authModalPrompt}
+        onAuthSuccess={(u) => {
+          setIsAuthModalOpen(false);
+          // If cart has items, user can immediately proceed to checkout smoothly
+        }}
+      />
+
+      {/* 6. Customer Account & Order History Portal */}
+      <CustomerAccountModal
+        isOpen={isAccountModalOpen}
+        onClose={() => setIsAccountModalOpen(false)}
+        onOpenLiveDeliveryMap={(order) => {
+          setActiveDeliveryOrderForMap(order);
+          setIsLiveDeliveryMapOpen(true);
+        }}
+        onReorderItems={(items) => {
+          if (items && items.length > 0) {
+            setCartItems((prev) => [...items, ...prev]);
+            setIsCartOpen(true);
+          }
+        }}
+      />
+
+      {/* 7. Interactive Live Delivery Map Modal */}
+      <LiveDeliveryMapModal
+        isOpen={isLiveDeliveryMapOpen}
+        onClose={() => {
+          setIsLiveDeliveryMapOpen(false);
+          setActiveDeliveryOrderForMap(null);
+        }}
+        order={activeDeliveryOrderForMap || latestPlacedOrder}
+      />
     </div>
   );
 };
+

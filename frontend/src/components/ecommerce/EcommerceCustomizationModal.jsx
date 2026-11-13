@@ -405,3 +405,4 @@ export const EcommerceCustomizationModal = ({ product, isOpen, onClose, onAddToC
     </div>
   );
 };
+
