@@ -155,10 +155,11 @@ export const AdminDeliveryTracker = () => {
 
         mapInstanceRef.current = map;
 
-        // Dark Voyager CartoDB tiles
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-          attribution: '© OpenStreetMap contributors',
-          maxZoom: 19
+        // Clean, Open Non-Watermarked OpenStreetMap Tile Layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+          maxZoom: 19,
+          subdomains: ['a', 'b', 'c']
         }).addTo(map);
 
         L.control.zoom({ position: 'bottomright' }).addTo(map);

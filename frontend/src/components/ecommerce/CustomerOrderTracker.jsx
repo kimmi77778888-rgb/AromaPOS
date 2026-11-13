@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
 import { downloadInvoice } from '../../utils/invoiceDownloader';
+import { soundService } from '../../services/soundService';
+import confetti from 'canvas-confetti';
 import { 
   X, 
   Search, 
@@ -15,7 +17,8 @@ import {
   ChevronRight,
   ArrowLeft,
   ExternalLink,
-  FileText
+  FileText,
+  PackageCheck
 } from 'lucide-react';
 
 export const CustomerOrderTracker = ({
@@ -240,8 +243,43 @@ export const CustomerOrderTracker = ({
                 </div>
               </div>
 
-              {/* Quick Actions: Live Delivery Map & Official Tax Invoice */}
+              {/* Quick Actions: Got Product Confirmation, Live Delivery Map & Official Tax Invoice */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {currentOrder.status !== 'COMPLETED' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      try {
+                        soundService.playKaChing();
+                        confetti({
+                          particleCount: 80,
+                          spread: 90,
+                          origin: { y: 0.6 },
+                          colors: ['#10B981', '#F59E0B', '#3B82F6']
+                        });
+                      } catch (e) {}
+                      if (currentOrder?.id) {
+                        const targetId = currentOrder.id;
+                        try {
+                          const stored = JSON.parse(localStorage.getItem('aromapos_orders') || '[]');
+                          const updated = stored.map((o) =>
+                            o.id === targetId || o.orderNumber === currentOrder.orderNumber
+                              ? { ...o, status: 'COMPLETED', isDelivered: true, deliveredAt: new Date().toISOString() }
+                              : o
+                          );
+                          localStorage.setItem('aromapos_orders', JSON.stringify(updated));
+                        } catch (err) {}
+                        if (searchedOrder) setSearchedOrder({ ...searchedOrder, status: 'COMPLETED' });
+                        else if (activeOrder) activeOrder.status = 'COMPLETED';
+                      }
+                    }}
+                    className="sm:col-span-2 w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-stone-950 font-black text-xs flex items-center justify-center gap-2 transition shadow-lg shadow-emerald-950/40 cursor-pointer active:scale-95"
+                  >
+                    <PackageCheck className="w-4 h-4 stroke-[2.5]" />
+                    <span>{isKhmer ? '✅ ខ្ញុំបានទទួលកាហ្វេរួចរាល់ (Got Product)' : '✅ I Received My Order (Got Product)'}</span>
+                  </button>
+                )}
+
                 {currentOrder.orderType === 'DELIVERY' && onOpenLiveMap && (
                   <button
                     type="button"

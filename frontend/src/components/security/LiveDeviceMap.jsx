@@ -35,17 +35,17 @@ import {
 
 const MAP_LAYERS = {
   dark: {
-    name: 'Dark Matter (Night)',
-    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-    attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap',
-    subdomains: 'abcd',
+    name: 'OpenStreetMap Streets',
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '&copy; OpenStreetMap contributors',
+    subdomains: 'abc',
     maxZoom: 19
   },
   street: {
-    name: 'Street Voyager',
-    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-    attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap',
-    subdomains: 'abcd',
+    name: 'Esri World Streets',
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+    attribution: '&copy; Esri & OpenStreetMap',
+    subdomains: 'abc',
     maxZoom: 19
   },
   satellite: {

@@ -566,6 +566,35 @@ export const CustomerAccountModal = ({
                               <span>{isKhmer ? 'ទាញយកវិក្កយបត្រ' : 'Invoice'}</span>
                             </button>
 
+                            {/* Got Product / Mark Received Button */}
+                            {order.status !== 'COMPLETED' && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  try {
+                                    soundService.playKaChing();
+                                  } catch (e) {}
+                                  if (setOrders) {
+                                    setOrders((prev) =>
+                                      prev.map((o) => (o.id === order.id || o.orderNumber === order.orderNumber ? { ...o, status: 'COMPLETED', isDelivered: true } : o))
+                                    );
+                                  }
+                                  try {
+                                    const stored = JSON.parse(localStorage.getItem('aromapos_orders') || '[]');
+                                    const updated = stored.map((o) => (o.id === order.id || o.orderNumber === order.orderNumber ? { ...o, status: 'COMPLETED', isDelivered: true } : o));
+                                    localStorage.setItem('aromapos_orders', JSON.stringify(updated));
+                                  } catch (e) {}
+                                  if (showToast) {
+                                    showToast(isKhmer ? '🎉 បានបញ្ជាក់ថាទទួលបានកាហ្វេរួចរាល់!' : '🎉 Confirmed received!', 'success');
+                                  }
+                                }}
+                                className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-stone-950 font-black text-xs flex items-center gap-1.5 transition cursor-pointer shadow-md"
+                              >
+                                <CheckCircle2 className="w-3.5 h-3.5 stroke-[2.5]" />
+                                <span>{isKhmer ? 'បានទទួលទំនិញ' : 'Got Product'}</span>
+                              </button>
+                            )}
+
                             {/* Live Delivery Map Button */}
                             {isDelivery && (
                               <button
