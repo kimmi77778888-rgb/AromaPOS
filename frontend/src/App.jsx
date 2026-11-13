@@ -23,6 +23,7 @@ import { UserAccountModal } from './components/auth/UserAccountModal';
 import { StoreSettingsModal } from './components/common/StoreSettingsModal';
 import { MobileBottomNav } from './components/common/MobileBottomNav';
 import { EmergencyAlarmModal } from './components/common/EmergencyAlarmModal';
+import { PublicEcommerceHome } from './components/ecommerce/PublicEcommerceHome';
 
 export const AppContent = () => {
   const { 
@@ -47,7 +48,9 @@ export const AppContent = () => {
     setIsFaceEnrollModalOpen,
     faceEnrollTarget,
     setFaceEnrollTarget,
-    user
+    user,
+    appMode,
+    changeAppMode
   } = useApp();
 
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
@@ -60,11 +63,24 @@ export const AppContent = () => {
     return <CustomerDisplay standalone={true} />;
   }
 
+  // 1. PUBLIC E-COMMERCE STOREFRONT (Homepage for customers)
+  if (appMode === 'ecommerce') {
+    return (
+      <>
+        <PublicEcommerceHome onSwitchToPos={() => changeAppMode('pos')} />
+        <Toast />
+        <EmergencyAlarmModal />
+      </>
+    );
+  }
+
+  // 2. STAFF AUTHENTICATION SCREEN (When entering POS without being logged in)
   if (!isAuthenticated) {
     return (
       <>
-        <LoginScreen />
+        <LoginScreen onReturnToEcommerce={() => changeAppMode('ecommerce')} />
         <Toast />
+        <EmergencyAlarmModal />
       </>
     );
   }

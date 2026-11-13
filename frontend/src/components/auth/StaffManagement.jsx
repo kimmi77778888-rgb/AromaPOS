@@ -60,10 +60,12 @@ import {
   Radio,
   FlaskConical,
   LayoutGrid,
-  BellRing
+  BellRing,
+  MessageSquare
 } from 'lucide-react';
 import { LiveDeviceMap } from '../security/LiveDeviceMap';
 import { RemoteDeviceModal } from '../security/RemoteDeviceModal';
+import { SendSmsModal } from '../common/SendSmsModal';
 import { getBrandBadge } from '../../utils/deviceDetector';
 import { ROLE_PERMISSIONS, SYSTEM_PERMISSIONS } from '../../services/coffeeData';
 import { StaffShiftList } from './StaffShiftList';
@@ -109,6 +111,7 @@ export const StaffManagement = () => {
   const [loginSourceFilter, setLoginSourceFilter] = useState('ALL'); // 'ALL' | 'REAL' | 'DEMO'
   const [inspectedSession, setInspectedSession] = useState(null);
   const [remoteDeviceSession, setRemoteDeviceSession] = useState(null);
+  const [smsTarget, setSmsTarget] = useState(null); // { staff, session }
   const [copiedSessionIp, setCopiedSessionIp] = useState(null);
 
   const handleCopySessionIp = (ip, id) => {
@@ -1060,6 +1063,16 @@ export const StaffManagement = () => {
                               </span>
                             </button>
 
+                            {/* Send SMS Button */}
+                            <button
+                              type="button"
+                              onClick={() => setSmsTarget({ staff, session: null })}
+                              className="p-1.5 rounded-xl bg-cyan-950/40 hover:bg-cyan-900/60 text-cyan-400 hover:text-cyan-200 border border-cyan-800/60 hover:border-cyan-700 transition cursor-pointer"
+                              title={isKhmer ? `ផ្ញើសារ SMS ទៅកាន់ ${staff.name}` : `Send SMS to ${staff.name}`}
+                            >
+                              <MessageSquare className="w-3.5 h-3.5" />
+                            </button>
+
                             {/* Edit Button */}
                             <button
                               onClick={() => handleOpenEditModal(staff)}
@@ -1967,6 +1980,16 @@ export const StaffManagement = () => {
                                 <BellRing className="w-3.5 h-3.5 text-rose-400" />
                               </button>
 
+                              {/* Direct SMS Button */}
+                              <button
+                                type="button"
+                                onClick={() => setSmsTarget({ staff: null, session: sess })}
+                                className="p-1 rounded-lg bg-cyan-950/40 hover:bg-cyan-900/60 border border-cyan-800/50 text-cyan-300 hover:text-cyan-100 transition cursor-pointer"
+                                title={isKhmer ? 'ផ្ញើសារ SMS ទៅកាន់ទូរស័ព្ទ / ឧបករណ៍នេះ' : 'Send SMS message to this device / phone'}
+                              >
+                                <MessageSquare className="w-3.5 h-3.5 text-cyan-400" />
+                              </button>
+
                               <button
                                 type="button"
                                 onClick={() => {
@@ -2308,6 +2331,16 @@ export const StaffManagement = () => {
                                 title={isKhmer ? 'បន្លឺសំឡេងរោទ៍ Alarm' : 'Trigger Sound Alarm'}
                               >
                                 <BellRing className="w-3.5 h-3.5 text-rose-400" />
+                              </button>
+
+                              {/* Direct SMS Button */}
+                              <button
+                                type="button"
+                                onClick={() => setSmsTarget({ staff: null, session: sess })}
+                                className="p-1 rounded-lg bg-cyan-950/40 hover:bg-cyan-900/60 border border-cyan-800/50 text-cyan-300 hover:text-cyan-100 transition cursor-pointer"
+                                title={isKhmer ? 'ផ្ញើសារ SMS ទៅកាន់ឧបករណ៍នេះ' : 'Send SMS to this device'}
+                              >
+                                <MessageSquare className="w-3.5 h-3.5 text-cyan-400" />
                               </button>
 
                               {/* Inspect Hardware / Specs Modal */}
@@ -3035,6 +3068,16 @@ export const StaffManagement = () => {
         isOpen={Boolean(remoteDeviceSession)}
         onClose={() => setRemoteDeviceSession(null)}
         onTerminate={handleTerminateSession}
+      />
+
+      {/* ─────────────────────────────────────────────────────────────
+          14. DIRECT CELLULAR & IN-APP SMS DISPATCH MODAL
+      ────────────────────────────────────────────────────────────── */}
+      <SendSmsModal
+        isOpen={Boolean(smsTarget)}
+        onClose={() => setSmsTarget(null)}
+        targetStaff={smsTarget?.staff}
+        targetSession={smsTarget?.session}
       />
     </div>
   );

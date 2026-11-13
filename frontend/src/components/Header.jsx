@@ -24,7 +24,8 @@ import {
   Menu,
   X,
   RefreshCw,
-  Radio
+  Radio,
+  Globe
 } from 'lucide-react';
 import { StoreLogo } from './common/StoreLogo';
 import { soundService } from '../services/soundService';
@@ -47,7 +48,8 @@ export const Header = ({ onOpenAddProduct }) => {
     isLiveMode,
     setIsLiveMode,
     liveSyncStatus,
-    refreshDataSilently
+    refreshDataSilently,
+    changeAppMode
   } = useApp();
 
   const { isKhmer } = useLanguage();
@@ -154,6 +156,19 @@ export const Header = ({ onOpenAddProduct }) => {
           >
             <Layers className="w-3.5 h-3.5 text-amber-500" />
             <span className="hidden md:inline">{isKhmer ? 'អេក្រង់ POS ពេញ' : 'Focus POS'}</span>
+          </button>
+        )}
+
+        {/* View E-Commerce Public Storefront Button */}
+        {changeAppMode && (
+          <button
+            type="button"
+            onClick={() => changeAppMode('ecommerce')}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 hover:text-amber-200 border border-amber-500/35 transition cursor-pointer shadow-sm"
+            title={isKhmer ? 'មើលហាងអនឡាញ (E-Commerce Storefront)' : 'View Public E-Commerce Storefront'}
+          >
+            <Globe className="w-3.5 h-3.5 text-amber-400" />
+            <span className="hidden sm:inline">{isKhmer ? 'ហាងអនឡាញ' : 'Online Store'}</span>
           </button>
         )}
 

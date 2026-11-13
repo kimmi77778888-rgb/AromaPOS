@@ -239,11 +239,15 @@ export const KitchenDisplaySystem = () => {
                       #{order.id.slice(-6).toUpperCase()}
                     </span>
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                      order.orderType === 'DINE_IN' 
+                      order.channel === 'ONLINE_ECOMMERCE'
+                        ? 'bg-cyan-950/80 text-cyan-300 border border-cyan-700'
+                        : order.orderType === 'DINE_IN' 
                         ? 'bg-amber-950/80 text-amber-300 border border-amber-800' 
                         : 'bg-sky-950/80 text-sky-300 border border-sky-800'
                     }`}>
-                      {order.orderType === 'DINE_IN' 
+                      {order.channel === 'ONLINE_ECOMMERCE'
+                        ? (order.orderType === 'DELIVERY' ? '🛵 Online Delivery' : '🛍️ Online Pickup')
+                        : order.orderType === 'DINE_IN' 
                         ? (isKhmer ? '🍽️ ញ៉ាំនៅហាង' : '🍽️ Dine-In') 
                         : (isKhmer ? '🥡 ខ្ចប់ទៅក្រៅ' : '🥡 Takeaway')}
                     </span>
@@ -253,6 +257,16 @@ export const KitchenDisplaySystem = () => {
                       </span>
                     )}
                   </div>
+
+                  {/* Online Delivery / Customer Details Pill */}
+                  {order.channel === 'ONLINE_ECOMMERCE' && (
+                    <div className="mt-2 p-2 rounded-xl bg-cyan-950/40 border border-cyan-800/60 text-[11px] text-cyan-200">
+                      <p className="font-bold">👤 {order.customerName || 'Online Customer'} ({order.customerPhone})</p>
+                      {order.deliveryAddress && (
+                        <p className="text-[10px] text-stone-300 truncate mt-0.5">📍 {order.deliveryAddress}</p>
+                      )}
+                    </div>
+                  )}
 
                   {/* Elapsed Live Timer */}
                   <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl font-mono text-xs font-bold border ${

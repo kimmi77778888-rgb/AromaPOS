@@ -16,6 +16,26 @@ export const AppProvider = ({ children }) => {
   const [activeTab, setActiveTab] = useState('pos'); // pos, kds, dashboard, inventory, orders, reports, staff
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  // Omnichannel App Mode: 'ecommerce' (Public Storefront) vs 'pos' (Staff POS Terminal)
+  const [appMode, setAppMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlView = urlParams.get('view') || urlParams.get('mode');
+      if (urlView === 'pos' || urlView === 'staff') return 'pos';
+      if (urlView === 'ecommerce' || urlView === 'shop') return 'ecommerce';
+      const saved = localStorage.getItem('aromapos_app_mode');
+      if (saved) return saved;
+    }
+    return 'ecommerce'; // Default landing page is the Public E-Commerce storefront
+  });
+
+  const changeAppMode = (mode) => {
+    setAppMode(mode);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('aromapos_app_mode', mode);
+    }
+  };
+
   // RBAC Role Separation & Permissions
   const userRole = useMemo(() => (user?.role || 'ADMIN').toUpperCase(), [user]);
 
@@ -1260,6 +1280,80 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  // Online Store E-Commerce Order Placement & Instant POS/KDS Sync
+  const placeOnlineOrder = useCallback((onlineOrder) => {
+    // 1. Deduct Product Stock
+    setProducts((prev) =>
+      prev.map((p) => {
+        const item = (onlineOrder.items || []).find((i) => i.productId === p.id);
+        if (item) {
+          return { ...p, stock: Math.max(0, p.stock - item.quantity) };
+        }
+        return p;
+      })
+    );
+
+    // 2. Deduct raw ingredients
+    setIngredients((prevIngs) => {
+      let lowIngredientTriggered = null;
+      const updated = prevIngs.map((ing) => {
+        let needed = 0;
+        (onlineOrder.items || []).forEach((item) => {
+          const prod = products.find((p) => p.id === item.productId);
+          if (prod?.recipe) {
+            const rItem = prod.recipe.find((r) => r.ingredientId === ing.id);
+            if (rItem) {
+              needed += rItem.quantity * item.quantity;
+            }
+          }
+        });
+        const newStock = Math.max(0, Math.round((ing.stock - needed) * 100) / 100);
+        if (newStock <= ing.minThreshold && ing.stock > ing.minThreshold) {
+          lowIngredientTriggered = ing.name;
+        }
+        return { ...ing, stock: newStock };
+      });
+
+      if (lowIngredientTriggered) {
+        showToast(`⚠️ Low stock alert for raw material: ${lowIngredientTriggered}`, 'warning');
+      }
+      return updated;
+    });
+
+    // 3. Add to orders state
+    setOrders((prev) => [onlineOrder, ...prev]);
+
+    // 4. Save to stored orders
+    try {
+      const cur = JSON.parse(localStorage.getItem('aromapos_orders') || '[]');
+      localStorage.setItem('aromapos_orders', JSON.stringify([onlineOrder, ...cur]));
+    } catch (e) {}
+
+    // 5. Broadcast to all open POS tabs & KDS
+    try {
+      if (typeof BroadcastChannel !== 'undefined') {
+        const liveBc = new BroadcastChannel('aroma_pos_live_channel');
+        liveBc.postMessage({ type: 'ORDER_PLACED', order: onlineOrder, timestamp: Date.now() });
+        liveBc.close();
+      }
+    } catch (e) {}
+
+    // 6. Celebration Confetti & Audio Chime
+    try {
+      confetti({
+        particleCount: 60,
+        spread: 80,
+        origin: { y: 0.6 },
+        colors: ['#D97706', '#10B981', '#F59E0B', '#3B82F6']
+      });
+    } catch (e) {}
+
+    soundService.playKaChing();
+    showToast(`🛵 Online Order #${onlineOrder.orderNumber} received from ${onlineOrder.customerName}!`, 'success');
+
+    return onlineOrder;
+  }, [products, showToast]);
+
   const handleRefundOrder = async (orderId, reason = 'Customer requested refund') => {
     try {
       const updated = await api.refundOrder(orderId, reason);
@@ -1817,7 +1911,11 @@ export const AppProvider = ({ children }) => {
         toggleTheme,
         activeAlarm,
         triggerDeviceAlarm,
-        silenceAlarm
+        silenceAlarm,
+        appMode,
+        setAppMode,
+        changeAppMode,
+        placeOnlineOrder
       }}
     >
       {children}

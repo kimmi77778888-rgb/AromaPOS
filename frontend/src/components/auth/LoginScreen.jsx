@@ -6,7 +6,7 @@ import { LanguageSwitcher } from '../common/LanguageSwitcher';
 import { FaceScannerModal } from './FaceScannerModal';
 import { getFullDeviceAuditSnapshot } from '../../utils/deviceDetector';
 
-export const LoginScreen = () => {
+export const LoginScreen = ({ onReturnToEcommerce }) => {
   const { login, faceLogin } = useApp();
   const { isKhmer } = useLanguage();
   const [email, setEmail] = useState('');
@@ -285,6 +285,19 @@ export const LoginScreen = () => {
                 </span>
               </div>
             </div>
+
+            {onReturnToEcommerce && (
+              <div className="pt-1 text-center">
+                <button
+                  type="button"
+                  onClick={onReturnToEcommerce}
+                  className="px-4 py-2 rounded-xl bg-stone-900 hover:bg-stone-850 border border-amber-500/30 text-amber-300 hover:text-amber-200 text-xs font-bold transition flex items-center justify-center gap-2 mx-auto cursor-pointer shadow"
+                >
+                  <span>🌐</span>
+                  <span>{isKhmer ? 'ត្រឡប់ទៅកាន់ហាងអនឡាញ (E-Commerce Storefront)' : 'Return to Public E-Commerce Storefront'}</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

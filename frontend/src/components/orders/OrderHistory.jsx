@@ -158,7 +158,13 @@ export const OrderHistory = () => {
       if (methodFilter !== 'ALL' && o.paymentMethod !== methodFilter) return false;
 
       // 4. Type match
-      if (typeFilter !== 'ALL' && o.orderType !== typeFilter) return false;
+      if (typeFilter !== 'ALL') {
+        if (typeFilter === 'ONLINE') {
+          if (o.channel !== 'ONLINE_ECOMMERCE' && o.orderType !== 'DELIVERY' && o.orderType !== 'PICKUP') return false;
+        } else if (o.orderType !== typeFilter) {
+          return false;
+        }
+      }
 
       // 5. Status match
       if (statusFilter !== 'ALL' && (o.status || 'COMPLETED') !== statusFilter) return false;
@@ -717,7 +723,8 @@ export const OrderHistory = () => {
               {[
                 { id: 'ALL', label: 'All' },
                 { id: 'DINE_IN', label: '🍽️ Dine-In' },
-                { id: 'TAKEAWAY', label: '🥡 Takeaway' }
+                { id: 'TAKEAWAY', label: '🥡 Takeaway' },
+                { id: 'ONLINE', label: '🌐 Online Store' }
               ].map((t) => (
                 <button
                   key={t.id}
@@ -956,7 +963,11 @@ export const OrderHistory = () => {
                           )}
                         </div>
                         <div className="mt-1">
-                          {order.orderType === 'DINE_IN' ? (
+                          {order.channel === 'ONLINE_ECOMMERCE' ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-cyan-950/80 text-cyan-300 border border-cyan-700/60 text-[10px] font-bold">
+                              {order.orderType === 'DELIVERY' ? '🛵 Online Delivery' : '🛍️ Online Pickup'}
+                            </span>
+                          ) : order.orderType === 'DINE_IN' ? (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-950/70 text-amber-300 border border-amber-700/60 text-[10px] font-bold">
                               🍽️ Dine-In
                             </span>
@@ -1142,11 +1153,37 @@ export const OrderHistory = () => {
                   <span className="font-bold text-stone-200 text-sm mt-0.5 block">
                     {selectedOrder.cashierName || 'Liam Vance'}
                   </span>
-                  <span className="text-[11px] text-amber-500 uppercase tracking-wider font-semibold">
-                    {selectedOrder.orderType === 'DINE_IN' ? '🍽️ Dine-In' : '🥡 Takeaway'}
+                  <span className="text-[11px] text-amber-500 uppercase tracking-wider font-semibold block">
+                    {selectedOrder.channel === 'ONLINE_ECOMMERCE'
+                      ? (selectedOrder.orderType === 'DELIVERY' ? '🛵 Online Delivery' : '🛍️ Online Pickup')
+                      : selectedOrder.orderType === 'DINE_IN' ? '🍽️ Dine-In' : '🥡 Takeaway'}
                   </span>
                 </div>
               </div>
+
+              {/* Online Delivery / Customer Details Card if present */}
+              {(selectedOrder.customerPhone || selectedOrder.deliveryAddress) && (
+                <div className="p-3.5 rounded-xl bg-cyan-950/30 border border-cyan-800/50 space-y-1 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-cyan-300">
+                      👤 {selectedOrder.customerName || 'Online Customer'}
+                    </span>
+                    <span className="font-mono text-cyan-400">
+                      📞 {selectedOrder.customerPhone}
+                    </span>
+                  </div>
+                  {selectedOrder.deliveryAddress && (
+                    <p className="text-[11px] text-stone-300">
+                      📍 {selectedOrder.deliveryAddress}
+                    </p>
+                  )}
+                  {selectedOrder.deliveryNotes && (
+                    <p className="text-[10px] text-stone-400 italic">
+                      Note: "{selectedOrder.deliveryNotes}"
+                    </p>
+                  )}
+                </div>
+              )}
 
               {/* Items List */}
               <div className="space-y-2">
