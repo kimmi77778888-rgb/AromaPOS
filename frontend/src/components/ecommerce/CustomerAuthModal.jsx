@@ -120,7 +120,7 @@ export const CustomerAuthModal = ({
   const handleQuickDemoLogin = (demoName, demoPhone) => {
     setIsLoading(true);
     setTimeout(() => {
-      const u = loginCustomer(demoPhone, '123456');
+      const u = loginCustomer(demoPhone, '123456', demoName);
       setIsLoading(false);
       if (onAuthSuccess) onAuthSuccess(u);
       onClose();

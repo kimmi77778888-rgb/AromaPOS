@@ -161,6 +161,7 @@ export const EcommerceCheckoutModal = ({
       orderType: orderData.orderType, // 'DELIVERY' | 'PICKUP'
       status: 'IN_PREPARATION', // Immediately moves to KDS
       createdAt: new Date().toISOString(),
+      customerId: orderData.customerId,
       customerName: orderData.customerName,
       customerPhone: orderData.customerPhone,
       carrier: orderData.carrier,

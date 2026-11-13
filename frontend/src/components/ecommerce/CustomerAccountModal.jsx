@@ -54,7 +54,7 @@ export const CustomerAccountModal = ({
   onReorderItems
 }) => {
   const { isKhmer } = useLanguage();
-  const { customerUser, logoutCustomer, orders = [], updateCustomerProfile } = useApp();
+  const { customerUser, logoutCustomer, orders = [], updateCustomerProfile, placeOnlineOrder } = useApp();
 
   const [activeTab, setActiveTab] = useState('ORDERS'); // 'ORDERS' | 'PROFILE' | 'ADDRESS'
   const [historyFilter, setHistoryFilter] = useState('ALL'); // 'ALL' | 'ACTIVE' | 'COMPLETED'
@@ -80,15 +80,41 @@ export const CustomerAccountModal = ({
     }
   }, [customerUser]);
 
+  // Combine live context orders with localStorage to guarantee immediate visibility
+  const allOrders = React.useMemo(() => {
+    try {
+      const local = JSON.parse(localStorage.getItem('aromapos_orders') || '[]');
+      const map = new Map();
+      (orders || []).forEach((o) => {
+        const key = o.id || o.orderNumber;
+        if (key) map.set(key, o);
+      });
+      local.forEach((o) => {
+        const key = o.id || o.orderNumber;
+        if (key && !map.has(key)) {
+          map.set(key, o);
+        }
+      });
+      return Array.from(map.values());
+    } catch (e) {
+      return orders || [];
+    }
+  }, [orders]);
+
   if (!isOpen || !customerUser) return null;
 
   // Filter orders associated with this customer
   const cleanPhone = (customerUser.phone || '').replace(/[^0-9]/g, '');
-  const userOrders = orders.filter((o) => {
+  const userOrders = allOrders.filter((o) => {
     const oPhone = (o.customerPhone || '').replace(/[^0-9]/g, '');
-    const phoneMatch = cleanPhone && oPhone && (cleanPhone.includes(oPhone) || oPhone.includes(cleanPhone));
-    const nameMatch = o.customerName && o.customerName.toLowerCase() === (customerUser.name || '').toLowerCase();
-    return phoneMatch || nameMatch;
+    const phoneMatch = cleanPhone && oPhone && (
+      cleanPhone.includes(oPhone) || 
+      oPhone.includes(cleanPhone) ||
+      (cleanPhone.length >= 8 && oPhone.slice(-8) === cleanPhone.slice(-8))
+    );
+    const idMatch = customerUser.id && o.customerId && customerUser.id === o.customerId;
+    const nameMatch = customerUser.name && o.customerName && customerUser.name.toLowerCase() === o.customerName.toLowerCase();
+    return phoneMatch || idMatch || nameMatch;
   });
 
   const filteredOrders = userOrders.filter((o) => {
@@ -103,6 +129,58 @@ export const CustomerAccountModal = ({
 
   const stampsCount = customerUser.stamps || 3;
   const totalStampsGoal = 10;
+
+  const handleCreateDemoOrder = () => {
+    const demoOrder = {
+      id: `ord-onl-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`,
+      orderNumber: `ORD-DEMO-${Math.floor(1000 + Math.random() * 9000)}`,
+      channel: 'ONLINE_ECOMMERCE',
+      orderType: 'DELIVERY',
+      status: 'IN_PREPARATION',
+      createdAt: new Date().toISOString(),
+      customerId: customerUser.id,
+      customerName: customerUser.name,
+      customerPhone: customerUser.phone,
+      deliveryAddress: customerUser.address || '#45, Street 288, Sangkat Boeng Keng Kang 1, Phnom Penh',
+      customerDistrict: customerUser.district || 'Boeng Keng Kang',
+      items: [
+        {
+          productId: 'prod-latte',
+          name: 'Iced Spanish Latte (កាហ្វេឡាតេ)',
+          nameKm: 'កាហ្វេឡាតេអេស្ប៉ាញ',
+          unitPrice: 3.50,
+          price: 3.50,
+          quantity: 1,
+          total: 3.50,
+          size: 'Regular',
+          ice: 'Normal',
+          sweetness: '50%'
+        },
+        {
+          productId: 'prod-croissant',
+          name: 'Butter Croissant (នំក្រូសង់ប៊ឺ)',
+          nameKm: 'នំក្រូសង់ប៊ឺស្រស់',
+          unitPrice: 2.00,
+          price: 2.00,
+          quantity: 1,
+          total: 2.00,
+          size: 'Standard'
+        }
+      ],
+      subtotal: 5.50,
+      deliveryFee: 1.00,
+      discount: 0,
+      total: 6.50,
+      rielTotal: '26,650',
+      paymentMethod: 'KHQR',
+      paymentStatus: 'PAID',
+      notes: 'Instant Demo Order with official NBC Bakong KHQR receipt'
+    };
+
+    if (placeOnlineOrder) {
+      placeOnlineOrder(demoOrder);
+    }
+  };
 
   const detectCarrier = (phone) => {
     const p = (phone || '').replace(/[^0-9]/g, '');
@@ -152,13 +230,22 @@ export const CustomerAccountModal = ({
               className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl object-cover border-2 border-amber-500/50 shadow-md"
             />
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="font-black text-base sm:text-xl text-white">
                   {customerUser.name}
                 </h3>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">
                   {customerUser.tier || 'Gold VIP Member'}
                 </span>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('PROFILE')}
+                  className="px-2.5 py-0.5 rounded-lg bg-stone-850 hover:bg-stone-800 border border-stone-700 text-stone-300 hover:text-amber-300 text-xs font-bold flex items-center gap-1 transition cursor-pointer"
+                  title={isKhmer ? 'កែប្រែព័ត៌មានគណនី' : 'Edit Profile'}
+                >
+                  <Edit3 className="w-3 h-3 text-amber-400" />
+                  <span>{isKhmer ? 'កែប្រែ' : 'Edit'}</span>
+                </button>
               </div>
               <p className="text-xs text-stone-400 font-mono flex items-center gap-2 mt-0.5">
                 <span>📞 {customerUser.phone}</span>
@@ -202,14 +289,20 @@ export const CustomerAccountModal = ({
                   key={idx}
                   className={`aspect-square rounded-xl flex items-center justify-center text-xs font-bold transition border ${
                     isStamped
-                      ? 'bg-amber-500 border-amber-400 text-stone-950 shadow-sm'
+                      ? 'bg-amber-500 border-amber-400 text-stone-950 shadow-md'
                       : isFinal
                       ? 'bg-amber-950/40 border-amber-600/60 text-amber-400 border-dashed animate-pulse'
                       : 'bg-stone-900 border-stone-800 text-stone-600'
                   }`}
                   title={isFinal ? 'Free Coffee Reward Cup!' : `Stamp #${idx + 1}`}
                 >
-                  {isStamped ? '☕' : isFinal ? '🎁' : idx + 1}
+                  {isStamped ? (
+                    <Coffee className="w-4 h-4 fill-stone-950 stroke-stone-950 stroke-[2.5]" />
+                  ) : isFinal ? (
+                    <Sparkles className="w-4 h-4 text-amber-400" />
+                  ) : (
+                    <span className="font-mono text-xs">{idx + 1}</span>
+                  )}
                 </div>
               );
             })}
@@ -285,14 +378,45 @@ export const CustomerAccountModal = ({
               </div>
 
               {filteredOrders.length === 0 ? (
-                <div className="py-16 text-center space-y-2 bg-stone-950/40 rounded-3xl border border-stone-850">
-                  <Package className="w-10 h-10 mx-auto text-stone-600 opacity-60" />
-                  <p className="font-bold text-stone-300">
-                    {isKhmer ? 'មិនមានប្រវត្តិកុម្ម៉ង់ក្នុងផ្នែកនេះទេ' : 'No orders found in this section.'}
-                  </p>
-                  <p className="text-xs text-stone-500">
-                    {isKhmer ? 'រាល់ការកុម្ម៉ង់របស់អ្នកនឹងបង្ហាញនៅទីនេះ' : 'Orders you place online will appear here with live tracking.'}
-                  </p>
+                <div className="py-12 px-4 text-center space-y-4 bg-stone-950/50 rounded-3xl border border-stone-850">
+                  <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mx-auto">
+                    <Package className="w-7 h-7 opacity-80" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="font-bold text-stone-200 text-sm">
+                      {isKhmer ? 'មិនទាន់មានប្រវត្តិកុម្ម៉ង់ក្នុងផ្នែកនេះទេ' : 'No orders found in this section'}
+                    </p>
+                    <p className="text-xs text-stone-400 max-w-sm mx-auto">
+                      {isKhmer 
+                        ? 'រាល់ការកុម្ម៉ង់របស់អ្នកនឹងបង្ហាញនៅទីនេះ ជាមួយការតាមដាន Live Rider និងទាញយកវិក្កយបត្រផ្លូវការ។' 
+                        : 'Orders you place online will appear here with live rider tracking and downloadable tax invoices.'}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-center gap-3 pt-2 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onClose();
+                        const menuEl = document.getElementById('menu');
+                        if (menuEl) menuEl.scrollIntoView({ behavior: 'smooth' });
+                      }}
+                      className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-black text-xs flex items-center gap-2 transition cursor-pointer shadow-md"
+                    >
+                      <Coffee className="w-3.5 h-3.5" />
+                      <span>{isKhmer ? 'កុម្ម៉ង់កាហ្វេឥឡូវនេះ' : 'Order Coffee Now'}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleCreateDemoOrder}
+                      className="px-4 py-2 rounded-xl bg-stone-900 hover:bg-stone-850 border border-stone-750 text-amber-300 font-bold text-xs flex items-center gap-2 transition cursor-pointer shadow-sm hover:border-amber-500/40"
+                      title={isKhmer ? 'បង្កើតកុម្ម៉ង់សាកល្បងភ្លាមៗដើម្បីតេស្តមុខងារវិក្កយបត្រ' : 'Create instant test order to preview invoice & tracking'}
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                      <span>{isKhmer ? '⚡ បង្កើតកុម្ម៉ង់សាកល្បង' : '⚡ Instant Test Order'}</span>
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-3">

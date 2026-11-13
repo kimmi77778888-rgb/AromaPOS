@@ -226,7 +226,13 @@ export const AppProvider = ({ children }) => {
   const [isRedeemingFreeStampDrink, setIsRedeemingFreeStampDrink] = useState(false);
 
   // Orders & Receipts
-  const [orders, setOrders] = useState([]);
+  const [orders, setOrders] = useState(() => {
+    try {
+      const saved = storage.getItem('aromapos_orders');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return [];
+  });
   const [receiptModalOrder, setReceiptModalOrder] = useState(null);
   const [receiptModalView, setReceiptModalView] = useState('customer');
 
@@ -1082,13 +1088,17 @@ export const AppProvider = ({ children }) => {
     return newCust;
   }, [showToast]);
 
-  const loginCustomer = useCallback((phoneOrEmail, password = '') => {
+  const loginCustomer = useCallback((phoneOrEmail, password = '', defaultName = '') => {
     const raw = (phoneOrEmail || '').trim();
     const cleanDigits = raw.replace(/[^0-9]/g, '');
 
     const found = customers.find((c) => {
       const cPhone = (c.phone || '').replace(/[^0-9]/g, '');
-      const matchPhone = cleanDigits && cPhone && (cPhone.includes(cleanDigits) || cleanDigits.includes(cPhone));
+      const matchPhone = cleanDigits && cPhone && (
+        cPhone.includes(cleanDigits) || 
+        cleanDigits.includes(cPhone) ||
+        (cleanDigits.length >= 8 && cPhone.slice(-8) === cleanDigits.slice(-8))
+      );
       const matchEmail = c.email && c.email.toLowerCase() === raw.toLowerCase();
       const matchName = c.name && c.name.toLowerCase() === raw.toLowerCase();
       return matchPhone || matchEmail || matchName;
@@ -1101,19 +1111,24 @@ export const AppProvider = ({ children }) => {
     }
 
     // Auto-create registered member for effortless checkout
+    const cleanName = defaultName ? defaultName.trim() : (raw.includes('@') ? raw.split('@')[0] : `Coffee VIP (${raw.slice(-4)})`);
     const newMember = {
       id: `cust-${Date.now()}`,
-      name: raw.includes('@') ? raw.split('@')[0] : `Member ${raw.slice(-4)}`,
+      name: cleanName,
       phone: raw,
       email: raw.includes('@') ? raw : '',
-      tier: 'Aroma Member',
-      points: 100,
-      stamps: 1,
-      avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=150&q=80'
+      district: 'Boeng Keng Kang',
+      address: '#45, Street 288, Sangkat Boeng Keng Kang 1, Phnom Penh',
+      tier: 'Gold VIP Member',
+      points: 150,
+      stamps: 3,
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
+      visits: 3,
+      createdAt: new Date().toISOString()
     };
     setCustomers((prev) => [newMember, ...prev]);
     setCustomerUser(newMember);
-    showToast(`ចូលគណនីបានជោគជ័យ!`, 'success');
+    showToast(`ស្វាគមន៍ ${newMember.name}! ទទួលបាន ១៥០ ពិន្ទុ & ត្រាកាហ្វេ`, 'success');
     return newMember;
   }, [customers, showToast]);
 
@@ -1433,7 +1448,31 @@ export const AppProvider = ({ children }) => {
       localStorage.setItem('aromapos_orders', JSON.stringify([onlineOrder, ...cur]));
     } catch (e) {}
 
-    // 5. Broadcast to all open POS tabs & KDS
+    // 5. Award loyalty points & stamps to active customer
+    try {
+      setCustomerUser((prev) => {
+        if (!prev) return prev;
+        const totalVal = Number(onlineOrder.total || onlineOrder.totalAmount || 0);
+        const earnedPts = Math.max(10, Math.floor(totalVal * 10));
+        const currentStamps = Number(prev.stamps || 0);
+        const newStamps = (currentStamps % 10) + 1;
+        const updated = {
+          ...prev,
+          points: (prev.points || 0) + earnedPts,
+          stamps: newStamps,
+          visits: (prev.visits || 0) + 1
+        };
+        setCustomers((list) =>
+          list.map((c) => (c.id === updated.id || c.phone === updated.phone ? updated : c))
+        );
+        try {
+          storage.setItem('aromapos_customer_user', JSON.stringify(updated));
+        } catch (err) {}
+        return updated;
+      });
+    } catch (e) {}
+
+    // 6. Broadcast to all open POS tabs & KDS
     try {
       if (typeof BroadcastChannel !== 'undefined') {
         const liveBc = new BroadcastChannel('aroma_pos_live_channel');
@@ -1442,7 +1481,7 @@ export const AppProvider = ({ children }) => {
       }
     } catch (e) {}
 
-    // 6. Celebration Confetti & Audio Chime
+    // 7. Celebration Confetti & Audio Chime
     try {
       confetti({
         particleCount: 60,

@@ -158,6 +158,7 @@ export const EcommerceCartDrawer = ({
 
     const orderData = {
       orderType,
+      customerId: customerUser?.id,
       customerName: customerName.trim(),
       customerPhone: customerPhone.trim(),
       carrier: carrier?.name || 'Cambodia Mobile',
