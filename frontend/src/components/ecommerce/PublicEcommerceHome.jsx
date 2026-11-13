@@ -25,7 +25,12 @@ import {
   Tag,
   Menu,
   X,
-  User
+  User,
+  LocateFixed,
+  Navigation,
+  Compass,
+  Radio,
+  ChevronDown
 } from 'lucide-react';
 import { LanguageSwitcher } from '../common/LanguageSwitcher';
 import { EcommerceCustomizationModal } from './EcommerceCustomizationModal';
@@ -35,11 +40,63 @@ import { CustomerOrderTracker } from './CustomerOrderTracker';
 import { CustomerAuthModal } from './CustomerAuthModal';
 import { CustomerAccountModal } from './CustomerAccountModal';
 import { LiveDeliveryMapModal } from './LiveDeliveryMapModal';
+import { getLiveDeviceLocation } from '../../services/routingService';
+
+export const TUBE_STORE_BRANCHES = [
+  { 
+    id: 'bkk1', 
+    name: 'Aroma / Tube BKK1 Flagship', 
+    nameKm: 'សាខា បឹងកេងកង ១ (ផ្លូវ ៥៧)', 
+    address: 'Street 57, Sangkat Boeng Keng Kang 1, Phnom Penh', 
+    hours: '6:30 AM - 9:00 PM',
+    distance: '0.8 km',
+    readyTime: '~10 mins'
+  },
+  { 
+    id: 'tuolkork', 
+    name: 'Aroma / Tube Toul Kork TK Avenue', 
+    nameKm: 'សាខា ទួលគោក (TK Avenue)', 
+    address: 'TK Avenue Mall, Street 315, Tuol Kork, Phnom Penh', 
+    hours: '7:00 AM - 8:30 PM',
+    distance: '3.2 km',
+    readyTime: '~12 mins'
+  },
+  { 
+    id: 'riverside', 
+    name: 'Aroma / Tube Riverside Heritage', 
+    nameKm: 'សាខា មាត់ទន្លេ (ដូនពេញ)', 
+    address: '#118, Preah Sisowath Quay, Daun Penh, Phnom Penh', 
+    hours: '7:00 AM - 10:00 PM',
+    distance: '2.1 km',
+    readyTime: '~10 mins'
+  },
+  { 
+    id: 'edengarden', 
+    name: 'Aroma / Tube Eden Garden Mall', 
+    nameKm: 'សាខា អ៊ីដិនហ្គាដិន (បឹងកក់)', 
+    address: 'Phnom Penh City Center, Srah Chak, Daun Penh', 
+    hours: '7:30 AM - 9:30 PM',
+    distance: '2.8 km',
+    readyTime: '~15 mins'
+  }
+];
+
+export const PHNOM_PENH_QUICK_DISTRICTS = [
+  'Boeng Keng Kang',
+  'Daun Penh',
+  'Tuol Kouk',
+  'Chamkar Mon',
+  'Sen Sok',
+  'Chbar Ampov',
+  'Mean Chey',
+  'Chroy Changvar'
+];
 
 const CATEGORIES = [
   { id: 'ALL', name: 'All Menu', nameKm: 'មុខទំនិញទាំងអស់', icon: Coffee },
-  { id: 'Hot Coffee', name: 'Hot Coffee', nameKm: 'កាហ្វេក្តៅ', icon: Flame },
+  { id: 'Tube Signatures', name: 'Tube Signatures', nameKm: 'កាហ្វេពិសេស Tube', icon: Sparkles },
   { id: 'Cold Brew & Iced', name: 'Iced & Cold Brew', nameKm: 'កាហ្វេត្រជាក់', icon: Snowflake },
+  { id: 'Hot Coffee', name: 'Hot Coffee', nameKm: 'កាហ្វេក្តៅ', icon: Flame },
   { id: 'Signature Frappes', name: 'Frappes & Blends', nameKm: 'ហ្វ្រេបប៉េពិសេស', icon: Sparkles },
   { id: 'Artisan Bakery', name: 'Fresh Bakery', nameKm: 'នំប៉័ង & នំខេក', icon: ShoppingBag },
   { id: 'Whole Bean Bags', name: 'Whole Beans', nameKm: 'គ្រាប់កាហ្វេ', icon: Layers },
@@ -54,6 +111,42 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+
+  // Tube Coffee Fulfillment State (Delivery vs Store Pickup)
+  const [fulfillmentMode, setFulfillmentMode] = useState('DELIVERY'); // 'DELIVERY' | 'PICKUP'
+  const [selectedBranchId, setSelectedBranchId] = useState('bkk1');
+  const [currentDeliveryAddress, setCurrentDeliveryAddress] = useState(
+    customerUser?.address || '#45, Street 288, Sangkat Boeng Keng Kang 1, Phnom Penh'
+  );
+  const [isBranchModalOpen, setIsBranchModalOpen] = useState(false);
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const [addressInputText, setAddressInputText] = useState('');
+  const [selectedDistrictFilter, setSelectedDistrictFilter] = useState('Boeng Keng Kang');
+  const [isLocatingGps, setIsLocatingGps] = useState(false);
+
+  // Sync address if customerUser changes
+  useEffect(() => {
+    if (customerUser?.address) {
+      setCurrentDeliveryAddress(`${customerUser.address}${customerUser.district ? `, Sangkat ${customerUser.district}` : ''}, Phnom Penh`);
+    }
+  }, [customerUser]);
+
+  const activeBranch = useMemo(() => {
+    return TUBE_STORE_BRANCHES.find((b) => b.id === selectedBranchId) || TUBE_STORE_BRANCHES[0];
+  }, [selectedBranchId]);
+
+  const handleUseLiveGps = async () => {
+    setIsLocatingGps(true);
+    const loc = await getLiveDeviceLocation();
+    setIsLocatingGps(false);
+    if (loc.success && loc.isRealGps) {
+      setCurrentDeliveryAddress(`GPS Pinpoint (Lat: ${loc.lat.toFixed(4)}, Lon: ${loc.lon.toFixed(4)}), Sangkat Boeng Keng Kang 1, Phnom Penh`);
+      setIsAddressModalOpen(false);
+    } else {
+      setCurrentDeliveryAddress('#45, Street 288, Sangkat Boeng Keng Kang 1, Phnom Penh');
+      setIsAddressModalOpen(false);
+    }
+  };
 
   // E-Commerce Modals & Cart State
   const [selectedProductForModal, setSelectedProductForModal] = useState(null);
@@ -112,6 +205,7 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
       const matchCat =
         selectedCategory === 'ALL' ||
         p.category === selectedCategory ||
+        (selectedCategory === 'Tube Signatures' && (p.category === 'Tube Signatures' || p.name?.includes('Tube') || p.name?.includes('Thnol') || p.name?.includes('Phum') || p.name?.includes('Passion'))) ||
         (selectedCategory === 'Cold Brew & Iced' && (p.category === 'Cold Brew & Iced' || p.category?.includes('Cold') || p.category?.includes('Iced')));
       
       const q = searchQuery.toLowerCase().trim();
@@ -126,6 +220,7 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
   }, [products, selectedCategory, searchQuery]);
 
   const totalCartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const subtotal = cartItems.reduce((sum, item) => sum + (item.totalPrice || item.unitPrice * item.quantity), 0);
 
   return (
     <div className="min-h-screen bg-stone-950 text-stone-100 font-sans selection:bg-amber-500 selection:text-stone-950">
@@ -470,6 +565,100 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
           </div>
         </div>
 
+        {/* ─────────────────────────────────────────────────────────────
+            TUBE COFFEE ORDER FULFILLMENT SWITCHER (DELIVERY VS PICK-UP)
+        ────────────────────────────────────────────────────────────── */}
+        <div className="mb-8 p-4 sm:p-5 rounded-3xl bg-stone-900/90 border border-stone-800 shadow-2xl backdrop-blur-md">
+          {/* Segmented 2-Way Tab Switcher */}
+          <div className="grid grid-cols-2 p-1.5 rounded-2xl bg-stone-950 border border-stone-800/80 max-w-md mx-auto">
+            <button
+              type="button"
+              onClick={() => setFulfillmentMode('DELIVERY')}
+              className={`py-2.5 px-4 rounded-xl font-black text-xs sm:text-sm flex items-center justify-center gap-2 transition cursor-pointer ${
+                fulfillmentMode === 'DELIVERY'
+                  ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-stone-950 shadow-lg shadow-amber-950/40'
+                  : 'text-stone-400 hover:text-white'
+              }`}
+            >
+              <Bike className="w-4 h-4" />
+              <span>{isKhmer ? 'ដឹកជញ្ជូន (Delivery)' : 'Delivery'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setFulfillmentMode('PICKUP')}
+              className={`py-2.5 px-4 rounded-xl font-black text-xs sm:text-sm flex items-center justify-center gap-2 transition cursor-pointer ${
+                fulfillmentMode === 'PICKUP'
+                  ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-stone-950 shadow-lg shadow-amber-950/40'
+                  : 'text-stone-400 hover:text-white'
+              }`}
+            >
+              <Store className="w-4 h-4" />
+              <span>{isKhmer ? 'ទៅយកនៅហាង (Pick-up)' : 'Pick-up'}</span>
+            </button>
+          </div>
+
+          {/* Fulfillment Sub-Detail Strip */}
+          <div className="mt-4 pt-3 border-t border-stone-800/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+            {fulfillmentMode === 'DELIVERY' ? (
+              <>
+                <div className="flex items-center gap-3 text-stone-300 w-full sm:w-auto">
+                  <div className="w-9 h-9 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+                    <MapPin className="w-4 h-4" />
+                  </div>
+                  <div className="overflow-hidden">
+                    <p className="font-bold text-white truncate max-w-md">
+                      {isKhmer ? 'ដឹកជញ្ជូនទៅកាន់:' : 'Delivering to:'} <span className="text-amber-400">{currentDeliveryAddress}</span>
+                    </p>
+                    <p className="text-[11px] text-stone-400 flex items-center gap-1.5 mt-0.5">
+                      <Clock className="w-3 h-3 text-emerald-400" />
+                      <span>{isKhmer ? 'រយៈពេលដឹក: ~២០-៣០ នាទី • ដឹកឥតគិតថ្លៃសម្រាប់ការកុម្ម៉ង់ចាប់ពី $១០ ឡើង' : 'Est. Delivery: ~20-30 mins • Free delivery on orders > $10'}</span>
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAddressInputText(currentDeliveryAddress);
+                    setIsAddressModalOpen(true);
+                  }}
+                  className="py-2 px-3.5 rounded-xl bg-stone-950 hover:bg-stone-850 border border-stone-750 text-amber-300 hover:text-white font-bold text-xs flex items-center gap-1.5 transition cursor-pointer shrink-0"
+                >
+                  <MapPin className="w-3.5 h-3.5 text-amber-400" />
+                  <span>{isKhmer ? 'ប្តូរអាសយដ្ឋាន' : 'Change Address'}</span>
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-3 text-stone-300 w-full sm:w-auto">
+                  <div className="w-9 h-9 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+                    <Store className="w-4 h-4" />
+                  </div>
+                  <div className="overflow-hidden">
+                    <p className="font-bold text-white truncate max-w-md">
+                      {isKhmer ? 'ទៅយកនៅសាខា:' : 'Pick up at:'} <span className="text-amber-400">{activeBranch?.nameKm || activeBranch?.name}</span>
+                    </p>
+                    <p className="text-[11px] text-stone-400 flex items-center gap-1.5 mt-0.5">
+                      <Sparkles className="w-3 h-3 text-amber-400" />
+                      <span>{activeBranch?.address} • <strong className="text-emerald-400">{isKhmer ? 'ឆុងរួចរាល់ក្នុង ~១០ នាទី (មិនបាច់តម្រង់ជួរ)' : 'Ready in ~10 mins (Skip queue)'}</strong></span>
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setIsBranchModalOpen(true)}
+                  className="py-2 px-3.5 rounded-xl bg-stone-950 hover:bg-stone-850 border border-stone-750 text-amber-300 hover:text-white font-bold text-xs flex items-center gap-1.5 transition cursor-pointer shrink-0"
+                >
+                  <Store className="w-3.5 h-3.5 text-amber-400" />
+                  <span>{isKhmer ? 'ប្តូរសាខា' : 'Change Branch'}</span>
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+
         {/* Category Filter Tabs */}
         <div className="flex items-center gap-2 overflow-x-auto pb-4 scrollbar-none mb-8">
           {CATEGORIES.map((cat) => {
@@ -738,6 +927,9 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
           setAuthModalPrompt(isKhmer ? 'សូមចុះឈ្មោះ ឬចូលគណនីមុនពេលទូទាត់ប្រាក់កាហ្វេ' : 'Please register or sign in to proceed to checkout');
           setIsAuthModalOpen(true);
         }}
+        initialOrderType={fulfillmentMode}
+        initialBranch={selectedBranchId}
+        initialAddress={currentDeliveryAddress}
       />
 
       {/* 3. Checkout & Payment Modal (Bakong KHQR & COD) */}
@@ -780,17 +972,19 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
           // If cart has items, immediately proceed to checkout with authenticated profile!
           if (cartItems.length > 0) {
             const subtotal = cartItems.reduce((sum, item) => sum + (item.totalPrice || item.unitPrice * item.quantity), 0);
-            const deliveryFee = subtotal >= 10 ? 0 : 1.00;
+            const isPickup = fulfillmentMode === 'PICKUP';
+            const deliveryFee = isPickup ? 0 : (subtotal >= 10 ? 0 : 1.00);
             const grandTotal = Math.round((subtotal + deliveryFee) * 100) / 100;
+            const branchObj = TUBE_STORE_BRANCHES.find((b) => b.id === selectedBranchId) || TUBE_STORE_BRANCHES[0];
             handleProceedToCheckout({
-              orderType: 'DELIVERY',
+              orderType: fulfillmentMode,
               customerId: u.id,
               customerName: u.name,
               customerPhone: u.phone,
               carrier: 'Cellcard 4G LTE',
-              deliveryAddress: u.address ? `${u.address}, ${u.district || 'Boeng Keng Kang'}, Phnom Penh` : '#45, Street 288, Sangkat Boeng Keng Kang 1, Phnom Penh',
+              deliveryAddress: !isPickup ? (u.address ? `${u.address}, ${u.district || 'Boeng Keng Kang'}, Phnom Penh` : currentDeliveryAddress) : null,
               deliveryNotes: '',
-              pickupBranch: null,
+              pickupBranch: isPickup ? (branchObj?.name || 'Aroma BKK1 Flagship Roastery') : null,
               cartItems,
               subtotal,
               discount: 0,
@@ -828,6 +1022,251 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
         }}
         order={activeDeliveryOrderForMap || latestPlacedOrder}
       />
+
+      {/* ─────────────────────────────────────────────────────────────
+          8. TUBE COFFEE STICKY FLOATING CART BAR (BOTTOM PILL)
+      ────────────────────────────────────────────────────────────── */}
+      {totalCartCount > 0 && (
+        <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-40 w-[92%] max-w-lg animate-fade-in font-sans">
+          <button
+            type="button"
+            onClick={() => setIsCartOpen(true)}
+            className="w-full py-3.5 px-5 rounded-3xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-black flex items-center justify-between shadow-2xl shadow-amber-500/40 border border-amber-300 transition-all cursor-pointer active:scale-95 group"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-stone-950 text-amber-400 flex items-center justify-center font-black text-sm shadow">
+                {totalCartCount}
+              </div>
+              <div className="text-left leading-tight">
+                <p className="text-[10px] uppercase tracking-wider text-stone-900 font-extrabold flex items-center gap-1">
+                  <span>{fulfillmentMode === 'DELIVERY' ? (isKhmer ? '🛵 ដឹកជញ្ជូន' : '🛵 Delivery') : (isKhmer ? '🏬 ទៅយកនៅហាង' : '🏬 Pick Up')}</span>
+                  <span>•</span>
+                  <span>{totalCartCount} {isKhmer ? 'កែវ/មុខ' : 'items'}</span>
+                </p>
+                <p className="text-base font-black font-mono">
+                  ${subtotal.toFixed(2)}{' '}
+                  <span className="text-xs font-normal opacity-85">
+                    ({Math.round(subtotal * 4100).toLocaleString()} ៛)
+                  </span>
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider bg-stone-950/15 group-hover:bg-stone-950/25 px-3.5 py-2 rounded-2xl transition">
+              <span>{isKhmer ? 'មើលកន្ត្រក & កុម្ម៉ង់' : 'View Cart & Order'}</span>
+              <ArrowRight className="w-4 h-4 stroke-[3]" />
+            </div>
+          </button>
+        </div>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────
+          9. TUBE COFFEE STORE BRANCH SELECTOR MODAL
+      ────────────────────────────────────────────────────────────── */}
+      {isBranchModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in font-sans">
+          <div 
+            className="relative w-full max-w-lg bg-stone-900 border border-stone-800 rounded-3xl overflow-hidden shadow-2xl p-6 space-y-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                  <Store className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-black text-lg text-white">
+                    {isKhmer ? 'ជ្រើសរើសសាខា Tube Coffee' : 'Select Tube Coffee Outlet'}
+                  </h3>
+                  <p className="text-xs text-stone-400">
+                    {isKhmer ? 'ទៅយកកាហ្វេភ្លាមៗ មិនបាច់រង់ចាំតម្រង់ជួរ' : 'Pick up quickly without waiting in line'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsBranchModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-stone-800 hover:bg-stone-700 text-stone-400 hover:text-white flex items-center justify-center transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-2.5 max-h-[60vh] overflow-y-auto pr-1">
+              {TUBE_STORE_BRANCHES.map((b) => {
+                const isSelected = selectedBranchId === b.id;
+                return (
+                  <div
+                    key={b.id}
+                    onClick={() => {
+                      setSelectedBranchId(b.id);
+                      setFulfillmentMode('PICKUP');
+                      setIsBranchModalOpen(false);
+                    }}
+                    className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
+                      isSelected
+                        ? 'bg-amber-950/40 border-amber-500 ring-2 ring-amber-500/20 shadow-lg'
+                        : 'bg-stone-950/70 border-stone-800 hover:border-stone-700 hover:bg-stone-950'
+                    }`}
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-bold text-sm text-white">
+                          {isKhmer ? b.nameKm : b.name}
+                        </h4>
+                        {isSelected && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                            Active
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-stone-400 flex items-center gap-1">
+                        <MapPin className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                        <span>{b.address}</span>
+                      </p>
+                      <p className="text-[11px] text-stone-500 flex items-center gap-2">
+                        <span>🕒 {b.hours}</span>
+                        <span>•</span>
+                        <span className="text-emerald-400 font-bold">⚡ Ready in {b.readyTime}</span>
+                      </p>
+                    </div>
+
+                    <div className="text-right shrink-0">
+                      <span className="text-xs font-mono font-bold text-amber-400 block">
+                        {b.distance}
+                      </span>
+                      <button
+                        type="button"
+                        className={`mt-2 py-1.5 px-3 rounded-xl text-xs font-bold transition ${
+                          isSelected
+                            ? 'bg-amber-500 text-stone-950'
+                            : 'bg-stone-800 text-stone-300 hover:bg-stone-700'
+                        }`}
+                      >
+                        {isSelected ? '✓ Selected' : 'Choose'}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────
+          10. TUBE COFFEE DELIVERY ADDRESS CHANGER MODAL
+      ────────────────────────────────────────────────────────────── */}
+      {isAddressModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in font-sans">
+          <div 
+            className="relative w-full max-w-lg bg-stone-900 border border-stone-800 rounded-3xl overflow-hidden shadow-2xl p-6 space-y-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                  <MapPin className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-black text-lg text-white">
+                    {isKhmer ? 'ប្តូរទីតាំងដឹកជញ្ជូន' : 'Set Delivery Address'}
+                  </h3>
+                  <p className="text-xs text-stone-400">
+                    {isKhmer ? 'ដឹកជញ្ជូនរហ័សទូទាំងរាជធានីភ្នំពេញ' : 'Fast door-to-door courier across Phnom Penh'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAddressModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-stone-800 hover:bg-stone-700 text-stone-400 hover:text-white flex items-center justify-center transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Hardware Live GPS Quick Pin */}
+            <button
+              type="button"
+              onClick={handleUseLiveGps}
+              disabled={isLocatingGps}
+              className="w-full py-3 px-4 rounded-2xl bg-emerald-950/60 hover:bg-emerald-900/60 border border-emerald-600/60 text-emerald-300 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer shadow-sm active:scale-95"
+            >
+              <LocateFixed className={`w-4 h-4 ${isLocatingGps ? 'animate-spin' : ''}`} />
+              <span>
+                {isLocatingGps
+                  ? (isKhmer ? 'កំពុងចាប់យក GPS ពីឧបករណ៍...' : 'Acquiring Device GPS...')
+                  : (isKhmer ? '📍 ប្រើប្រាស់ទីតាំង GPS ជាក់ស្តែងលើទូរស័ព្ទ/កុំព្យូទ័រ' : '📍 Use Current Live Device GPS')}
+              </span>
+            </button>
+
+            {/* Quick District Pills */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-stone-300">
+                {isKhmer ? 'ជ្រើសរើសខណ្ឌ/សង្កាត់:' : 'Select District / Sangkat:'}
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {PHNOM_PENH_QUICK_DISTRICTS.map((d) => (
+                  <button
+                    key={d}
+                    type="button"
+                    onClick={() => {
+                      setSelectedDistrictFilter(d);
+                      setCurrentDeliveryAddress(`#45, Street 288, Sangkat ${d}, Phnom Penh`);
+                      setFulfillmentMode('DELIVERY');
+                      setIsAddressModalOpen(false);
+                    }}
+                    className={`py-1.5 px-3 rounded-xl text-xs font-bold transition cursor-pointer ${
+                      selectedDistrictFilter === d
+                        ? 'bg-amber-500 text-stone-950 font-black'
+                        : 'bg-stone-950 text-stone-400 hover:text-stone-200 border border-stone-800'
+                    }`}
+                  >
+                    {d}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Custom Street Address Input */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-stone-300">
+                {isKhmer ? 'ឬបញ្ចូលអាសយដ្ឋានលម្អិត:' : 'Or enter exact street/building details:'}
+              </label>
+              <input
+                type="text"
+                value={addressInputText}
+                onChange={(e) => setAddressInputText(e.target.value)}
+                placeholder="e.g. #45, St. 288, Sangkat Boeng Keng Kang 1, Phnom Penh"
+                className="w-full bg-stone-950 border border-stone-800 rounded-2xl px-4 py-2.5 text-xs text-stone-100 placeholder-stone-600 focus:outline-none focus:border-amber-500"
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsAddressModalOpen(false)}
+                className="px-4 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-300 font-bold text-xs"
+              >
+                {isKhmer ? 'បោះបង់' : 'Cancel'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (addressInputText.trim()) {
+                    setCurrentDeliveryAddress(addressInputText.trim());
+                  }
+                  setFulfillmentMode('DELIVERY');
+                  setIsAddressModalOpen(false);
+                }}
+                className="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-black text-xs"
+              >
+                {isKhmer ? 'រក្សាទុក' : 'Save Address'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

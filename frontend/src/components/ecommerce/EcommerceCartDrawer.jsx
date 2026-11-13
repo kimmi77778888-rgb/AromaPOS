@@ -64,18 +64,40 @@ export const EcommerceCartDrawer = ({
   onUpdateQuantity,
   onRemoveItem,
   onProceedToCheckout,
-  onRequireAuth
+  onRequireAuth,
+  initialOrderType = 'DELIVERY',
+  initialBranch = 'bkk1',
+  initialAddress = ''
 }) => {
   const { isKhmer } = useLanguage();
   const { customerUser } = useApp();
 
-  const [orderType, setOrderType] = useState('DELIVERY'); // 'DELIVERY' | 'PICKUP'
+  const [orderType, setOrderType] = useState(initialOrderType); // 'DELIVERY' | 'PICKUP'
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [district, setDistrict] = useState(PHNOM_PENH_DISTRICTS[0]);
-  const [streetAddress, setStreetAddress] = useState('');
+  const [streetAddress, setStreetAddress] = useState(initialAddress || '');
   const [deliveryNotes, setDeliveryNotes] = useState('');
-  const [selectedBranch, setSelectedBranch] = useState(STORE_BRANCHES[0].id);
+  const [selectedBranch, setSelectedBranch] = useState(initialBranch || STORE_BRANCHES[0].id);
+
+  // Sync fulfillment type whenever passed from parent Tube flow
+  useEffect(() => {
+    if (initialOrderType) {
+      setOrderType(initialOrderType);
+    }
+  }, [initialOrderType, isOpen]);
+
+  useEffect(() => {
+    if (initialBranch) {
+      setSelectedBranch(initialBranch);
+    }
+  }, [initialBranch, isOpen]);
+
+  useEffect(() => {
+    if (initialAddress && !streetAddress) {
+      setStreetAddress(initialAddress);
+    }
+  }, [initialAddress, isOpen]);
 
   // Sync details from authenticated customer account
   useEffect(() => {

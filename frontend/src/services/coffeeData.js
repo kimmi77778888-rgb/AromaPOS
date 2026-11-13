@@ -17,6 +17,72 @@ export const INITIAL_INGREDIENTS = [
 
 export const INITIAL_PRODUCTS = [
   {
+    id: "prod-thnol",
+    name: "Iced Thnol Coffee (Tube Signature)",
+    nameKm: "កាហ្វេថ្នល់ទឹកដោះគោ (Tube Signature)",
+    category: "Tube Signatures",
+    categoryKm: "កាហ្វេពិសេស Tube",
+    price: 2.25,
+    stock: 50,
+    imageUrl: "https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?auto=format&fit=crop&w=600&q=80",
+    description: "Cambodia's iconic dark roasted Robusta espresso blended with creamy sweetened condensed milk over crushed ice.",
+    sku: "SKU-TUBE-001",
+    recipe: [
+      { ingredientId: "ing-1", ingredientName: "House Espresso Blend Beans", quantity: 20, unit: "g" },
+      { ingredientId: "ing-3", ingredientName: "Organic Whole Milk", quantity: 50, unit: "ml" },
+      { ingredientId: "ing-12", ingredientName: "Cold Beverage Cups (16oz)", quantity: 1, unit: "cups" }
+    ]
+  },
+  {
+    id: "prod-phum",
+    name: "Cafe Phum (Village Roast)",
+    nameKm: "កាហ្វេភូមិខ្មែរ (Cafe Phum)",
+    category: "Tube Signatures",
+    categoryKm: "កាហ្វេពិសេស Tube",
+    price: 2.00,
+    stock: 45,
+    imageUrl: "https://images.unsplash.com/photo-1461023058943-07fcbe16d735?auto=format&fit=crop&w=600&q=80",
+    description: "Traditional village-style dark drip coffee, intense and deeply aromatic with rich caramel notes.",
+    sku: "SKU-TUBE-002",
+    recipe: [
+      { ingredientId: "ing-1", ingredientName: "House Espresso Blend Beans", quantity: 22, unit: "g" },
+      { ingredientId: "ing-12", ingredientName: "Cold Beverage Cups (16oz)", quantity: 1, unit: "cups" }
+    ]
+  },
+  {
+    id: "prod-passion",
+    name: "Passion Milk Cream Tea",
+    nameKm: "តែផាសិនទឹកដោះគោស្រស់",
+    category: "Tube Signatures",
+    categoryKm: "កាហ្វេពិសេស Tube",
+    price: 2.50,
+    stock: 35,
+    imageUrl: "https://images.unsplash.com/photo-1556881286-fc6915169721?auto=format&fit=crop&w=600&q=80",
+    description: "Tart tropical passion fruit seeds shaken with jasmine green tea and topped with sweet milk foam.",
+    sku: "SKU-TUBE-003",
+    recipe: [
+      { ingredientId: "ing-3", ingredientName: "Organic Whole Milk", quantity: 120, unit: "ml" },
+      { ingredientId: "ing-12", ingredientName: "Cold Beverage Cups (16oz)", quantity: 1, unit: "cups" }
+    ]
+  },
+  {
+    id: "prod-matcha-tube",
+    name: "Matcha Green Tea Latte",
+    nameKm: "តែបៃតងម៉ាត់ឆាទឹកដោះគោ",
+    category: "Tube Signatures",
+    categoryKm: "កាហ្វេពិសេស Tube",
+    price: 2.75,
+    stock: 30,
+    imageUrl: "https://images.unsplash.com/photo-1536256263959-770b48d82b0a?auto=format&fit=crop&w=600&q=80",
+    description: "Japanese Uji ceremonial matcha layered with fresh cold milk and sweet whipped foam.",
+    sku: "SKU-TUBE-004",
+    recipe: [
+      { ingredientId: "ing-10", ingredientName: "Ceremonial Uji Matcha Powder", quantity: 15, unit: "g" },
+      { ingredientId: "ing-3", ingredientName: "Organic Whole Milk", quantity: 180, unit: "ml" },
+      { ingredientId: "ing-12", ingredientName: "Cold Beverage Cups (16oz)", quantity: 1, unit: "cups" }
+    ]
+  },
+  {
     id: "prod-1",
     name: "Artisan Pour Over",
     nameKm: "កាហ្វេតម្រង Artisan Pour Over",
