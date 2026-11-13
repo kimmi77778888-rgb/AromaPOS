@@ -18,8 +18,14 @@ import {
   Lock,
   BarChart3,
   Volume2,
-  RefreshCw
+  RefreshCw,
+  Bike,
+  User,
+  LogOut,
+  MapPin,
+  ExternalLink
 } from 'lucide-react';
+import { UserAvatar } from '../common/UserAvatar';
 import { soundService } from '../../services/soundService';
 import { 
   AreaChart, 
@@ -52,7 +58,10 @@ export const Dashboard = () => {
     isLiveMode,
     setIsLiveMode,
     liveSyncStatus,
-    refreshDataSilently
+    refreshDataSilently,
+    user,
+    logout,
+    setIsProfileModalOpen
   } = useApp();
 
   const { isKhmer, formatKHR, formatUSD } = useLanguage();
@@ -129,6 +138,85 @@ export const Dashboard = () => {
 
   return (
     <div className="flex-1 overflow-y-auto p-8 space-y-8 bg-stone-900/40">
+      {/* Top Section: Active User Account & Live Delivery Alert Banner */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* 1. Logged-in User Account Card */}
+        <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-stone-950 via-stone-900 to-amber-950/30 border border-stone-800/80 shadow-lg flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5 overflow-hidden">
+            <div className="relative">
+              <UserAvatar user={user} size="lg" shape="rounded-2xl" showBadge />
+              <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-stone-900 animate-pulse" />
+            </div>
+            <div className="overflow-hidden">
+              <div className="flex items-center gap-2">
+                <h3 className="font-black text-sm sm:text-base text-white truncate">
+                  {user?.name || 'Marcus Thorne'}
+                </h3>
+                <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-purple-950/80 text-purple-300 border border-purple-800">
+                  {user?.role || 'ADMIN / OWNER'}
+                </span>
+              </div>
+              <p className="text-xs text-stone-400 truncate mt-0.5">
+                {user?.email || 'admin@aromacoffee.com'} • Terminal #01
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => setIsProfileModalOpen(true)}
+              className="px-3 py-1.5 rounded-xl bg-stone-850 hover:bg-stone-800 border border-stone-700 text-stone-300 hover:text-amber-300 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+              title={isKhmer ? 'កែប្រែគណនី' : 'Account Profile'}
+            >
+              <User className="w-3.5 h-3.5 text-amber-400" />
+              <span className="hidden sm:inline">{isKhmer ? 'គណនី' : 'Profile'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={lockScreen}
+              className="p-2 rounded-xl bg-stone-850 hover:bg-stone-800 border border-stone-700 text-stone-400 hover:text-rose-300 transition cursor-pointer"
+              title={isKhmer ? 'ចាក់សោ PIN' : 'Lock Screen'}
+            >
+              <Lock className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+
+        {/* 2. Admin Live Location Delivery GPS Card */}
+        <div 
+          onClick={() => setActiveTab('delivery')}
+          className="lg:col-span-2 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-emerald-950/40 via-stone-900 to-stone-950 border border-emerald-600/40 hover:border-emerald-500/80 shadow-lg flex items-center justify-between gap-4 cursor-pointer group transition-all"
+        >
+          <div className="flex items-center gap-3.5">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition shadow-md">
+              <Bike className="w-6 h-6 stroke-[2.2]" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h4 className="font-black text-sm sm:text-base text-white flex items-center gap-2">
+                  <span>{isKhmer ? 'ផែនទីដឹកជញ្ជូនផ្ទាល់ (Live Location Delivery)' : 'Live Delivery Fleet GPS'}</span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                </h4>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                  2 On Route
+                </span>
+              </div>
+              <p className="text-xs text-stone-400 mt-0.5">
+                {isKhmer 
+                  ? 'ចុចទីនេះដើម្បីមើលផែនទី GPS ទីតាំងអ្នកដឹកជញ្ជូន និងអតិថិជននៅភ្នំពេញផ្ទាល់' 
+                  : 'Track riders, route waypoints, speed & live customer destinations in Phnom Penh'}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-stone-950 font-black text-xs transition shadow-md shrink-0">
+            <span>{isKhmer ? 'មើលផែនទី GPS' : 'Open GPS Map'}</span>
+            <ArrowUpRight className="w-4 h-4 stroke-[2.5]" />
+          </div>
+        </div>
+      </div>
+
       {/* Top Shift Management Action Strip */}
       <div className="p-4 rounded-2xl bg-stone-950/80 border border-stone-800 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">

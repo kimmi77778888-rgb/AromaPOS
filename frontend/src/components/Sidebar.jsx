@@ -26,7 +26,8 @@ import {
   FileSpreadsheet,
   X,
   Sun,
-  Moon
+  Moon,
+  Bike
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { ROLE_PERMISSIONS } from '../services/coffeeData';
@@ -132,6 +133,14 @@ export const Sidebar = () => {
           icon: ChefHat,
           badge: orders.length > 0 ? orders.length : null,
           badgeColor: 'bg-emerald-600 text-white animate-pulse'
+        },
+        {
+          id: 'delivery',
+          label: 'Live Delivery Map',
+          labelKm: 'ផែនទីដឹកជញ្ជូនផ្ទាល់ (GPS)',
+          icon: Bike,
+          badge: 'LIVE',
+          badgeColor: 'bg-emerald-600 text-white animate-pulse font-mono'
         },
         {
           id: 'inventory',
@@ -253,6 +262,57 @@ export const Sidebar = () => {
               </div>
             </div>
           )}
+
+        {/* Prominent Logged-In User Account Card */}
+        {!isCollapsed ? (
+          <div className="px-3 pt-3 pb-1 shrink-0">
+            <div 
+              onClick={() => setIsProfileModalOpen(true)}
+              className="p-2.5 rounded-2xl bg-gradient-to-r from-stone-900 via-stone-900 to-amber-950/30 border border-stone-800/80 hover:border-amber-500/50 transition-all cursor-pointer group shadow-sm flex items-center justify-between"
+              title={isKhmer ? 'ចុចដើម្បីមើល ឬកែប្រែគណនី' : 'Click to view or edit account'}
+            >
+              <div className="flex items-center gap-2.5 overflow-hidden">
+                <div className="relative">
+                  <UserAvatar user={user} size="sm" shape="rounded-xl" showBadge />
+                  <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-stone-900 animate-pulse" />
+                </div>
+                <div className="overflow-hidden text-left">
+                  <p className="text-xs font-black text-white group-hover:text-amber-300 transition truncate">
+                    {user?.name || 'Marcus Thorne'}
+                  </p>
+                  <span className={`inline-block text-[9px] font-extrabold uppercase px-1.5 py-0.2 rounded border ${permissions.badgeColor}`}>
+                    {isKhmer && permissions.titleKm ? permissions.titleKm : permissions.title}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsProfileModalOpen(true);
+                  }}
+                  className="p-1.5 rounded-lg bg-stone-850 hover:bg-stone-800 text-stone-400 hover:text-amber-300 transition cursor-pointer"
+                  title={isKhmer ? 'កែប្រែព័ត៌មានគណនី' : 'Account Settings'}
+                >
+                  <User className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="pt-3 pb-1 flex flex-col items-center shrink-0">
+            <div 
+              onClick={() => setIsProfileModalOpen(true)}
+              className="relative cursor-pointer group"
+              title={`${user?.name || 'Staff'} (${permissions.title}) - Click to view account`}
+            >
+              <UserAvatar user={user} size="sm" shape="rounded-xl" showBadge />
+              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-stone-900 animate-pulse" />
+            </div>
+          </div>
+        )}
 
         {/* Station Controls Pill */}
         {!isCollapsed ? (
