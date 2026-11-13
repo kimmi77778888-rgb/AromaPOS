@@ -233,3 +233,4 @@ export const downloadInvoice = (order) => {
     URL.revokeObjectURL(url);
   }
 };
+

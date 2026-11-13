@@ -73,8 +73,8 @@ export const AppContent = ({ forcePos = false }) => {
      new URLSearchParams(window.location.search).get('mode') === 'pos' || 
      new URLSearchParams(window.location.search).get('mode') === 'staff'));
 
-  // 1. PUBLIC E-COMMERCE STOREFRONT (Homepage for customers)
-  if (appMode === 'ecommerce' && !isPosExplicit) {
+  // 1. PUBLIC E-COMMERCE STOREFRONT (Default homepage for all customers & public visitors)
+  if (!isPosExplicit) {
     return (
       <>
         <PublicEcommerceHome onSwitchToPos={() => changeAppMode('pos')} />

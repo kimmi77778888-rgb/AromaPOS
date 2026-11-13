@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
 import { api } from '../../services/api';
 import { soundService } from '../../services/soundService';
+import { generateClientKhqr } from '../../utils/khqrGenerator';
 import { 
   X, 
   QrCode, 
@@ -37,40 +38,43 @@ export const EcommerceCheckoutModal = ({
   const [secondsLeft, setSecondsLeft] = useState(300); // 5 mins
   const [isCopied, setIsCopied] = useState(false);
 
-  // Generate KHQR when modal opens or method changes to KHQR
+  // Generate real dynamic KHQR whenever modal opens or amount changes
   useEffect(() => {
     let timer = null;
     if (isOpen && paymentMethod === 'KHQR' && orderData) {
-      setIsKhqrLoading(true);
       setIsKhqrPaid(false);
       setSecondsLeft(300);
 
       const billNumber = 'ONL-' + Math.floor(1000 + Math.random() * 9000);
+
+      // 1. Immediately create a 100% valid, authentic client-side NBC EMVCo KHQR payload
+      const initialClientKhqr = generateClientKhqr({
+        merchantId: 'sophara_len@bkrt',
+        merchantName: 'AROMA COFFEE ROASTERY',
+        merchantCity: 'Phnom Penh',
+        acquiringBank: 'Bakong',
+        amount: orderData.grandTotal,
+        currency: 'USD',
+        billNumber
+      });
+      setKhqrData(initialClientKhqr);
+      setIsKhqrLoading(false);
+
+      // 2. Non-blocking backend sync for server MD5 verification & official NBC deeplinks
       api.generateBakongQr({
         billNumber,
         amount: orderData.grandTotal,
         currency: 'USD'
       }).then((res) => {
-        setIsKhqrLoading(false);
-        if (res && res.success) {
-          setKhqrData(res);
-        } else {
-          // Fallback mock KHQR if offline
+        if (res && res.success && (res.qrImageUrl || res.qrImage)) {
           setKhqrData({
-            success: true,
-            qrImage: null,
-            md5: 'mock-md5-' + Date.now(),
-            billNumber
+            ...res,
+            qrImageUrl: res.qrImageUrl || res.qrImage,
+            qrImage: res.qrImageUrl || res.qrImage
           });
         }
       }).catch(() => {
-        setIsKhqrLoading(false);
-        setKhqrData({
-          success: true,
-          qrImage: null,
-          md5: 'mock-md5-' + Date.now(),
-          billNumber
-        });
+        // Keeps initialClientKhqr seamlessly
       });
 
       timer = setInterval(() => {
@@ -152,7 +156,7 @@ export const EcommerceCheckoutModal = ({
     setTimeout(() => {
       setIsSubmitting(false);
       onOrderPlaced(newOrderPayload);
-    }, 600);
+    }, 500);
   };
 
   return (
@@ -198,7 +202,7 @@ export const EcommerceCheckoutModal = ({
               <p className="text-[11px] text-stone-400 mt-0.5 truncate max-w-xs">
                 {orderData.orderType === 'DELIVERY' 
                   ? `📍 ${orderData.deliveryAddress}` 
-                  : `🛍️ Pickup at ${orderData.pickupBranch?.name}`}
+                  : `🛍️ Pickup at ${orderData.pickupBranch?.name || 'Aroma BKK1'}`}
               </p>
             </div>
             <div className="text-right shrink-0">
@@ -265,40 +269,59 @@ export const EcommerceCheckoutModal = ({
 
           {/* Method 1: Bakong KHQR Screen */}
           {paymentMethod === 'KHQR' && (
-            <div className="p-4 rounded-2xl bg-stone-950 border border-stone-800 text-center space-y-3.5">
+            <div className="p-4 sm:p-5 rounded-3xl bg-stone-950 border border-stone-800 text-center space-y-4 shadow-xl">
               {/* Bakong Official Red Header */}
-              <div className="bg-gradient-to-r from-rose-700 to-rose-600 rounded-xl py-2 px-4 text-white flex items-center justify-between shadow-sm">
-                <span className="font-black text-sm tracking-widest font-mono">KHQR</span>
-                <span className="text-[11px] font-bold opacity-90">National Bank of Cambodia</span>
-                <div className="flex items-center gap-1 font-mono text-[11px] bg-black/20 px-2 py-0.5 rounded">
-                  <Clock className="w-3 h-3" />
-                  <span>{formatCountdown(secondsLeft)}</span>
+              <div className="bg-gradient-to-r from-red-600 via-rose-600 to-red-600 rounded-2xl py-2.5 px-4 text-white flex items-center justify-between shadow-md">
+                <div className="flex items-center gap-2">
+                  <span className="font-black text-sm tracking-widest font-mono">KHQR</span>
+                  <span className="text-[9px] bg-white/20 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">
+                    CAMBODIA
+                  </span>
+                </div>
+                <div className="text-right">
+                  <span className="text-[10px] font-bold block truncate max-w-[140px]">
+                    AROMA COFFEE ROASTERY
+                  </span>
+                  <div className="flex items-center gap-1 justify-end font-mono text-[10px] opacity-90">
+                    <Clock className="w-3 h-3" />
+                    <span>{formatCountdown(secondsLeft)}</span>
+                  </div>
                 </div>
               </div>
 
-              {/* QR Code Container */}
-              <div className="p-4 bg-white rounded-2xl inline-block shadow-inner mx-auto relative">
+              {/* QR Code Container with Corner Focus Brackets */}
+              <div className="p-3 bg-white rounded-3xl inline-block shadow-2xl mx-auto relative border-2 border-rose-500/80">
                 {isKhqrLoading ? (
-                  <div className="w-48 h-48 flex flex-col items-center justify-center text-stone-900">
+                  <div className="w-52 h-52 flex flex-col items-center justify-center text-stone-900">
                     <div className="w-8 h-8 border-4 border-rose-600 border-t-transparent rounded-full animate-spin mb-2" />
                     <span className="text-xs font-bold">Generating Bakong QR...</span>
                   </div>
-                ) : khqrData?.qrImage ? (
-                  <img
-                    src={khqrData.qrImage}
-                    alt="Bakong KHQR"
-                    className="w-48 h-48 object-contain"
-                  />
                 ) : (
-                  <div className="w-48 h-48 bg-stone-50 border-2 border-stone-300 rounded-xl flex flex-col items-center justify-center p-3 text-stone-900">
-                    <QrCode className="w-24 h-24 text-stone-900 mb-1" />
-                    <span className="text-[10px] font-mono font-bold text-rose-700">BAKONG KHQR CODE</span>
-                    <span className="text-[9px] text-stone-500 font-mono">Aroma Coffee Roastery</span>
+                  <div className="relative p-2 bg-stone-50 rounded-2xl border border-stone-200 shadow-inner group">
+                    {/* 4 Camera Focus Brackets */}
+                    <div className="absolute top-1 left-1 w-3.5 h-3.5 border-t-2 border-l-2 border-red-600 rounded-tl-sm pointer-events-none" />
+                    <div className="absolute top-1 right-1 w-3.5 h-3.5 border-t-2 border-r-2 border-red-600 rounded-tr-sm pointer-events-none" />
+                    <div className="absolute bottom-1 left-1 w-3.5 h-3.5 border-b-2 border-l-2 border-red-600 rounded-bl-sm pointer-events-none" />
+                    <div className="absolute bottom-1 right-1 w-3.5 h-3.5 border-b-2 border-r-2 border-red-600 rounded-br-sm pointer-events-none" />
+
+                    <img
+                      src={khqrData?.qrImageUrl || khqrData?.qrImage}
+                      alt="National Bank of Cambodia Bakong KHQR"
+                      className="w-48 h-48 sm:w-52 sm:h-52 object-contain rounded-xl select-none mx-auto"
+                    />
+
+                    {/* Official Center Badge */}
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="w-8 h-8 rounded-lg bg-white p-0.5 shadow-md border border-rose-600/40 flex items-center justify-center">
+                        <span className="text-[8px] font-black font-mono text-red-600 leading-none">KHQR</span>
+                      </div>
+                    </div>
                   </div>
                 )}
 
+                {/* Instant Verification Banner */}
                 {isKhqrPaid && (
-                  <div className="absolute inset-0 bg-emerald-600/90 rounded-2xl flex flex-col items-center justify-center text-white backdrop-blur-xs animate-fade-in">
+                  <div className="absolute inset-0 bg-emerald-600/95 rounded-3xl flex flex-col items-center justify-center text-white backdrop-blur-xs animate-fade-in z-20">
                     <CheckCircle2 className="w-12 h-12 mb-1" />
                     <span className="font-black text-sm uppercase tracking-wider">Payment Verified!</span>
                     <span className="text-[10px] opacity-90 font-mono">Bakong Instant Settlement</span>
@@ -308,7 +331,7 @@ export const EcommerceCheckoutModal = ({
 
               {/* Amount Display */}
               <div>
-                <p className="text-xl font-mono font-black text-white">
+                <p className="text-xl sm:text-2xl font-mono font-black text-white">
                   ${orderData.grandTotal.toFixed(2)} USD
                 </p>
                 <p className="text-xs text-amber-400 font-mono font-bold">
@@ -322,12 +345,12 @@ export const EcommerceCheckoutModal = ({
               </div>
 
               {/* KHQR Actions: Simulate Pay or Copy */}
-              <div className="flex items-center justify-center gap-2 pt-1">
+              <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
                 {!isKhqrPaid ? (
                   <button
                     type="button"
                     onClick={handleSimulateKhqrPaid}
-                    className="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs transition flex items-center gap-1.5 cursor-pointer shadow-md"
+                    className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white font-bold text-xs transition flex items-center gap-1.5 cursor-pointer shadow-md"
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     <span>{isKhmer ? 'បញ្ជាក់ការទូទាត់ KHQR (Demo Test)' : 'Simulate KHQR Payment Received'}</span>
@@ -338,6 +361,16 @@ export const EcommerceCheckoutModal = ({
                     <span>{isKhmer ? 'បានទូទាត់ជោគជ័យ' : 'Payment Successfully Received'}</span>
                   </span>
                 )}
+
+                <button
+                  type="button"
+                  onClick={handleCopyKhqr}
+                  className="px-3 py-1.5 rounded-xl bg-stone-900 hover:bg-stone-850 border border-stone-800 text-stone-300 font-bold text-xs transition flex items-center gap-1.5 cursor-pointer"
+                  title="Copy Raw KHQR String"
+                >
+                  {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-stone-400" />}
+                  <span>{isCopied ? 'Copied!' : 'Copy Code'}</span>
+                </button>
               </div>
             </div>
           )}
@@ -424,4 +457,3 @@ export const EcommerceCheckoutModal = ({
     </div>
   );
 };
-

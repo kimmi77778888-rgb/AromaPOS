@@ -20,3 +20,4 @@ const AppContent = dynamic(
 export default function LoginPage() {
   return <AppContent forcePos={true} />;
 }
+

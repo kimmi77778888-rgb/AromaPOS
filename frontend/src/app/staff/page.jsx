@@ -20,3 +20,4 @@ const AppContent = dynamic(
 export default function StaffPage() {
   return <AppContent forcePos={true} />;
 }
+

@@ -27,6 +27,7 @@ export const AppProvider = ({ children }) => {
       const urlView = urlParams.get('view') || urlParams.get('mode');
       if (urlView === 'pos' || urlView === 'staff' || urlView === 'login') return 'pos';
       if (urlView === 'ecommerce' || urlView === 'shop') return 'ecommerce';
+      if (path === '/' || path === '') return 'ecommerce';
       const saved = localStorage.getItem('aromapos_app_mode');
       if (saved) return saved;
     }
