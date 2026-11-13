@@ -242,18 +242,6 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
             )}
           </button>
 
-          {/* Direct Staff / POS Portal Switcher Button */}
-          <button
-            type="button"
-            onClick={onSwitchToPos}
-            className="py-2 px-3 sm:px-4 rounded-2xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 hover:text-amber-200 font-black text-xs flex items-center gap-2 transition cursor-pointer shadow-lg hover:border-amber-400"
-            title={isKhmer ? 'ប្តូរទៅកាន់ប្រព័ន្ធគិតប្រាក់ POS សម្រាប់បុគ្គលិក' : 'Switch to Staff POS Terminal & KDS'}
-          >
-            <Lock className="w-3.5 h-3.5 text-amber-400" />
-            <span className="hidden md:inline">{isKhmer ? 'ស្ថានីយ POS' : 'Staff POS'}</span>
-            <span className="text-[10px] opacity-75 font-mono hidden xl:inline">Portal</span>
-          </button>
-
           {/* Mobile Menu Hamburger */}
           <button
             type="button"
@@ -714,14 +702,6 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
               className="hover:text-amber-400 transition cursor-pointer"
             >
               Order Tracking
-            </button>
-            <button
-              type="button"
-              onClick={onSwitchToPos}
-              className="text-amber-400 hover:text-amber-300 font-bold transition cursor-pointer flex items-center gap-1"
-            >
-              <Lock className="w-3 h-3" />
-              <span>Staff POS Portal</span>
             </button>
           </div>
 

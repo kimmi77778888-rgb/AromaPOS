@@ -63,11 +63,15 @@ export const AppContent = ({ forcePos = false }) => {
     return <CustomerDisplay standalone={true} />;
   }
 
-  // Check if POS was explicitly requested via prop, path (/pos), or URL query (?mode=pos / ?view=pos)
+  // Check if POS was explicitly requested via prop, path (/pos, /staff, /login), or URL query (?mode=pos / ?view=pos)
   const isPosExplicit = forcePos || (typeof window !== 'undefined' && 
     (window.location.pathname.startsWith('/pos') || 
+     window.location.pathname.startsWith('/staff') || 
+     window.location.pathname.startsWith('/login') || 
      new URLSearchParams(window.location.search).get('view') === 'pos' || 
-     new URLSearchParams(window.location.search).get('mode') === 'pos'));
+     new URLSearchParams(window.location.search).get('view') === 'staff' || 
+     new URLSearchParams(window.location.search).get('mode') === 'pos' || 
+     new URLSearchParams(window.location.search).get('mode') === 'staff'));
 
   // 1. PUBLIC E-COMMERCE STOREFRONT (Homepage for customers)
   if (appMode === 'ecommerce' && !isPosExplicit) {

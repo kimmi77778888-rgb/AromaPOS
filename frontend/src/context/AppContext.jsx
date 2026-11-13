@@ -20,12 +20,12 @@ export const AppProvider = ({ children }) => {
   const [appMode, setAppMode] = useState(() => {
     if (typeof window !== 'undefined') {
       const path = window.location.pathname;
-      if (path.startsWith('/pos')) return 'pos';
+      if (path.startsWith('/pos') || path.startsWith('/staff') || path.startsWith('/login')) return 'pos';
       if (path.startsWith('/shop')) return 'ecommerce';
 
       const urlParams = new URLSearchParams(window.location.search);
       const urlView = urlParams.get('view') || urlParams.get('mode');
-      if (urlView === 'pos' || urlView === 'staff') return 'pos';
+      if (urlView === 'pos' || urlView === 'staff' || urlView === 'login') return 'pos';
       if (urlView === 'ecommerce' || urlView === 'shop') return 'ecommerce';
       const saved = localStorage.getItem('aromapos_app_mode');
       if (saved) return saved;
@@ -1121,6 +1121,21 @@ export const AppProvider = ({ children }) => {
     showToast('បានចាកចេញពីគណនីអតិថិជនរួចរាល់', 'info');
   }, [showToast]);
 
+  const updateCustomerProfile = useCallback((updatedFields) => {
+    setCustomerUser((prev) => {
+      if (!prev) return null;
+      const updated = { ...prev, ...updatedFields };
+      setCustomers((list) =>
+        list.map((c) => (c.id === updated.id || c.phone === updated.phone ? updated : c))
+      );
+      try {
+        storage.setItem('aromapos_customer_user', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+    showToast('ព័ត៌មានគណនីត្រូវបានរក្សាទុកជោគជ័យ!', 'success');
+  }, [showToast]);
+
   // Live Totals Calculations with Loyalty Points, Combos, Happy Hour & Stamp Card Free Drink
   const cartTotals = useMemo(() => {
     const subtotal = cart.reduce(
@@ -2008,7 +2023,8 @@ export const AppProvider = ({ children }) => {
         setCustomerUser,
         registerCustomer,
         loginCustomer,
-        logoutCustomer
+        logoutCustomer,
+        updateCustomerProfile
       }}
     >
       {children}

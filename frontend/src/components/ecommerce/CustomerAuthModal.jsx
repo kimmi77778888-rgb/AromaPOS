@@ -353,3 +353,4 @@ export const CustomerAuthModal = ({
     </div>
   );
 };
+

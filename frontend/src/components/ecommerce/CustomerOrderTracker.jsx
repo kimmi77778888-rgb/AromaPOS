@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
+import { downloadInvoice } from '../../utils/invoiceDownloader';
 import { 
   X, 
   Search, 
@@ -13,7 +14,8 @@ import {
   Sparkles, 
   ChevronRight,
   ArrowLeft,
-  ExternalLink
+  ExternalLink,
+  FileText
 } from 'lucide-react';
 
 export const CustomerOrderTracker = ({
@@ -238,17 +240,31 @@ export const CustomerOrderTracker = ({
                 </div>
               </div>
 
-              {/* Live Delivery Map Trigger (For Delivery Orders) */}
-              {currentOrder.orderType === 'DELIVERY' && onOpenLiveMap && (
+              {/* Quick Actions: Live Delivery Map & Official Tax Invoice */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {currentOrder.orderType === 'DELIVERY' && onOpenLiveMap && (
+                  <button
+                    type="button"
+                    onClick={() => onOpenLiveMap(currentOrder)}
+                    className="w-full py-3 px-4 rounded-2xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs flex items-center justify-center gap-2 transition shadow-md cursor-pointer"
+                  >
+                    <Bike className="w-4 h-4" />
+                    <span>{isKhmer ? '📍 មើលទីតាំងលើផែនទី' : '📍 Live Delivery Map'}</span>
+                  </button>
+                )}
+
                 <button
                   type="button"
-                  onClick={() => onOpenLiveMap(currentOrder)}
-                  className="w-full py-3 px-4 rounded-2xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs flex items-center justify-center gap-2 transition shadow-lg shadow-amber-950/20 cursor-pointer"
+                  onClick={() => downloadInvoice(currentOrder)}
+                  className={`w-full py-3 px-4 rounded-2xl bg-stone-900 hover:bg-stone-850 border border-stone-800 text-stone-200 hover:text-white font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer shadow-sm hover:border-amber-500/50 ${
+                    currentOrder.orderType !== 'DELIVERY' || !onOpenLiveMap ? 'sm:col-span-2' : ''
+                  }`}
+                  title="Download / Print Official Tax Invoice"
                 >
-                  <Bike className="w-4 h-4" />
-                  <span>{isKhmer ? '📍 មើលទីតាំងអ្នកដឹកជញ្ជូនលើផែនទីផ្ទាល់ (Live Delivery Map)' : '📍 View Live Delivery Location on Map'}</span>
+                  <FileText className="w-4 h-4 text-amber-400" />
+                  <span>{isKhmer ? '📄 ទាញយកវិក្កយបត្រ (Invoice)' : '📄 Download Tax Invoice'}</span>
                 </button>
-              )}
+              </div>
 
               {/* Items List in this Order */}
               <div className="space-y-2.5">
