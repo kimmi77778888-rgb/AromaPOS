@@ -72,3 +72,4 @@ The project is configured via `render.yaml` for zero-downtime deployment:
 ---
 
 *AromaPOS Team • Cambodia Artisan Coffee Roastery*
+

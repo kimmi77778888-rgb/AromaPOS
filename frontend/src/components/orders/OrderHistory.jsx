@@ -155,7 +155,15 @@ export const OrderHistory = () => {
       if (!matchesSearch) return false;
 
       // 3. Payment method match
-      if (methodFilter !== 'ALL' && o.paymentMethod !== methodFilter) return false;
+      if (methodFilter !== 'ALL') {
+        if (methodFilter === 'QR_CODE') {
+          if (o.paymentMethod !== 'QR_CODE' && o.paymentMethod !== 'BAKONG_KHQR' && o.paymentMethod !== 'KHQR') return false;
+        } else if (methodFilter === 'CASH') {
+          if (o.paymentMethod !== 'CASH' && o.paymentMethod !== 'COD') return false;
+        } else if (o.paymentMethod !== methodFilter) {
+          return false;
+        }
+      }
 
       // 4. Type match
       if (typeFilter !== 'ALL') {
@@ -196,11 +204,11 @@ export const OrderHistory = () => {
     const averageOrder = validOrders.length > 0 ? totalRevenue / validOrders.length : 0;
 
     const khqrRevenue = validOrders
-      .filter((o) => o.paymentMethod === 'QR_CODE')
+      .filter((o) => o.paymentMethod === 'QR_CODE' || o.paymentMethod === 'BAKONG_KHQR' || o.paymentMethod === 'KHQR')
       .reduce((sum, o) => sum + (Number(o.total) || 0), 0);
 
     const cashRevenue = validOrders
-      .filter((o) => o.paymentMethod === 'CASH')
+      .filter((o) => o.paymentMethod === 'CASH' || o.paymentMethod === 'COD')
       .reduce((sum, o) => sum + (Number(o.total) || 0), 0);
 
     const cardRevenue = validOrders
@@ -221,6 +229,8 @@ export const OrderHistory = () => {
   const getPaymentBadge = (method) => {
     switch (method) {
       case 'QR_CODE':
+      case 'BAKONG_KHQR':
+      case 'KHQR':
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-950/60 border border-rose-800/60 text-rose-300 font-semibold text-[11px]">
             <QrCode className="w-3.5 h-3.5 text-rose-400" />
@@ -232,6 +242,13 @@ export const OrderHistory = () => {
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-sky-950/60 border border-sky-800/60 text-sky-300 font-semibold text-[11px]">
             <CreditCard className="w-3.5 h-3.5 text-sky-400" />
             <span>Card</span>
+          </span>
+        );
+      case 'COD':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-950/60 border border-amber-800/60 text-amber-300 font-semibold text-[11px]">
+            <Banknote className="w-3.5 h-3.5 text-amber-400" />
+            <span>Cash on Delivery</span>
           </span>
         );
       case 'CASH':

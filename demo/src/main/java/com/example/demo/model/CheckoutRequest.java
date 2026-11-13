@@ -13,6 +13,9 @@ public class CheckoutRequest {
     private int loyaltyPointsUsed;
     private int loyaltyPointsEarned;
     private String cashierName;
+    private String channel;
+    private String deliveryAddress;
+    private String notes;
 
     public CheckoutRequest() {
     }
@@ -95,5 +98,29 @@ public class CheckoutRequest {
 
     public void setCashierName(String cashierName) {
         this.cashierName = cashierName;
+    }
+
+    public String getChannel() {
+        return channel;
+    }
+
+    public void setChannel(String channel) {
+        this.channel = channel;
+    }
+
+    public String getDeliveryAddress() {
+        return deliveryAddress;
+    }
+
+    public void setDeliveryAddress(String deliveryAddress) {
+        this.deliveryAddress = deliveryAddress;
+    }
+
+    public String getNotes() {
+        return notes;
+    }
+
+    public void setNotes(String notes) {
+        this.notes = notes;
     }
 }

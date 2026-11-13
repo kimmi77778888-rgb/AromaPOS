@@ -17,7 +17,7 @@ public class OrderService {
     private final IngredientService ingredientService;
     private final TelegramService telegramService;
     private final List<Order> orders = new CopyOnWriteArrayList<>();
-    private final AtomicInteger orderSeq = new AtomicInteger(1040);
+    private final AtomicInteger orderSeq = new AtomicInteger(1042);
 
     // Register Shift Management
     private boolean storeOpen = false;
@@ -65,6 +65,29 @@ public class OrderService {
         ), 9.75, 0.78, 0.0, 10.53, "QR_CODE", 10.53, 0.0, "DINE_IN", "Chloe Chen", "Michael Scott");
         o5.setCreatedAt(now.minusMinutes(20));
         orders.add(o5);
+
+        // Seed 2 Authentic Online Store orders so 'Online Store' filter immediately displays orders
+        Order o6 = new Order("ord-6", "#ORD-1041", List.of(
+            new OrderItem("prod-4", "Iced Vanilla Oat Latte", 5.00, 2, 10.00, "Less sweet 50%"),
+            new OrderItem("prod-8", "Avocado Sourdough Toast", 5.50, 1, 5.50, "Extra seasoning")
+        ), 15.50, 1.24, 0.0, 16.74, "BAKONG_KHQR", 16.74, 0.0, "DELIVERY", "Online Store", "Phara");
+        o6.setChannel("ONLINE_ECOMMERCE");
+        o6.setCustomerPhone("096 927 6538");
+        o6.setDeliveryAddress("#45, Street 288, Sangkat Boeng Keng Kang 1, Phnom Penh");
+        o6.setNotes("Online Store (Phnom Penh Delivery)");
+        o6.setCreatedAt(now.minusMinutes(12));
+        orders.add(o6);
+
+        Order o7 = new Order("ord-7", "#ORD-1042", List.of(
+            new OrderItem("prod-1", "Artisan Pour Over", 4.75, 1, 4.75, "Single origin Ethiopia"),
+            new OrderItem("prod-10", "Pain au Chocolat", 4.25, 1, 4.25, "Warm up")
+        ), 9.00, 0.72, 0.0, 9.72, "BAKONG_KHQR", 9.72, 0.0, "PICKUP", "Online Store", "Sophea Kem");
+        o7.setChannel("ONLINE_ECOMMERCE");
+        o7.setCustomerPhone("012 888 999");
+        o7.setDeliveryAddress("Pickup at Aroma Coffee Roastery BKK1");
+        o7.setNotes("Online Store (Store Pickup)");
+        o7.setCreatedAt(now.minusMinutes(5));
+        orders.add(o7);
     }
 
     public synchronized Order processCheckout(CheckoutRequest request, String cashierName) {
@@ -136,6 +159,15 @@ public class OrderService {
 
         if (request.getCustomerPhone() != null) {
             order.setCustomerPhone(request.getCustomerPhone());
+        }
+        if (request.getChannel() != null) {
+            order.setChannel(request.getChannel());
+        }
+        if (request.getDeliveryAddress() != null) {
+            order.setDeliveryAddress(request.getDeliveryAddress());
+        }
+        if (request.getNotes() != null) {
+            order.setNotes(request.getNotes());
         }
         order.setLoyaltyPointsUsed(request.getLoyaltyPointsUsed());
         order.setLoyaltyPointsEarned(request.getLoyaltyPointsEarned());

@@ -1640,7 +1640,14 @@ export const api = {
       if (res.ok) {
         const orders = await res.json();
         if (!cashierName || cashierName === 'ALL') {
-          saveStoredOrders(orders);
+          const currentLocal = getStoredOrders();
+          const localOnlyOnline = currentLocal.filter(
+            (lo) => (lo.channel === 'ONLINE_ECOMMERCE' || lo.orderType === 'DELIVERY') && 
+                    !orders.some((bo) => bo.id === lo.id || bo.orderNumber === lo.orderNumber)
+          );
+          const merged = [...orders, ...localOnlyOnline];
+          saveStoredOrders(merged);
+          return merged;
         }
         return orders;
       }

@@ -23,6 +23,9 @@ public class Order {
     private int loyaltyPointsEarned;
     private String status; // COMPLETED, REFUNDED
     private LocalDateTime createdAt;
+    private String channel; // IN_STORE, ONLINE_ECOMMERCE
+    private String deliveryAddress;
+    private String notes;
 
     public Order() {
         this.createdAt = LocalDateTime.now();
@@ -191,5 +194,29 @@ public class Order {
 
     public void setLoyaltyPointsEarned(int loyaltyPointsEarned) {
         this.loyaltyPointsEarned = loyaltyPointsEarned;
+    }
+
+    public String getChannel() {
+        return channel;
+    }
+
+    public void setChannel(String channel) {
+        this.channel = channel;
+    }
+
+    public String getDeliveryAddress() {
+        return deliveryAddress;
+    }
+
+    public void setDeliveryAddress(String deliveryAddress) {
+        this.deliveryAddress = deliveryAddress;
+    }
+
+    public String getNotes() {
+        return notes;
+    }
+
+    public void setNotes(String notes) {
+        this.notes = notes;
     }
 }

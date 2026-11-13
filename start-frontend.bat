@@ -19,3 +19,4 @@ cd /d "%~dp0frontend"
 echo Starting Next.js Development Server...
 npm run dev
 pause
+

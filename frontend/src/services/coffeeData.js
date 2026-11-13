@@ -321,6 +321,57 @@ export const INITIAL_ORDERS = [
     customerName: "Michael Scott",
     createdAt: new Date(Date.now() - 20 * 60 * 1000).toISOString(),
     status: "COMPLETED"
+  },
+  {
+    id: "ord-6",
+    orderNumber: "#ORD-1041",
+    channel: "ONLINE_ECOMMERCE",
+    items: [
+      { productId: "prod-4", productName: "Iced Vanilla Oat Latte", unitPrice: 5.00, quantity: 2, subtotal: 10.00, notes: "Less sweet 50%" },
+      { productId: "prod-8", productName: "Avocado Sourdough Toast", unitPrice: 5.50, quantity: 1, subtotal: 5.50, notes: "Extra seasoning" }
+    ],
+    subtotal: 15.50,
+    tax: 1.24,
+    discount: 0.0,
+    total: 16.74,
+    rielTotal: "68,600",
+    paymentMethod: "BAKONG_KHQR",
+    amountPaid: 16.74,
+    change: 0.0,
+    orderType: "DELIVERY",
+    cashierName: "Online Store",
+    customerName: "Phara",
+    customerPhone: "096 927 6538",
+    deliveryAddress: "#45, Street 288, Sangkat Boeng Keng Kang 1, Phnom Penh",
+    carrier: "Cellcard 4G LTE",
+    notes: "Online Store (Phnom Penh Delivery)",
+    createdAt: new Date(Date.now() - 12 * 60 * 1000).toISOString(),
+    status: "COMPLETED"
+  },
+  {
+    id: "ord-7",
+    orderNumber: "#ORD-1042",
+    channel: "ONLINE_ECOMMERCE",
+    items: [
+      { productId: "prod-1", productName: "Artisan Pour Over", unitPrice: 4.75, quantity: 1, subtotal: 4.75, notes: "Single origin Ethiopia" },
+      { productId: "prod-10", productName: "Pain au Chocolat", unitPrice: 4.25, quantity: 1, subtotal: 4.25, notes: "Warm up" }
+    ],
+    subtotal: 9.00,
+    tax: 0.72,
+    discount: 0.0,
+    total: 9.72,
+    rielTotal: "39,850",
+    paymentMethod: "BAKONG_KHQR",
+    amountPaid: 9.72,
+    change: 0.0,
+    orderType: "PICKUP",
+    cashierName: "Online Store",
+    customerName: "Sophea Kem",
+    customerPhone: "012 888 999",
+    deliveryAddress: "Pickup at Aroma Coffee Roastery BKK1",
+    notes: "Online Store (Store Pickup)",
+    createdAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+    status: "COMPLETED"
   }
 ];
 
