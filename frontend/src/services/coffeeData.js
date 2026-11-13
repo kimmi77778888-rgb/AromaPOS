@@ -401,26 +401,44 @@ export const MODIFIER_GROUPS = [
 
 export const DEMO_CUSTOMERS = [
   {
+    id: "cust-0",
+    name: "Phara",
+    phone: "0969276538",
+    email: "phara@aromacafe.com",
+    district: "Boeng Keng Kang",
+    address: "#45, Street 288, Sangkat Boeng Keng Kang 1, Phnom Penh",
+    tier: "Gold VIP Member",
+    points: 250,
+    stamps: 6,
+    avatar: "",
+    visits: 18,
+    favoriteDrink: "Iced Spanish Latte"
+  },
+  {
     id: "cust-1",
     name: "Sophea Kem",
     phone: "012888999",
     email: "sophea.kem@gmail.com",
+    district: "Boeng Keng Kang",
+    address: "#88, Street 51, BKK1, Phnom Penh",
     tier: "Gold VIP",
     points: 280,
     stamps: 8, // 8 of 10 coffee stamps collected (Buy 9 Get 1 Free)
-    avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=150&q=80",
+    avatar: "",
     visits: 24,
     favoriteDrink: "Iced Brown Sugar Oat Shaken"
   },
   {
     id: "cust-2",
     name: "David Miller",
-    phone: "098765432",
+    phone: "017333444",
     email: "david.miller@yahoo.com",
+    district: "Tuol Kouk",
+    address: "#12, Street 315, Tuol Kouk, Phnom Penh",
     tier: "Silver Member",
     points: 150,
     stamps: 9, // 9 of 10 coffee stamps - 1 FREE REWARD DRINK READY!
-    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80",
+    avatar: "",
     visits: 12,
     favoriteDrink: "Velvety Flat White"
   },

@@ -104,8 +104,6 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
     }
     setLatestPlacedOrder(newOrder);
     setCartItems([]);
-    setIsCheckoutModalOpen(false);
-    setIsTrackerOpen(true);
   };
 
   // Filter Products
@@ -748,6 +746,11 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
         onClose={() => setIsCheckoutModalOpen(false)}
         orderData={pendingCheckoutOrderData}
         onOrderPlaced={handleOrderPlacedSuccess}
+        onOpenLiveDeliveryMap={(order) => {
+          setActiveDeliveryOrderForMap(order);
+          setIsLiveDeliveryMapOpen(true);
+        }}
+        onOpenAccountModal={() => setIsAccountModalOpen(true)}
       />
 
       {/* 4. Live Order Status Tracker */}
@@ -774,7 +777,29 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
         messagePrompt={authModalPrompt}
         onAuthSuccess={(u) => {
           setIsAuthModalOpen(false);
-          // If cart has items, user can immediately proceed to checkout smoothly
+          // If cart has items, immediately proceed to checkout with authenticated profile!
+          if (cartItems.length > 0) {
+            const subtotal = cartItems.reduce((sum, item) => sum + (item.totalPrice || item.unitPrice * item.quantity), 0);
+            const deliveryFee = subtotal >= 10 ? 0 : 1.00;
+            const grandTotal = Math.round((subtotal + deliveryFee) * 100) / 100;
+            handleProceedToCheckout({
+              orderType: 'DELIVERY',
+              customerId: u.id,
+              customerName: u.name,
+              customerPhone: u.phone,
+              carrier: 'Cellcard 4G LTE',
+              deliveryAddress: u.address ? `${u.address}, ${u.district || 'Boeng Keng Kang'}, Phnom Penh` : '#45, Street 288, Sangkat Boeng Keng Kang 1, Phnom Penh',
+              deliveryNotes: '',
+              pickupBranch: null,
+              cartItems,
+              subtotal,
+              discount: 0,
+              appliedPromo: null,
+              deliveryFee,
+              grandTotal,
+              rielGrandTotal: Math.round(grandTotal * 4100).toLocaleString()
+            });
+          }
         }}
       />
 

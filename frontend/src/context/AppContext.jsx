@@ -1117,7 +1117,16 @@ export const AppProvider = ({ children }) => {
     }
 
     // Auto-create registered member for effortless checkout
-    const cleanName = defaultName ? defaultName.trim() : (raw.includes('@') ? raw.split('@')[0] : `Coffee VIP (${raw.slice(-4)})`);
+    let cleanName = defaultName ? defaultName.trim() : '';
+    if (!cleanName) {
+      if (cleanDigits.includes('0969276538') || cleanDigits.slice(-8) === '969276538') {
+        cleanName = 'Phara';
+      } else if (raw.includes('@')) {
+        cleanName = raw.split('@')[0];
+      } else {
+        cleanName = `Coffee VIP (${raw.slice(-4)})`;
+      }
+    }
     const newMember = {
       id: `cust-${Date.now()}`,
       name: cleanName,

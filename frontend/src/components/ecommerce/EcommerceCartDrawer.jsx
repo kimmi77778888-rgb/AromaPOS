@@ -18,7 +18,8 @@ import {
   ShieldCheck,
   CheckCircle2,
   Lock,
-  Sparkles
+  Sparkles,
+  LogIn
 } from 'lucide-react';
 
 /**
@@ -376,45 +377,76 @@ export const EcommerceCartDrawer = ({
 
               {/* Customer Contact & Delivery Info */}
               <div className="p-4 rounded-2xl bg-stone-950/80 border border-stone-850 space-y-3.5">
-                <h4 className="text-xs font-black uppercase tracking-wider text-stone-300 flex items-center gap-1.5">
-                  <User className="w-3.5 h-3.5 text-amber-400" />
-                  <span>{isKhmer ? 'ព័ត៌មានអតិថិជន & ទំនាក់ទំនង' : 'Customer & Contact Details'}</span>
-                </h4>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-stone-400">
-                      {isKhmer ? 'ឈ្មោះអតិថិជន' : 'Customer Name'} *
-                    </label>
-                    <input
-                      type="text"
-                      value={customerName}
-                      onChange={(e) => setCustomerName(e.target.value)}
-                      placeholder="e.g. Sokha Mean"
-                      className="w-full bg-stone-900 border border-stone-800 rounded-xl px-3 py-2 text-xs text-stone-100 placeholder-stone-600 focus:outline-none focus:border-amber-500"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <label className="text-[11px] font-bold text-stone-400">
-                        {isKhmer ? 'លេខទូរស័ព្ទ' : 'Phone Number'} *
-                      </label>
-                      {carrier && (
-                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${carrier.color}`}>
-                          {carrier.icon} {carrier.name}
-                        </span>
-                      )}
-                    </div>
-                    <input
-                      type="tel"
-                      value={customerPhone}
-                      onChange={(e) => setCustomerPhone(e.target.value)}
-                      placeholder="e.g. 012 888 999"
-                      className="w-full bg-stone-900 border border-stone-800 rounded-xl px-3 py-2 text-xs text-stone-100 placeholder-stone-600 focus:outline-none focus:border-amber-500 font-mono"
-                    />
-                  </div>
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-stone-300 flex items-center gap-1.5">
+                    <User className="w-3.5 h-3.5 text-amber-400" />
+                    <span>{isKhmer ? 'ព័ត៌មានអតិថិជន & ទំនាក់ទំនង' : 'Customer & Contact Details'}</span>
+                  </h4>
+                  {customerUser && (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                      {customerUser.tier || 'VIP Member'}
+                    </span>
+                  )}
                 </div>
+
+                {!customerUser ? (
+                  <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-950/40 to-stone-900 border border-amber-600/50 space-y-2.5 text-center">
+                    <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto text-amber-400">
+                      <Lock className="w-4 h-4" />
+                    </div>
+                    <div className="space-y-0.5">
+                      <p className="font-bold text-xs text-stone-200">
+                        {isKhmer ? 'សូមចូលគណនី ឬចុះឈ្មោះមុនពេលទិញកាហ្វេ' : 'Account required to order coffee'}
+                      </p>
+                      <p className="text-[11px] text-stone-400">
+                        {isKhmer ? 'ទទួលបាន ១០០ ពិន្ទុ & ត្រាកាហ្វេឌីជីថល និងតាមដានការដឹកជញ្ជូន Live' : 'Earn stamps, points, and track your coffee rider live'}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={onRequireAuth}
+                      className="w-full py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs flex items-center justify-center gap-1.5 transition cursor-pointer shadow-md"
+                    >
+                      <LogIn className="w-3.5 h-3.5" />
+                      <span>{isKhmer ? 'ចូលគណនី ឬចុះឈ្មោះឥឡូវនេះ (Sign In / Register)' : 'Sign In or Register Now'}</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-bold text-stone-400">
+                        {isKhmer ? 'ឈ្មោះអតិថិជន' : 'Customer Name'} *
+                      </label>
+                      <input
+                        type="text"
+                        value={customerName}
+                        onChange={(e) => setCustomerName(e.target.value)}
+                        placeholder="e.g. Sokha Mean"
+                        className="w-full bg-stone-900 border border-stone-800 rounded-xl px-3 py-2 text-xs text-stone-100 placeholder-stone-600 focus:outline-none focus:border-amber-500"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[11px] font-bold text-stone-400">
+                          {isKhmer ? 'លេខទូរស័ព្ទ' : 'Phone Number'} *
+                        </label>
+                        {carrier && (
+                          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${carrier.color}`}>
+                            {carrier.icon} {carrier.name}
+                          </span>
+                        )}
+                      </div>
+                      <input
+                        type="tel"
+                        value={customerPhone}
+                        onChange={(e) => setCustomerPhone(e.target.value)}
+                        placeholder="e.g. 012 888 999"
+                        className="w-full bg-stone-900 border border-stone-800 rounded-xl px-3 py-2 text-xs text-stone-100 placeholder-stone-600 focus:outline-none focus:border-amber-500 font-mono"
+                      />
+                    </div>
+                  </div>
+                )}
 
                 {orderType === 'DELIVERY' ? (
                   <div className="space-y-2.5 pt-1">

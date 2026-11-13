@@ -411,23 +411,32 @@ export const CustomerAuthModal = ({
             <span className="text-[11px] font-bold text-stone-500 uppercase tracking-wider block text-center">
               {isKhmer ? 'ឬចូលសាកល្បងរហ័ស (1-Click Demo Accounts)' : 'Or Instant 1-Click Demo Customer'}
             </span>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => handleQuickDemoLogin('Phara', '096 927 6538')}
+                className="p-2 rounded-xl bg-amber-950/30 hover:bg-amber-900/40 border border-amber-600/50 text-left transition cursor-pointer"
+              >
+                <p className="font-bold text-xs text-amber-300">👤 Phara</p>
+                <p className="text-[10px] text-stone-400 font-mono">096 927 6538</p>
+              </button>
+
               <button
                 type="button"
                 onClick={() => handleQuickDemoLogin('Sophea Kem', '012 888 999')}
-                className="p-2.5 rounded-xl bg-stone-950 hover:bg-stone-850 border border-stone-800 text-left transition cursor-pointer"
+                className="p-2 rounded-xl bg-stone-950 hover:bg-stone-850 border border-stone-800 text-left transition cursor-pointer"
               >
-                <p className="font-bold text-xs text-amber-300">👤 Sophea Kem</p>
-                <p className="text-[10px] text-stone-500 font-mono">012 888 999 • Gold VIP</p>
+                <p className="font-bold text-xs text-stone-200">👤 Sophea</p>
+                <p className="text-[10px] text-stone-500 font-mono">012 888 999</p>
               </button>
 
               <button
                 type="button"
                 onClick={() => handleQuickDemoLogin('David Miller', '017 333 444')}
-                className="p-2.5 rounded-xl bg-stone-950 hover:bg-stone-850 border border-stone-800 text-left transition cursor-pointer"
+                className="p-2 rounded-xl bg-stone-950 hover:bg-stone-850 border border-stone-800 text-left transition cursor-pointer"
               >
-                <p className="font-bold text-xs text-stone-200">👤 David Miller</p>
-                <p className="text-[10px] text-stone-500 font-mono">017 333 444 • Member</p>
+                <p className="font-bold text-xs text-stone-200">👤 David</p>
+                <p className="text-[10px] text-stone-500 font-mono">017 333 444</p>
               </button>
             </div>
           </div>
