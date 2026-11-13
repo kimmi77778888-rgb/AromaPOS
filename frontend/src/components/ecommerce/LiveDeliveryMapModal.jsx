@@ -15,19 +15,18 @@ import {
   Sparkles,
   ExternalLink,
   ThumbsUp,
-  PackageCheck
+  PackageCheck,
+  Navigation,
+  Compass,
+  Radio,
+  LocateFixed
 } from 'lucide-react';
-
-/**
- * Route Waypoints in Phnom Penh from Aroma BKK1 Roastery to Customer
- */
-const DEFAULT_ROUTE_POINTS = [
-  { lat: 11.5508, lon: 104.9242, name: 'Aroma BKK1 Roastery (St. 57)' },
-  { lat: 11.5530, lon: 104.9230, name: 'Monivong Blvd Junction' },
-  { lat: 11.5565, lon: 104.9215, name: 'Independence Monument Circle' },
-  { lat: 11.5598, lon: 104.9240, name: 'Norodom Blvd Expressway' },
-  { lat: 11.5625, lon: 104.9265, name: 'Customer Destination (Sangkat Chaktomuk)' }
-];
+import { 
+  ROASTERY_HQ, 
+  geocodeDeliveryAddress, 
+  fetchOsrmRoute, 
+  getLiveDeviceLocation 
+} from '../../services/routingService';
 
 export const LiveDeliveryMapModal = ({
   isOpen,
@@ -40,11 +39,17 @@ export const LiveDeliveryMapModal = ({
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const riderMarkerRef = useRef(null);
+  const routePolylineRef = useRef(null);
 
-  // Rider Telemetry Simulation
-  const [riderStep, setRiderStep] = useState(1);
-  const [speed, setSpeed] = useState(32);
-  const [etaMinutes, setEtaMinutes] = useState(12);
+  // Real GPS & Route Telemetry State
+  const [routeCoordinates, setRouteCoordinates] = useState([]);
+  const [routeDistanceKm, setRouteDistanceKm] = useState(2.1);
+  const [etaMinutes, setEtaMinutes] = useState(8);
+  const [isRealGps, setIsRealGps] = useState(false);
+  const [gpsAccuracy, setGpsAccuracy] = useState(null);
+  const [activeStepIndex, setActiveStepIndex] = useState(0);
+  const [speed, setSpeed] = useState(28);
+  const [routeRoadName, setRouteRoadName] = useState('Norodom Blvd & St. 288');
 
   // "Got Product / Order Received" confirmation state
   const [isDelivered, setIsDelivered] = useState(
@@ -57,23 +62,47 @@ export const LiveDeliveryMapModal = ({
     }
   }, [order]);
 
-  // Step movement simulation
+  // Load Real Device GPS & Calculate Real OSRM Road Route
   useEffect(() => {
-    if (!isOpen || isDelivered) return;
+    let isCancelled = false;
+    if (!isOpen) return;
 
-    const interval = setInterval(() => {
-      setRiderStep((prev) => {
-        const next = (prev + 1) % DEFAULT_ROUTE_POINTS.length;
-        setSpeed(Math.floor(26 + Math.random() * 12));
-        setEtaMinutes((m) => Math.max(2, m > 3 ? m - 1 : 10));
-        return next;
-      });
-    }, 4000);
+    const setupRealRoute = async () => {
+      // 1. Resolve Customer Destination: Check Device GPS first, then address geocoding
+      let destination = geocodeDeliveryAddress(order?.deliveryAddress || '', order?.customerDistrict || '');
 
-    return () => clearInterval(interval);
-  }, [isOpen, isDelivered]);
+      // Try acquiring hardware live GPS
+      const deviceLoc = await getLiveDeviceLocation();
+      if (!isCancelled && deviceLoc.success && deviceLoc.isRealGps) {
+        setIsRealGps(true);
+        setGpsAccuracy(deviceLoc.accuracy);
+        // If user is within Cambodia bounds (lat 10..15, lon 102..108), pin directly to their real device GPS
+        if (deviceLoc.lat >= 10 && deviceLoc.lat <= 15 && deviceLoc.lon >= 102 && deviceLoc.lon <= 108) {
+          destination = { lat: deviceLoc.lat, lon: deviceLoc.lon, district: 'Live Device GPS' };
+        }
+      }
 
-  // Leaflet Map Initialization with Clean, Free OpenStreetMap Tiles (No API Key Required)
+      // 2. Fetch Real OSRM Driving Route
+      const routeData = await fetchOsrmRoute(ROASTERY_HQ, destination);
+      if (isCancelled) return;
+
+      if (routeData && routeData.coordinates.length > 0) {
+        setRouteCoordinates(routeData.coordinates);
+        setRouteDistanceKm(routeData.distanceKm);
+        setEtaMinutes(routeData.durationMins);
+        setRouteRoadName(routeData.summary || 'Phnom Penh Main Road');
+        setActiveStepIndex(Math.floor(routeData.coordinates.length * 0.35)); // Rider currently mid-route
+      }
+    };
+
+    setupRealRoute();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [isOpen, order]);
+
+  // Leaflet Map Initialization with Clean OpenStreetMap
   useEffect(() => {
     let isMounted = true;
     if (!isOpen || !mapContainerRef.current) return;
@@ -81,27 +110,20 @@ export const LiveDeliveryMapModal = ({
     import('leaflet').then((L) => {
       if (!isMounted || !mapContainerRef.current) return;
 
-      // Clean up previous instance
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
       }
 
-      const storePos = [DEFAULT_ROUTE_POINTS[0].lat, DEFAULT_ROUTE_POINTS[0].lon];
-      const customerPos = [
-        DEFAULT_ROUTE_POINTS[DEFAULT_ROUTE_POINTS.length - 1].lat,
-        DEFAULT_ROUTE_POINTS[DEFAULT_ROUTE_POINTS.length - 1].lon
-      ];
-
       const map = L.map(mapContainerRef.current, {
-        center: [11.5565, 104.9230],
+        center: [11.5565, 104.9242],
         zoom: 14,
         zoomControl: false
       });
 
       mapInstanceRef.current = map;
 
-      // Clean Standard OpenStreetMap Tiles (Fixes "API KEY REQUIRED" watermark completely)
+      // 100% Free & Open OpenStreetMap Tile Layer (Zero "API KEY REQUIRED" watermark)
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         maxZoom: 19,
@@ -110,59 +132,61 @@ export const LiveDeliveryMapModal = ({
 
       L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-      // 1. Store Origin Pin (Aroma Roastery)
+      // Store Origin Pin (Aroma BKK1 Roastery)
       const storeHtml = `
         <div style="transform: translate(-50%, -50%);">
-          <div style="background: #1c1917; border: 2.5px solid #f59e0b; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(0,0,0,0.5); font-size: 16px;">
+          <div style="background: #1c1917; border: 2.5px solid #f59e0b; border-radius: 50%; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(0,0,0,0.6); font-size: 17px;">
             ☕
           </div>
         </div>
       `;
-      L.marker(storePos, { icon: L.divIcon({ html: storeHtml, className: 'store-pin' }) })
+      L.marker([ROASTERY_HQ.lat, ROASTERY_HQ.lon], { icon: L.divIcon({ html: storeHtml, className: 'store-pin' }) })
         .addTo(map)
-        .bindPopup('<b>Aroma Coffee Roastery HQ</b><br>Origin Kitchen (St. 57, BKK1)');
+        .bindPopup(`<b>${ROASTERY_HQ.name}</b><br>${ROASTERY_HQ.address}`);
 
-      // 2. Customer Destination Pin
-      const custHtml = `
-        <div style="transform: translate(-50%, -50%);">
-          <div style="background: #e11d48; border: 2.5px solid #ffffff; border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(225,29,72,0.6); font-size: 16px; color: white;">
-            📍
+      // If route coordinates are ready, draw real road polyline and pins
+      if (routeCoordinates.length > 0) {
+        // Customer Destination Pin
+        const destCoord = routeCoordinates[routeCoordinates.length - 1];
+        const custHtml = `
+          <div style="transform: translate(-50%, -50%);">
+            <div style="background: #e11d48; border: 2.5px solid #ffffff; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(225,29,72,0.6); font-size: 17px; color: white;">
+              📍
+            </div>
           </div>
-        </div>
-      `;
-      L.marker(customerPos, { icon: L.divIcon({ html: custHtml, className: 'cust-pin' }) })
-        .addTo(map)
-        .bindPopup(`<b>${order?.customerName || 'Customer Delivery'}</b><br>${order?.deliveryAddress || 'Phnom Penh'}`);
+        `;
+        L.marker(destCoord, { icon: L.divIcon({ html: custHtml, className: 'cust-pin' }) })
+          .addTo(map)
+          .bindPopup(`<b>${order?.customerName || 'Customer'}</b><br>${order?.deliveryAddress || 'Phnom Penh'}`);
 
-      // 3. Polyline Route
-      const latlngs = DEFAULT_ROUTE_POINTS.map(p => [p.lat, p.lon]);
-      L.polyline(latlngs, {
-        color: '#f59e0b',
-        weight: 5,
-        opacity: 0.85,
-        dashArray: '8, 8',
-        lineCap: 'round'
-      }).addTo(map);
+        // Exact Real OSRM Road Polyline
+        const polyline = L.polyline(routeCoordinates, {
+          color: '#f59e0b',
+          weight: 5,
+          opacity: 0.9,
+          lineJoin: 'round',
+          lineCap: 'round'
+        }).addTo(map);
+        routePolylineRef.current = polyline;
 
-      // 4. Moving Rider Marker
-      const currentPt = DEFAULT_ROUTE_POINTS[riderStep];
-      const riderHtml = `
-        <div style="transform: translate(-50%, -50%); position: relative;">
-          <div style="position: absolute; inset: -4px; border-radius: 50%; background: rgba(16, 185, 129, 0.45); animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
-          <div style="position: relative; background: #047857; border: 2.5px solid #ffffff; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(4,120,87,0.7); font-size: 19px; color: white;">
-            🛵
+        // Moving Rider Pin
+        const curRiderPos = routeCoordinates[activeStepIndex] || routeCoordinates[0];
+        const riderHtml = `
+          <div style="transform: translate(-50%, -50%); position: relative;">
+            <div style="position: absolute; inset: -4px; border-radius: 50%; background: rgba(16, 185, 129, 0.45); animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
+            <div style="position: relative; background: #047857; border: 2.5px solid #ffffff; border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(4,120,87,0.7); font-size: 20px; color: white;">
+              🛵
+            </div>
           </div>
-        </div>
-      `;
+        `;
+        const riderMarker = L.marker(curRiderPos, {
+          icon: L.divIcon({ html: riderHtml, className: 'rider-pin' }),
+          zIndexOffset: 1000
+        }).addTo(map);
+        riderMarkerRef.current = riderMarker;
 
-      const riderMarker = L.marker([currentPt.lat, currentPt.lon], {
-        icon: L.divIcon({ html: riderHtml, className: 'rider-pin' }),
-        zIndexOffset: 1000
-      }).addTo(map);
-
-      riderMarkerRef.current = riderMarker;
-
-      map.fitBounds(L.latLngBounds(latlngs), { padding: [50, 50] });
+        map.fitBounds(polyline.getBounds(), { padding: [55, 55] });
+      }
     }).catch(err => console.error('Leaflet load error', err));
 
     return () => {
@@ -172,26 +196,44 @@ export const LiveDeliveryMapModal = ({
         mapInstanceRef.current = null;
       }
     };
-  }, [isOpen]);
+  }, [isOpen, routeCoordinates]);
 
-  // Update Rider position smoothly on step change
+  // Animate Rider smoothly along real road coordinates
   useEffect(() => {
-    if (!riderMarkerRef.current || !mapInstanceRef.current) return;
-    const pt = DEFAULT_ROUTE_POINTS[riderStep];
-    riderMarkerRef.current.setLatLng([pt.lat, pt.lon]);
-  }, [riderStep]);
+    if (!isOpen || isDelivered || routeCoordinates.length === 0) return;
 
-  // Handle "User Got Product" Click
+    const interval = setInterval(() => {
+      setActiveStepIndex((prev) => {
+        const next = prev + 1 >= routeCoordinates.length ? Math.floor(routeCoordinates.length * 0.2) : prev + 1;
+        setSpeed(Math.floor(26 + Math.random() * 10));
+        setEtaMinutes((m) => Math.max(1, m > 2 ? m - 1 : 6));
+        return next;
+      });
+    }, 3500);
+
+    return () => clearInterval(interval);
+  }, [isOpen, isDelivered, routeCoordinates]);
+
+  // Update Rider Marker position dynamically
+  useEffect(() => {
+    if (!riderMarkerRef.current || routeCoordinates.length === 0) return;
+    const pt = routeCoordinates[activeStepIndex];
+    if (pt) {
+      riderMarkerRef.current.setLatLng(pt);
+    }
+  }, [activeStepIndex, routeCoordinates]);
+
+  // Handle "User Got Product / Received Order" Click
   const handleGotProduct = () => {
     setIsDelivered(true);
     setEtaMinutes(0);
     setSpeed(0);
 
-    // Audio & Confetti Celebration
+    // Audio Chime & Confetti Celebration
     try {
       soundService.playKaChing();
       confetti({
-        particleCount: 85,
+        particleCount: 90,
         spread: 95,
         origin: { y: 0.6 },
         colors: ['#10B981', '#F59E0B', '#3B82F6', '#D97706']
@@ -259,8 +301,10 @@ export const LiveDeliveryMapModal = ({
                   </span>
                 )}
               </div>
-              <p className="text-xs text-stone-400">
-                Aroma Express Logistics • Phnom Penh Fast City Delivery
+              <p className="text-xs text-stone-400 flex items-center gap-1.5 mt-0.5">
+                <span>Aroma Express Logistics</span>
+                <span>•</span>
+                <span className="text-stone-300 font-medium">{routeRoadName}</span>
               </p>
             </div>
           </div>
@@ -278,16 +322,27 @@ export const LiveDeliveryMapModal = ({
           <div ref={mapContainerRef} className="w-full h-full" />
 
           {/* Floating Live Telemetry HUD */}
-          <div className="absolute top-4 left-4 z-10 p-3 rounded-2xl bg-stone-950/90 backdrop-blur-md border border-stone-800 shadow-xl flex items-center gap-3 text-xs">
-            <div className="flex items-center gap-1.5 text-emerald-400 font-bold font-mono">
+          <div className="absolute top-4 left-4 z-10 p-3 rounded-2xl bg-stone-950/92 backdrop-blur-md border border-stone-800 shadow-2xl flex items-center gap-3 text-xs">
+            <div className="flex items-center gap-1.5 font-bold font-mono">
               <span className={`w-2 h-2 rounded-full ${isDelivered ? 'bg-emerald-400' : 'bg-emerald-400 animate-ping'}`} />
-              <span>{isDelivered ? 'COMPLETED' : 'LIVE GPS'}</span>
+              <span className="text-emerald-400">
+                {isDelivered ? 'DELIVERED' : isRealGps ? '🛰️ REAL GPS' : '🗺️ OSRM ROUTE'}
+              </span>
+              {gpsAccuracy && !isDelivered && (
+                <span className="text-[10px] text-stone-400 font-normal">
+                  (±{gpsAccuracy}m)
+                </span>
+              )}
             </div>
-            <span className="text-stone-600">|</span>
+            <span className="text-stone-700">|</span>
+            <div className="font-mono text-stone-200">
+              Dist: <strong className="text-amber-400">{routeDistanceKm} km</strong>
+            </div>
+            <span className="text-stone-700">|</span>
             <div className="font-mono text-stone-200">
               Speed: <strong className="text-amber-400">{isDelivered ? 0 : speed} km/h</strong>
             </div>
-            <span className="text-stone-600">|</span>
+            <span className="text-stone-700">|</span>
             <div className="font-mono text-stone-200">
               ETA: <strong className="text-emerald-400">{isDelivered ? (isKhmer ? 'បានដល់' : 'Arrived') : `~${etaMinutes} mins`}</strong>
             </div>

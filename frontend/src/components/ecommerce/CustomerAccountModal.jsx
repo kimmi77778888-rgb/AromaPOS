@@ -174,10 +174,10 @@ export const CustomerAccountModal = ({
   const stampsCount = customerUser.stamps || 3;
   const totalStampsGoal = 10;
 
-  const handleCreateDemoOrder = () => {
-    const demoOrder = {
+  const handleCreateQuickOrder = () => {
+    const quickOrder = {
       id: `ord-onl-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`,
-      orderNumber: `ORD-DEMO-${Math.floor(1000 + Math.random() * 9000)}`,
+      orderNumber: `#ORD-ONL-${Math.floor(1000 + Math.random() * 9000)}`,
       channel: 'ONLINE_ECOMMERCE',
       orderType: 'DELIVERY',
       status: 'IN_PREPARATION',
@@ -218,11 +218,11 @@ export const CustomerAccountModal = ({
       rielTotal: '26,650',
       paymentMethod: 'KHQR',
       paymentStatus: 'PAID',
-      notes: 'Instant Demo Order with official NBC Bakong KHQR receipt'
+      notes: 'Online Store (Phnom Penh Fast Delivery)'
     };
 
     if (placeOnlineOrder) {
-      placeOnlineOrder(demoOrder);
+      placeOnlineOrder(quickOrder);
     }
   };
 
@@ -482,12 +482,12 @@ export const CustomerAccountModal = ({
 
                     <button
                       type="button"
-                      onClick={handleCreateDemoOrder}
+                      onClick={handleCreateQuickOrder}
                       className="px-4 py-2 rounded-xl bg-stone-900 hover:bg-stone-850 border border-stone-750 text-amber-300 font-bold text-xs flex items-center gap-2 transition cursor-pointer shadow-sm hover:border-amber-500/40"
-                      title={isKhmer ? 'បង្កើតកុម្ម៉ង់សាកល្បងភ្លាមៗដើម្បីតេស្តមុខងារវិក្កយបត្រ' : 'Create instant test order to preview invoice & tracking'}
+                      title={isKhmer ? 'កុម្ម៉ង់រហ័សកាហ្វេឡាតេ និងនំក្រូសង់ប៊ឺស្រស់' : 'Quick re-order artisan latte & croissant'}
                     >
                       <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                      <span>{isKhmer ? '⚡ បង្កើតកុម្ម៉ង់សាកល្បង' : '⚡ Instant Test Order'}</span>
+                      <span>{isKhmer ? '⚡ កុម្ម៉ង់រហ័ស (Quick Order)' : '⚡ Quick Order'}</span>
                     </button>
                   </div>
                 </div>

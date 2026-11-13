@@ -101,13 +101,20 @@ public class ShiftService {
         s4.setVarianceStatus("BALANCED");
         s4.setClosingNotes("Previous shift closed and verified.");
 
-        shifts.add(0, s4);
+        // 5. Active Current Shift (Liam Vance / Register #1) - OPEN
+        Shift s5 = new Shift("shf-active", "SHIFT-" + now.toLocalDate().toString().replace("-", "") + "-02",
+                "usr-1", "Liam Vance", "BARISTA", "Register #1 - Main Bar", 150.00, "Active registered shift. Store open for business.");
+        s5.setOpenedAt(now.minusHours(4));
+        s5.setStatus("OPEN");
+
+        shifts.add(0, s5);
+        shifts.add(s4);
         shifts.add(s1);
         shifts.add(s2);
         shifts.add(s3);
 
-        // By default, store starts CLOSED until a cashier officially opens the register
-        orderService.setStoreOpen(false);
+        // Store is standard OPEN for live POS and online delivery operations
+        orderService.setStoreOpen(true);
     }
 
     public List<Shift> getAllShifts() {

@@ -1463,6 +1463,36 @@ export const AppProvider = ({ children }) => {
       localStorage.setItem('aromapos_orders', JSON.stringify([onlineOrder, ...cur]));
     } catch (e) {}
 
+    // 4b. Sync with Backend API asynchronously
+    try {
+      fetch('/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Cashier-Name': 'Online Store'
+        },
+        body: JSON.stringify({
+          items: (onlineOrder.items || []).map((i) => ({
+            productId: i.productId || 'prod-1',
+            productName: i.name || i.productName || 'Beverage',
+            quantity: i.quantity || 1,
+            unitPrice: i.unitPrice || i.price || 0,
+            subtotal: i.total || i.subtotal || 0,
+            notes: i.notes || i.specialNote || ''
+          })),
+          paymentMethod: onlineOrder.paymentMethod || 'KHQR',
+          amountPaid: onlineOrder.total || 0,
+          discount: onlineOrder.discount || 0,
+          orderType: onlineOrder.orderType || 'DELIVERY',
+          customerName: onlineOrder.customerName || 'Online Customer',
+          customerPhone: onlineOrder.customerPhone,
+          channel: 'ONLINE_ECOMMERCE',
+          deliveryAddress: onlineOrder.deliveryAddress,
+          notes: onlineOrder.notes || 'Online Store Delivery'
+        })
+      }).catch(() => {});
+    } catch (e) {}
+
     // 5. Award loyalty points & stamps to active customer
     try {
       setCustomerUser((prev) => {

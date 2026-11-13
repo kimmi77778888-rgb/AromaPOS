@@ -84,37 +84,62 @@ export const Dashboard = () => {
     };
   }, [orders]);
 
-  // Hourly Sales Data for Chart
+  // Hourly Sales Data for Chart: Grouped dynamically by actual order timestamp
   const hourlyData = useMemo(() => {
-    const hours = ['8 AM', '9 AM', '10 AM', '11 AM', '12 PM', '1 PM', '2 PM', '3 PM', '4 PM', '5 PM'];
-    const baseAmounts = [65.50, 112.00, 168.40, 142.00, 215.50, 180.20, 135.00, 155.80, 95.00, 68.00];
+    const hourSlots = [
+      { label: '8 AM', h: 8 },
+      { label: '9 AM', h: 9 },
+      { label: '10 AM', h: 10 },
+      { label: '11 AM', h: 11 },
+      { label: '12 PM', h: 12 },
+      { label: '1 PM', h: 13 },
+      { label: '2 PM', h: 14 },
+      { label: '3 PM', h: 15 },
+      { label: '4 PM', h: 16 },
+      { label: '5 PM', h: 17 }
+    ];
 
-    const dynamicRevenue = orders.reduce((s, o) => s + o.total, 0);
-    return hours.map((hour, idx) => ({
-      hour,
-      sales: Math.round((baseAmounts[idx] + (idx >= 4 ? dynamicRevenue * 0.12 : 0)) * 100) / 100,
-      tickets: Math.floor(baseAmounts[idx] / 15) + (idx === 4 ? 3 : 1)
-    }));
+    return hourSlots.map(({ label, h }) => {
+      let sales = 0;
+      let tickets = 0;
+
+      orders.forEach((o) => {
+        if (o.status === 'REFUNDED') return;
+        const d = new Date(o.createdAt || Date.now());
+        if (d.getHours() === h) {
+          sales += (o.total || 0);
+          tickets += 1;
+        }
+      });
+
+      return {
+        hour: label,
+        sales: Math.round(sales * 100) / 100,
+        tickets
+      };
+    });
   }, [orders]);
 
-  // Category Revenue Data for Chart
+  // Category Revenue Data for Chart: 100% dynamic summation from real database orders
   const categoryChartData = useMemo(() => {
     const counts = {
-      'Hot Coffee': 320.50,
-      'Iced Coffee': 415.80,
-      'Pastries': 195.40,
-      'Beans': 180.00,
-      'Specialty': 98.50
+      'Hot Coffee': 0,
+      'Iced Coffee': 0,
+      'Pastries': 0,
+      'Beans': 0,
+      'Specialty': 0
     };
 
     orders.forEach((o) => {
-      o.items.forEach((item) => {
+      if (o.status === 'REFUNDED') return;
+      (o.items || []).forEach((item) => {
         const prod = products.find((p) => p.id === item.productId);
         const cat = prod?.category || 'Specialty';
+        const lineVal = Number(item.subtotal || item.total || (item.unitPrice * item.quantity) || 0);
         if (counts[cat] !== undefined) {
-          counts[cat] += item.subtotal;
+          counts[cat] += lineVal;
         } else {
-          counts[cat] = item.subtotal;
+          counts[cat] = lineVal;
         }
       });
     });

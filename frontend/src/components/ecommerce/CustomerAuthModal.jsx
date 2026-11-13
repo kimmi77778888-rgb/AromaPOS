@@ -155,15 +155,6 @@ export const CustomerAuthModal = ({
     }
   };
 
-  const handleQuickDemoLogin = (demoName, demoPhone) => {
-    setIsLoading(true);
-    setTimeout(() => {
-      const u = loginCustomer(demoPhone, '123456', demoName);
-      setIsLoading(false);
-      if (onAuthSuccess) onAuthSuccess(u);
-      onClose();
-    }, 300);
-  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-xl animate-fade-in font-sans">
@@ -455,29 +446,7 @@ export const CustomerAuthModal = ({
             </div>
           </form>
 
-          {/* Minimalist 1-Click Fast Demo Pill Row */}
-          <div className="pt-3 pb-1 border-t border-stone-800/60">
-            <div className="flex items-center justify-between text-[11px] text-stone-500 mb-2">
-              <span>{isKhmer ? 'សាកល្បងរហ័ស (Demo Accounts):' : 'Quick demo accounts:'}</span>
-              <span className="text-[10px] text-amber-500/70 font-mono">1-Click Fill</span>
-            </div>
-            <div className="flex items-center gap-2">
-              {[
-                { name: 'Phara', phone: '096 927 6538' },
-                { name: 'Sophea', phone: '012 888 999' },
-                { name: 'David', phone: '017 333 444' }
-              ].map((acc) => (
-                <button
-                  key={acc.phone}
-                  type="button"
-                  onClick={() => handleQuickDemoLogin(acc.name, acc.phone)}
-                  className="flex-1 py-1.5 px-2 rounded-xl bg-stone-950/70 hover:bg-stone-800/80 border border-stone-800 text-stone-300 hover:text-amber-300 text-[11px] font-medium transition cursor-pointer text-center truncate"
-                >
-                  <span className="font-bold">{acc.name}</span>
-                </button>
-              ))}
-            </div>
-          </div>
+
         </div>
       </div>
     </div>

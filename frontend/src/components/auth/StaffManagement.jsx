@@ -108,7 +108,7 @@ export const StaffManagement = () => {
   const [loginLocationFilter, setLoginLocationFilter] = useState('ALL');
   const [loginDeviceTypeFilter, setLoginDeviceTypeFilter] = useState('ALL');
   const [loginBrandFilter, setLoginBrandFilter] = useState('ALL');
-  const [loginSourceFilter, setLoginSourceFilter] = useState('ALL'); // 'ALL' | 'REAL' | 'DEMO'
+  const [loginSourceFilter, setLoginSourceFilter] = useState('REAL'); // Defaults to REAL devices only
   const [inspectedSession, setInspectedSession] = useState(null);
   const [remoteDeviceSession, setRemoteDeviceSession] = useState(null);
   const [smsTarget, setSmsTarget] = useState(null); // { staff, session }

@@ -20,7 +20,7 @@ public class OrderService {
     private final AtomicInteger orderSeq = new AtomicInteger(1042);
 
     // Register Shift Management
-    private boolean storeOpen = false;
+    private boolean storeOpen = true;
     private double startingFloat = 200.00;
     private LocalDateTime shiftStartedAt = LocalDateTime.now().minusHours(8);
     private String currentShiftCashier = "Liam Vance";
@@ -91,7 +91,12 @@ public class OrderService {
     }
 
     public synchronized Order processCheckout(CheckoutRequest request, String cashierName) {
-        if (!storeOpen) {
+        boolean isOnlineOrder = "ONLINE_ECOMMERCE".equalsIgnoreCase(request.getChannel())
+                || "DELIVERY".equalsIgnoreCase(request.getOrderType())
+                || "Online Store".equalsIgnoreCase(cashierName)
+                || (request.getNotes() != null && request.getNotes().contains("Online Store"));
+
+        if (!storeOpen && !isOnlineOrder) {
             throw new IllegalStateException("Store is currently closed. Please open the store / register shift before making sales.");
         }
 
