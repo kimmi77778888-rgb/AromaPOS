@@ -13,10 +13,10 @@ public class GoogleAuthConfig {
     private String clientSecret;
 
     public String getClientId() {
-        return clientId;
+        return clientId != null ? clientId.trim() : "";
     }
 
     public String getClientSecret() {
-        return clientSecret;
+        return clientSecret != null ? clientSecret.trim() : "";
     }
 }

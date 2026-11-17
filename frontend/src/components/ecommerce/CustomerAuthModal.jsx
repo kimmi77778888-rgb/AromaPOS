@@ -306,11 +306,20 @@ export const CustomerAuthModal = ({
             {/* Quick Demo Test Chips */}
             <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
               <span className="text-[10px] text-stone-500">Quick tests:</span>
-              {['admin@cafe.com', 'sophara.coffee@gmail.com'].map((demoMail) => (
+              {['lensophara@gmail.com', 'admin@cafe.com', 'sophara.coffee@gmail.com'].map((demoMail) => (
                 <button
                   key={demoMail}
                   type="button"
-                  onClick={() => setGmailInput(demoMail)}
+                  onClick={() => {
+                    setGmailInput(demoMail);
+                    if (demoMail === 'lensophara@gmail.com') {
+                      setGmailName('Len Sophara');
+                    } else if (demoMail === 'admin@cafe.com') {
+                      setGmailName('Admin Manager');
+                    } else if (demoMail === 'sophara.coffee@gmail.com') {
+                      setGmailName('Sophara Coffee');
+                    }
+                  }}
                   className="text-[10px] font-mono px-2 py-0.5 rounded-lg bg-stone-900 hover:bg-stone-850 border border-stone-800 text-blue-400 hover:border-blue-500/60 transition cursor-pointer"
                 >
                   {demoMail}

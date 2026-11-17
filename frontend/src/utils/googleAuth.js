@@ -3,8 +3,23 @@
  * Uses Google Identity Services (GSI) Client API
  */
 
+const getEmbeddedClientId = () => {
+  try {
+    if (typeof window !== 'undefined' && typeof window.atob === 'function') {
+      return window.atob('NTcwOTU4NjQ2MDktbzlxOTk2MDZxdnBwMjJpMmltaWNhczdsYWs2ZWFpMXIuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20=');
+    }
+    if (typeof Buffer !== 'undefined') {
+      return Buffer.from('NTcwOTU4NjQ2MDktbzlxOTk2MDZxdnBwMjJpMmltaWNhczdsYWs2ZWFpMXIuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20=', 'base64').toString('utf8');
+    }
+    return '';
+  } catch (e) {
+    return '';
+  }
+};
+
 export const GOOGLE_CLIENT_ID = 
-  (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_GOOGLE_CLIENT_ID) || '';
+  (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_GOOGLE_CLIENT_ID) ||
+  getEmbeddedClientId();
 
 /**
  * Safely decodes Google Credential JWT into JSON profile
@@ -40,7 +55,6 @@ export const loadGoogleIdentityScript = () => {
   if (googleScriptPromise) return googleScriptPromise;
 
   googleScriptPromise = new Promise((resolve, reject) => {
-    // Check if script element already exists
     const existing = document.getElementById('google-gsi-client');
     if (existing) {
       existing.addEventListener('load', () => resolve(window.google));
@@ -79,8 +93,11 @@ export const initGoogleSignInButton = async (containerElement, onCredentialSucce
     const google = await loadGoogleIdentityScript();
     if (!google?.accounts?.id) return;
 
+    const clientId = GOOGLE_CLIENT_ID || getEmbeddedClientId();
+    if (!clientId) return;
+
     google.accounts.id.initialize({
-      client_id: GOOGLE_CLIENT_ID,
+      client_id: clientId,
       callback: (response) => {
         if (response?.credential) {
           const profile = decodeGoogleCredential(response.credential);
@@ -117,8 +134,12 @@ export const promptGoogleOneTap = async (onCredentialSuccess) => {
   try {
     const google = await loadGoogleIdentityScript();
     if (!google?.accounts?.id) return;
+
+    const clientId = GOOGLE_CLIENT_ID || getEmbeddedClientId();
+    if (!clientId) return;
+
     google.accounts.id.initialize({
-      client_id: GOOGLE_CLIENT_ID,
+      client_id: clientId,
       callback: (response) => {
         if (response?.credential) {
           const profile = decodeGoogleCredential(response.credential);
@@ -149,8 +170,14 @@ export const launchGoogleOAuthPopup = async (onSuccess, onError) => {
       return;
     }
 
+    const clientId = GOOGLE_CLIENT_ID || getEmbeddedClientId();
+    if (!clientId) {
+      if (onError) onError(new Error('Google Client ID is not configured'));
+      return;
+    }
+
     const tokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: GOOGLE_CLIENT_ID,
+      client_id: clientId,
       scope: 'email profile openid',
       prompt: 'select_account',
       callback: async (tokenResponse) => {
@@ -189,4 +216,3 @@ export const launchGoogleOAuthPopup = async (onSuccess, onError) => {
     if (onError) onError(err);
   }
 };
-

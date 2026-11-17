@@ -5,7 +5,7 @@ import { Coffee, Lock, Mail, Eye, EyeOff, ArrowRight, ShieldCheck, ScanFace, Glo
 import { LanguageSwitcher } from '../common/LanguageSwitcher';
 import { FaceScannerModal } from './FaceScannerModal';
 import { getFullDeviceAuditSnapshot } from '../../utils/deviceDetector';
-import { initGoogleSignInButton, promptGoogleOneTap } from '../../utils/googleAuth';
+import { initGoogleSignInButton, promptGoogleOneTap, launchGoogleOAuthPopup } from '../../utils/googleAuth';
 import { GoogleLogoSvg } from '../ecommerce/CustomerAuthModal';
 
 export const LoginScreen = ({ onReturnToEcommerce }) => {
@@ -290,16 +290,31 @@ export const LoginScreen = ({ onReturnToEcommerce }) => {
               <button
                 type="button"
                 onClick={() => {
-                  promptGoogleOneTap(async (p) => {
-                    setIsLoading(true);
-                    try {
-                      await googleLogin(p);
-                    } catch (err) {
-                      setError(err.message || 'Google login failed');
-                    } finally {
+                  setIsLoading(true);
+                  setError('');
+                  launchGoogleOAuthPopup(
+                    async (p) => {
+                      try {
+                        await googleLogin(p);
+                      } catch (err) {
+                        setError(err.message || 'Google login failed');
+                      } finally {
+                        setIsLoading(false);
+                      }
+                    },
+                    (popupErr) => {
+                      promptGoogleOneTap(async (p) => {
+                        try {
+                          await googleLogin(p);
+                        } catch (err) {
+                          setError(err.message || 'Google login failed');
+                        } finally {
+                          setIsLoading(false);
+                        }
+                      });
                       setIsLoading(false);
                     }
-                  });
+                  );
                 }}
                 className="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-stone-100 text-stone-900 font-bold text-xs flex items-center justify-center gap-2.5 transition shadow border border-stone-300 cursor-pointer active:scale-95"
               >
