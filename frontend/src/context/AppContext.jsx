@@ -37,7 +37,18 @@ export const AppProvider = ({ children }) => {
   const changeAppMode = (mode) => {
     setAppMode(mode);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('aromapos_app_mode', mode);
+      try {
+        localStorage.setItem('aromapos_app_mode', mode);
+        if (mode === 'pos') {
+          if (!window.location.pathname.startsWith('/pos') && !window.location.pathname.startsWith('/staff') && !window.location.pathname.startsWith('/login')) {
+            window.history.pushState({}, '', '/pos');
+          }
+        } else if (mode === 'ecommerce') {
+          if (window.location.pathname.startsWith('/pos') || window.location.pathname.startsWith('/staff') || window.location.pathname.startsWith('/login')) {
+            window.history.pushState({}, '', '/');
+          }
+        }
+      } catch (e) {}
     }
   };
 
@@ -742,6 +753,23 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  const googleLogin = async (googleUser) => {
+    try {
+      const res = await api.googleLogin(googleUser);
+      if (res && res.user) {
+        setUser(res.user);
+        setIsAuthenticated(true);
+        setLoginSessions(getStoredLoginSessions());
+        showToast(`Welcome, ${res.user.name}! ☕ (Google OAuth)`, 'success');
+        soundService.speakKhmerWelcome();
+        return true;
+      }
+    } catch (err) {
+      showToast(err.message || 'Google Sign-In failed', 'error');
+      throw err;
+    }
+  };
+
   const logout = () => {
     saveStoredUser(null);
     setUser(null);
@@ -1145,6 +1173,50 @@ export const AppProvider = ({ children }) => {
     setCustomerUser(newMember);
     showToast(`ស្វាគមន៍ ${newMember.name}! ទទួលបាន ១៥០ ពិន្ទុ & ត្រាកាហ្វេ`, 'success');
     return newMember;
+  }, [customers, showToast]);
+
+  const loginCustomerWithGoogle = useCallback((googleProfile) => {
+    const email = (googleProfile.email || '').trim().toLowerCase();
+    const existing = customers.find((c) => c.email && c.email.toLowerCase() === email);
+    if (existing) {
+      const updated = {
+        ...existing,
+        name: existing.name || googleProfile.name,
+        avatar: googleProfile.picture || existing.avatar,
+        lastLoginAt: new Date().toISOString()
+      };
+      setCustomerUser(updated);
+      try {
+        storage.setItem('aromapos_customer_user', JSON.stringify(updated));
+      } catch (e) {}
+      showToast(`Welcome back, ${updated.name}! ☕`, 'success');
+      return updated;
+    } else {
+      const newCust = {
+        id: `cust-g-${Date.now()}`,
+        name: googleProfile.name || 'Google Coffee Lover',
+        email: email,
+        phone: googleProfile.phone || '',
+        avatar: googleProfile.picture || '',
+        address: '#57, Street 288, Sangkat Boeng Keng Kang 1',
+        district: 'Khan Boeng Keng Kang (BKK)',
+        tier: 'Aroma Coffee Club VIP',
+        points: 100, // 100 Welcome Points
+        stamps: 1,
+        visits: 1,
+        isGoogleAccount: true,
+        joinedAt: new Date().toISOString()
+      };
+      setCustomers((prev) => [newCust, ...prev]);
+      setCustomerUser(newCust);
+      try {
+        const stored = JSON.parse(storage.getItem('aromapos_customers') || '[]');
+        storage.setItem('aromapos_customers', JSON.stringify([newCust, ...stored]));
+        storage.setItem('aromapos_customer_user', JSON.stringify(newCust));
+      } catch (e) {}
+      showToast(`🎉 Welcome to Aroma Coffee Club, ${newCust.name}! (+100 Points)`, 'success');
+      return newCust;
+    }
   }, [customers, showToast]);
 
   const logoutCustomer = useCallback(() => {
@@ -2108,6 +2180,8 @@ export const AppProvider = ({ children }) => {
         setCustomerUser,
         registerCustomer,
         loginCustomer,
+        loginCustomerWithGoogle,
+        googleLogin,
         logoutCustomer,
         updateCustomerProfile
       }}

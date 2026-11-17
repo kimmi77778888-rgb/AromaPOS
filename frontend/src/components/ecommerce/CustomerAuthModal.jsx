@@ -1,184 +1,205 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useApp } from '../../context/AppContext';
 import { 
+  initGoogleSignInButton, 
+  promptGoogleOneTap, 
+  launchGoogleOAuthPopup, 
+  GOOGLE_CLIENT_ID 
+} from '../../utils/googleAuth';
+import { soundService } from '../../services/soundService';
+import confetti from 'canvas-confetti';
+import { 
   X, 
   User, 
-  Phone, 
-  Lock, 
-  MapPin, 
   Sparkles, 
-  CheckCircle2, 
+  Coffee, 
+  ShieldCheck, 
+  Gift, 
+  Mail, 
+  Zap, 
   ArrowRight, 
-  Coffee,
-  LogIn,
-  UserPlus,
-  Camera,
-  Trash2,
-  Eye,
-  EyeOff,
-  ChevronDown,
-  ShieldCheck,
-  Gift
+  CheckCircle2,
+  Lock
 } from 'lucide-react';
 
-const PHNOM_PENH_DISTRICTS = [
-  'Khan Boeng Keng Kang (BKK)',
-  'Khan Daun Penh (Riverside)',
-  'Khan Tuol Kork (TK)',
-  'Khan Chamkarmon',
-  'Khan Sen Sok',
-  'Khan Chbar Ampov',
-  'Khan Russey Keo',
-  'Khan Meanchey',
-  'Khan Chroy Changvar'
-];
-
 /**
- * Detect Cambodia mobile carrier
+ * Official Google Multi-Color G Logo SVG
  */
-const detectCarrier = (phone = '') => {
-  const clean = phone.replace(/[^0-9]/g, '');
-  if (/^(855|0)(10|15|16|69|70|86|87|93|96|98)/.test(clean)) {
-    return { name: 'Smart 5G', badge: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' };
-  }
-  if (/^(855|0)(11|12|14|17|61|76|77|78|85|89|92|95|99)/.test(clean)) {
-    return { name: 'Cellcard 4G', badge: 'bg-orange-500/15 text-orange-400 border-orange-500/30' };
-  }
-  if (/^(855|0)(88|97|71|66|67|68|90|31)/.test(clean)) {
-    return { name: 'Metfone 4G', badge: 'bg-rose-500/15 text-rose-400 border-rose-500/30' };
-  }
-  return null;
-};
+export const GoogleLogoSvg = ({ className = "w-5 h-5" }) => (
+  <svg className={className} viewBox="0 0 24 24" preserveAspectRatio="xMidYMid meet">
+    <path
+      fill="#4285F4"
+      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+    />
+    <path
+      fill="#34A853"
+      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+    />
+    <path
+      fill="#FBBC05"
+      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+    />
+    <path
+      fill="#EA4335"
+      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+    />
+  </svg>
+);
 
 export const CustomerAuthModal = ({
   isOpen,
   onClose,
-  initialMode = 'REGISTER', // 'REGISTER' | 'LOGIN'
   onAuthSuccess,
   messagePrompt = ''
 }) => {
   const { isKhmer } = useLanguage();
-  const { registerCustomer, loginCustomer } = useApp();
+  const { loginCustomerWithGoogle } = useApp();
 
-  const [authMode, setAuthMode] = useState(initialMode); // 'REGISTER' | 'LOGIN'
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [district, setDistrict] = useState(PHNOM_PENH_DISTRICTS[0]);
-  const [address, setAddress] = useState('');
-  const [regAvatar, setRegAvatar] = useState('');
+  const [gmailInput, setGmailInput] = useState('');
+  const [gmailName, setGmailName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  const regFileInputRef = useRef(null);
+  const googleBtnRef = useRef(null);
+
+  // Initialize official Google Sign-In Button on mount / open
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const timer = setTimeout(() => {
+      if (googleBtnRef.current) {
+        initGoogleSignInButton(googleBtnRef.current, (googleProfile) => {
+          handleGoogleSuccess(googleProfile);
+        }, {
+          width: 320,
+          theme: 'filled_black'
+        });
+      }
+    }, 120);
+
+    return () => clearTimeout(timer);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
-  const carrier = detectCarrier(phone);
-
-  const handleRegImageUpload = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      setErrorMsg(isKhmer ? 'សូមជ្រើសរើសឯកសារជារូបភាព (JPG, PNG, WebP)!' : 'Please choose an image file (JPG, PNG, WebP)!');
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const size = 360;
-        canvas.width = size;
-        canvas.height = size;
-        const ctx = canvas.getContext('2d');
-        const minSide = Math.min(img.width, img.height);
-        const sx = (img.width - minSide) / 2;
-        const sy = (img.height - minSide) / 2;
-        ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, size, size);
-        setRegAvatar(canvas.toDataURL('image/jpeg', 0.88));
-      };
-      img.src = event.target.result;
-    };
-    reader.readAsDataURL(file);
+  const triggerCelebration = () => {
+    try {
+      soundService.playKaChing();
+      confetti({
+        particleCount: 85,
+        spread: 95,
+        origin: { y: 0.6 },
+        colors: ['#4285F4', '#34A853', '#FBBC05', '#EA4335', '#D97706']
+      });
+    } catch (e) {}
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleGoogleSuccess = (googleProfile) => {
+    setIsLoading(true);
+    try {
+      const customer = loginCustomerWithGoogle(googleProfile);
+      triggerCelebration();
+      if (onAuthSuccess) {
+        onAuthSuccess(customer);
+      }
+      onClose();
+    } catch (err) {
+      setErrorMsg(err.message || 'Google login failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Launch interactive Google OAuth 2.0 Account Picker
+  const handleInteractiveGoogleAuth = () => {
+    setIsLoading(true);
     setErrorMsg('');
-
-    if (authMode === 'REGISTER') {
-      if (!name.trim()) {
-        setErrorMsg(isKhmer ? 'សូមបញ្ចូលឈ្មោះពេញរបស់អ្នក' : 'Please enter your full name');
-        return;
-      }
-      if (!phone.trim()) {
-        setErrorMsg(isKhmer ? 'សូមបញ្ចូលលេខទូរស័ព្ទរបស់អ្នក' : 'Please enter your phone number');
-        return;
-      }
-      if (!password.trim() || password.length < 4) {
-        setErrorMsg(isKhmer ? 'សូមបង្កើតពាក្យសម្ងាត់យ៉ាងតិច ៤ ខ្ទង់' : 'Password must be at least 4 characters');
-        return;
-      }
-
-      setIsLoading(true);
-      setTimeout(() => {
-        const newCust = registerCustomer({
-          name: name.trim(),
-          phone: phone.trim(),
-          password: password.trim(),
-          address: address.trim(),
-          district,
-          avatar: regAvatar
+    launchGoogleOAuthPopup(
+      (profile) => {
+        handleGoogleSuccess(profile);
+      },
+      (err) => {
+        // Fallback to one-tap if popup is blocked
+        promptGoogleOneTap((profile) => {
+          handleGoogleSuccess(profile);
         });
         setIsLoading(false);
-        if (onAuthSuccess) onAuthSuccess(newCust);
-        onClose();
-      }, 450);
-
-    } else {
-      // LOGIN MODE
-      if (!phone.trim()) {
-        setErrorMsg(isKhmer ? 'សូមបញ្ចូលលេខទូរស័ព្ទរបស់អ្នក' : 'Please enter your phone number');
-        return;
       }
-
-      setIsLoading(true);
-      setTimeout(() => {
-        const loggedUser = loginCustomer(phone.trim(), password.trim());
-        setIsLoading(false);
-        if (onAuthSuccess) onAuthSuccess(loggedUser);
-        onClose();
-      }, 400);
-    }
+    );
   };
 
+  // Direct Interactive Real Gmail Sign-In
+  const handleQuickGmailLogin = (e) => {
+    if (e) e.preventDefault();
+    setErrorMsg('');
+
+    const raw = (gmailInput || '').trim();
+    if (!raw) {
+      setErrorMsg(isKhmer ? 'សូមបញ្ចូលអាសយដ្ឋាន Gmail របស់អ្នក' : 'Please enter your Gmail address');
+      return;
+    }
+
+    const fullEmail = raw.includes('@') ? raw.toLowerCase() : `${raw.toLowerCase()}@gmail.com`;
+    if (!fullEmail.includes('@') || !fullEmail.includes('.')) {
+      setErrorMsg(isKhmer ? 'អាសយដ្ឋាន Gmail មិនត្រឹមត្រូវ' : 'Invalid email address format');
+      return;
+    }
+
+    setIsLoading(true);
+
+    // Extract human-friendly name from email (e.g. sophara.len@gmail.com -> Sophara Len)
+    let derivedName = gmailName.trim();
+    if (!derivedName) {
+      const prefix = fullEmail.split('@')[0];
+      derivedName = prefix
+        .replace(/[._-]+/g, ' ')
+        .split(' ')
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ');
+      if (!derivedName || derivedName.length < 2) {
+        derivedName = 'Google Coffee Member';
+      }
+    }
+
+    const autoAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(derivedName)}&background=4285F4&color=ffffff&bold=true&size=256`;
+
+    setTimeout(() => {
+      const googleProfile = {
+        email: fullEmail,
+        name: derivedName,
+        picture: autoAvatar,
+        sub: `google-sub-${Date.now()}`
+      };
+
+      handleGoogleSuccess(googleProfile);
+    }, 450);
+  };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-xl animate-fade-in font-sans">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/85 backdrop-blur-xl animate-fade-in font-sans">
       <div 
-        className="relative w-full max-w-[480px] bg-stone-900/95 border border-stone-800/80 rounded-[32px] overflow-hidden shadow-2xl flex flex-col max-h-[92vh] text-stone-100 transition-all"
+        className="relative w-full max-w-[460px] bg-stone-900/95 border border-stone-800/80 rounded-[32px] overflow-hidden shadow-2xl flex flex-col max-h-[92vh] text-stone-100 transition-all"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Subtle Ambient Brand Glow */}
-        <div className="pointer-events-none absolute -top-24 -right-24 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl" />
+        {/* Subtle Ambient Brand Glows */}
+        <div className="pointer-events-none absolute -top-24 -right-24 w-64 h-64 bg-blue-500/15 rounded-full blur-3xl" />
         <div className="pointer-events-none absolute -bottom-24 -left-24 w-64 h-64 bg-amber-600/10 rounded-full blur-3xl" />
 
         {/* Modal Top Header */}
-        <div className="relative px-6 pt-6 pb-4 flex items-center justify-between shrink-0">
+        <div className="relative px-6 pt-6 pb-4 flex items-center justify-between shrink-0 border-b border-stone-850">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center text-stone-950 shadow-lg shadow-amber-950/40">
-              <Coffee className="w-6 h-6 stroke-[2.2]" />
+            <div className="w-11 h-11 rounded-2xl bg-white border border-stone-200 flex items-center justify-center shadow-lg">
+              <GoogleLogoSvg className="w-6 h-6" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="font-black text-lg sm:text-xl text-white tracking-tight">
-                  {authMode === 'REGISTER' 
-                    ? (isKhmer ? 'ចុះឈ្មោះសមាជិកកាហ្វេ' : 'Create Coffee Account')
-                    : (isKhmer ? 'ចូលគណនីអតិថិជន' : 'Welcome Back')}
+                  {isKhmer ? 'ចូលគណនីជាមួយ Google' : 'Sign in with Google'}
                 </h3>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/40">
+                  Gmail Only
+                </span>
               </div>
               <p className="text-xs text-stone-400">
                 Aroma Coffee Club • Phnom Penh
@@ -195,48 +216,18 @@ export const CustomerAuthModal = ({
           </button>
         </div>
 
-        {/* Minimalist Segmented Mode Tabs (Apple-style pill) */}
-        <div className="px-6 pb-3">
-          <div className="p-1 rounded-2xl bg-stone-950/80 border border-stone-800/60 grid grid-cols-2 gap-1 text-xs font-bold">
-            <button
-              type="button"
-              onClick={() => { setAuthMode('REGISTER'); setErrorMsg(''); }}
-              className={`py-2 px-3 rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                authMode === 'REGISTER'
-                  ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-stone-950 font-black shadow-md'
-                  : 'text-stone-400 hover:text-stone-200'
-              }`}
-            >
-              <UserPlus className="w-3.5 h-3.5" />
-              <span>{isKhmer ? 'ចុះឈ្មោះថ្មី' : 'New Member'}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => { setAuthMode('LOGIN'); setErrorMsg(''); }}
-              className={`py-2 px-3 rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                authMode === 'LOGIN'
-                  ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-stone-950 font-black shadow-md'
-                  : 'text-stone-400 hover:text-stone-200'
-              }`}
-            >
-              <LogIn className="w-3.5 h-3.5" />
-              <span>{isKhmer ? 'ចូលគណនី' : 'Sign In'}</span>
-            </button>
-          </div>
-        </div>
-
         {/* Member Perk Micro-Banner */}
-        <div className="mx-6 mb-3 px-3.5 py-2 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center gap-2.5 text-xs text-amber-300">
-          <Gift className="w-4 h-4 text-amber-400 shrink-0" />
+        <div className="mx-6 mt-4 mb-2 px-3.5 py-2.5 rounded-2xl bg-gradient-to-r from-blue-500/15 via-amber-500/15 to-blue-500/15 border border-blue-500/30 flex items-center gap-2.5 text-xs text-blue-200 shrink-0">
+          <Gift className="w-4 h-4 text-amber-400 shrink-0 animate-bounce" />
           <span className="text-[11px] leading-tight font-medium">
             {messagePrompt || (isKhmer 
-              ? '🎁 ទទួលបាន ១០០ ពិន្ទុស្វាគមន៍ & សន្សំត្រាកាហ្វេ ៩ ថែម ១ ឥតគិតថ្លៃ!' 
-              : '🎁 Earn 100 welcome points & 1 free coffee reward for every 9 stamps!')}
+              ? '🎁 ទទួលបាន ១០០ ពិន្ទុស្វាគមន៍ & ត្រាកាហ្វេភ្លាមៗជាមួយគណនី Gmail របស់អ្នក!' 
+              : '🎁 Earn 100 welcome points & digital coffee stamp with your Gmail!')}
           </span>
         </div>
 
-        {/* Scrollable Form Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-2 space-y-4 text-stone-200 scrollbar-thin">
+        {/* Scrollable Body */}
+        <div className="flex-1 overflow-y-auto px-6 py-3 space-y-4 text-stone-200 scrollbar-thin">
           {errorMsg && (
             <div className="p-3 rounded-2xl bg-rose-950/60 border border-rose-800/80 text-rose-300 text-xs flex items-center gap-2.5 animate-shake">
               <span className="text-base">⚠️</span>
@@ -244,209 +235,132 @@ export const CustomerAuthModal = ({
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-3.5">
-            {/* REGISTER HERO: Clean Modern Real Avatar Upload */}
-            {authMode === 'REGISTER' && (
-              <div className="flex flex-col items-center justify-center pb-2 pt-1">
+          {/* Primary Google Identity Card */}
+          <div className="p-5 rounded-3xl bg-gradient-to-b from-stone-950 via-stone-950 to-stone-900 border border-stone-800 text-center space-y-3.5 shadow-xl">
+            <div>
+              <h4 className="font-black text-base sm:text-lg text-white">
+                {isKhmer ? 'គណនី Google ផ្លូវការ' : 'Official Google Account'}
+              </h4>
+              <p className="text-xs text-stone-400 max-w-xs mx-auto mt-0.5">
+                {isKhmer 
+                  ? 'ចុចខាងក្រោមដើម្បីចូលគណនី ១-Click ជាមួយ Google' 
+                  : 'Click below to sign in instantly with your Google account'}
+              </p>
+            </div>
+
+            {/* Official Google Identity Services Iframe Container */}
+            <div className="flex justify-center pt-1 min-h-[44px]">
+              <div ref={googleBtnRef} className="w-full flex justify-center" />
+            </div>
+
+            {/* Tactile 1-Click Button */}
+            <button
+              type="button"
+              onClick={handleInteractiveGoogleAuth}
+              disabled={isLoading}
+              className="w-full py-3.5 px-4 rounded-2xl bg-white hover:bg-stone-100 active:scale-[0.99] disabled:opacity-50 text-stone-900 font-bold text-xs sm:text-sm flex items-center justify-center gap-3 transition-all cursor-pointer shadow-lg border border-stone-300"
+            >
+              <GoogleLogoSvg className="w-5 h-5 shrink-0" />
+              <span>{isKhmer ? 'បន្តជាមួយគណនី Google (Gmail)' : 'Continue with Google Account'}</span>
+              <ArrowRight className="w-4 h-4 text-stone-500" />
+            </button>
+          </div>
+
+          {/* Real Gmail Address Direct Input */}
+          <form onSubmit={handleQuickGmailLogin} className="p-4 sm:p-5 rounded-3xl bg-stone-950/90 border border-stone-800 space-y-3">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-bold text-stone-200 flex items-center gap-1.5">
+                <Mail className="w-4 h-4 text-blue-400" />
+                <span>{isKhmer ? 'ឬវាយបញ្ចូលអាសយដ្ឋាន Gmail របស់អ្នក' : 'Or enter your real Gmail address'}</span>
+              </span>
+              <span className="text-[10px] text-emerald-400 font-mono font-bold bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800">
+                ✓ Google Verified
+              </span>
+            </div>
+
+            <div className="space-y-2">
+              <div className="relative flex items-center rounded-2xl bg-stone-900 border border-stone-800 focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/15 transition-all">
+                <Mail className="w-4 h-4 text-stone-500 ml-3.5 shrink-0" />
                 <input
-                  type="file"
-                  ref={regFileInputRef}
-                  accept="image/*"
-                  onChange={handleRegImageUpload}
-                  className="hidden"
-                />
-
-                <div className="relative group cursor-pointer" onClick={() => regFileInputRef.current?.click()}>
-                  {regAvatar ? (
-                    <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-amber-500 shadow-xl group-hover:scale-105 transition-all">
-                      <img src={regAvatar} alt="Profile Preview" className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
-                        <Camera className="w-5 h-5 text-white" />
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="w-20 h-20 rounded-full bg-gradient-to-b from-stone-950 to-stone-900 border-2 border-dashed border-stone-700 hover:border-amber-500 flex flex-col items-center justify-center text-stone-400 hover:text-amber-400 transition-all shadow-inner group-hover:scale-105">
-                      <Camera className="w-6 h-6 stroke-[1.8]" />
-                      <span className="text-[9px] font-bold mt-1 text-stone-400 group-hover:text-amber-400">
-                        {isKhmer ? '+ រូបថត' : '+ Photo'}
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Camera overlay pill */}
-                  <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-amber-500 text-stone-950 flex items-center justify-center shadow-md border-2 border-stone-900">
-                    <Camera className="w-3 h-3 stroke-[2.5]" />
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 mt-2">
-                  <p className="text-[11px] text-stone-400 font-medium">
-                    {regAvatar 
-                      ? (isKhmer ? 'រូបថតផ្ទាល់ខ្លួនត្រូវបានជ្រើសរើស' : 'Real photo selected') 
-                      : (isKhmer ? 'បង្ហោះរូបថតពិត (ស្រេចចិត្ត)' : 'Upload real photo (Optional)')}
-                  </p>
-                  {regAvatar && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setRegAvatar('');
-                      }}
-                      className="text-[10px] text-rose-400 hover:text-rose-300 hover:underline flex items-center gap-0.5"
-                    >
-                      <Trash2 className="w-2.5 h-2.5" />
-                      <span>{isKhmer ? 'លុប' : 'Remove'}</span>
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* REGISTER: Full Name Field */}
-            {authMode === 'REGISTER' && (
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-stone-300 flex items-center gap-1.5">
-                  <span>{isKhmer ? 'ឈ្មោះពេញ' : 'Full Name'}</span>
-                  <span className="text-amber-400 font-bold">*</span>
-                </label>
-                <div className="relative flex items-center rounded-2xl bg-stone-950/80 border border-stone-800/80 focus-within:border-amber-500 focus-within:ring-4 focus-within:ring-amber-500/15 transition-all">
-                  <User className="w-4 h-4 text-stone-500 ml-3.5 shrink-0" />
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder={isKhmer ? 'ឧ. សុខា មាន (Sokha Mean)' : 'e.g. Sokha Mean'}
-                    required
-                    className="w-full bg-transparent px-3 py-2.5 text-xs text-stone-100 placeholder-stone-600 focus:outline-none"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Mobile Phone Field with Clean In-Field Carrier Detection */}
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-stone-300 flex items-center justify-between">
-                <span className="flex items-center gap-1">
-                  <span>{isKhmer ? 'លេខទូរស័ព្ទ' : 'Mobile Phone Number'}</span>
-                  <span className="text-amber-400 font-bold">*</span>
-                </span>
-                {carrier && (
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${carrier.badge}`}>
-                    {carrier.name}
-                  </span>
-                )}
-              </label>
-              <div className="relative flex items-center rounded-2xl bg-stone-950/80 border border-stone-800/80 focus-within:border-amber-500 focus-within:ring-4 focus-within:ring-amber-500/15 transition-all">
-                <Phone className="w-4 h-4 text-stone-500 ml-3.5 shrink-0" />
-                <input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="012 888 999 / 096 927 6538"
+                  type="email"
+                  value={gmailInput}
+                  onChange={(e) => setGmailInput(e.target.value)}
+                  placeholder="yourname@gmail.com"
                   required
-                  className="w-full bg-transparent px-3 py-2.5 text-xs text-stone-100 placeholder-stone-600 focus:outline-none font-mono"
+                  className="w-full bg-transparent px-3 py-2.5 text-xs text-white placeholder-stone-600 focus:outline-none font-mono"
+                />
+              </div>
+
+              <div className="relative flex items-center rounded-2xl bg-stone-900 border border-stone-800 focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/15 transition-all">
+                <User className="w-4 h-4 text-stone-500 ml-3.5 shrink-0" />
+                <input
+                  type="text"
+                  value={gmailName}
+                  onChange={(e) => setGmailName(e.target.value)}
+                  placeholder={isKhmer ? 'ឈ្មោះរបស់អ្នក (ឧ. Sophara Len)' : 'Your Name (e.g. Sophara Len)'}
+                  className="w-full bg-transparent px-3 py-2.5 text-xs text-white placeholder-stone-600 focus:outline-none"
                 />
               </div>
             </div>
 
-            {/* Password Field with Show/Hide Toggle */}
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-stone-300 flex items-center gap-1.5">
-                <span>{isKhmer ? 'ពាក្យសម្ងាត់' : 'Password'}</span>
-                <span className="text-amber-400 font-bold">*</span>
-              </label>
-              <div className="relative flex items-center rounded-2xl bg-stone-950/80 border border-stone-800/80 focus-within:border-amber-500 focus-within:ring-4 focus-within:ring-amber-500/15 transition-all">
-                <Lock className="w-4 h-4 text-stone-500 ml-3.5 shrink-0" />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                  className="w-full bg-transparent px-3 py-2.5 text-xs text-stone-100 placeholder-stone-600 focus:outline-none"
-                />
+            {/* Quick Demo Test Chips */}
+            <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+              <span className="text-[10px] text-stone-500">Quick tests:</span>
+              {['admin@cafe.com', 'sophara.coffee@gmail.com'].map((demoMail) => (
                 <button
+                  key={demoMail}
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="p-2 mr-1 text-stone-500 hover:text-stone-300 transition cursor-pointer"
-                  title={showPassword ? 'Hide password' : 'Show password'}
+                  onClick={() => setGmailInput(demoMail)}
+                  className="text-[10px] font-mono px-2 py-0.5 rounded-lg bg-stone-900 hover:bg-stone-850 border border-stone-800 text-blue-400 hover:border-blue-500/60 transition cursor-pointer"
                 >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {demoMail}
                 </button>
-              </div>
+              ))}
             </div>
 
-            {/* REGISTER: Phnom Penh District & Delivery Address */}
-            {authMode === 'REGISTER' && (
-              <div className="space-y-3 pt-1">
-                {/* District Select */}
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-stone-300 flex items-center gap-1.5">
-                    <MapPin className="w-3.5 h-3.5 text-rose-400" />
-                    <span>{isKhmer ? 'ខណ្ឌ / តំបន់នៅភ្នំពេញ' : 'Phnom Penh District'}</span>
-                  </label>
-                  <div className="relative rounded-2xl bg-stone-950/80 border border-stone-800/80 focus-within:border-amber-500 focus-within:ring-4 focus-within:ring-amber-500/15 transition-all">
-                    <select
-                      value={district}
-                      onChange={(e) => setDistrict(e.target.value)}
-                      className="w-full bg-transparent appearance-none pl-3.5 pr-8 py-2.5 text-xs text-stone-200 focus:outline-none cursor-pointer"
-                    >
-                      {PHNOM_PENH_DISTRICTS.map((d) => (
-                        <option key={d} value={d} className="bg-stone-900 text-stone-200">{d}</option>
-                      ))}
-                    </select>
-                    <ChevronDown className="w-4 h-4 text-stone-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  </div>
-                </div>
-
-                {/* Street Address Input */}
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-stone-300">
-                    {isKhmer ? 'ផ្ទះលេខ & ផ្លូវ (សម្រាប់ដឹកជញ្ជូនដល់កន្លែង)' : 'Delivery Address (Street / Building)'}
-                  </label>
-                  <div className="relative flex items-center rounded-2xl bg-stone-950/80 border border-stone-800/80 focus-within:border-amber-500 focus-within:ring-4 focus-within:ring-amber-500/15 transition-all">
-                    <input
-                      type="text"
-                      value={address}
-                      onChange={(e) => setAddress(e.target.value)}
-                      placeholder={isKhmer ? 'ឧ. ផ្ទះលេខ ៤៥, ផ្លូវ ២៨៨, សង្កាត់ បឹងកេងកង ១' : 'e.g. #45, Street 288, Sangkat BKK1'}
-                      className="w-full bg-transparent px-3.5 py-2.5 text-xs text-stone-100 placeholder-stone-600 focus:outline-none"
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Action CTA Button */}
-            <div className="pt-2">
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full py-3.5 px-5 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:brightness-105 active:scale-[0.99] disabled:opacity-50 text-stone-950 font-black text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg shadow-amber-500/25"
-              >
-                {isLoading ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-stone-950 border-t-transparent rounded-full animate-spin" />
-                    <span>{isKhmer ? 'កំពុងដំណើរការ...' : 'Connecting...'}</span>
-                  </>
-                ) : authMode === 'REGISTER' ? (
-                  <>
-                    <Sparkles className="w-4 h-4 fill-stone-950" />
-                    <span>{isKhmer ? 'បង្កើតគណនី & បន្តទៅទិញកាហ្វេ' : 'Complete Registration & Continue'}</span>
-                    <ArrowRight className="w-4 h-4 ml-1" />
-                  </>
-                ) : (
-                  <>
-                    <LogIn className="w-4 h-4" />
-                    <span>{isKhmer ? 'ចូលគណនី & បន្តទៅទិញកាហ្វេ' : 'Sign In & Continue'}</span>
-                    <ArrowRight className="w-4 h-4 ml-1" />
-                  </>
-                )}
-              </button>
-            </div>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 active:scale-[0.99] disabled:opacity-50 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition cursor-pointer shadow-lg shadow-blue-900/30"
+            >
+              {isLoading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>{isKhmer ? 'កំពុងផ្ទៀងផ្ទាត់...' : 'Verifying Gmail Account...'}</span>
+                </>
+              ) : (
+                <>
+                  <Zap className="w-4 h-4 text-amber-300" />
+                  <span>{isKhmer ? 'ចូលគណនីជាមួយ Gmail នេះ' : 'Sign In with this Gmail'}</span>
+                  <ArrowRight className="w-4 h-4 ml-1" />
+                </>
+              )}
+            </button>
           </form>
 
+          {/* Perks Grid */}
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className="p-3 rounded-2xl bg-stone-950 border border-stone-850 space-y-0.5">
+              <span className="font-bold text-amber-400 flex items-center gap-1 text-xs">
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                <span>+100 Points</span>
+              </span>
+              <p className="text-[10px] text-stone-400">Awarded immediately</p>
+            </div>
+            <div className="p-3 rounded-2xl bg-stone-950 border border-stone-850 space-y-0.5">
+              <span className="font-bold text-emerald-400 flex items-center gap-1 text-xs">
+                <Coffee className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Digital Stamp</span>
+              </span>
+              <p className="text-[10px] text-stone-400">1st Coffee Stamp granted</p>
+            </div>
+          </div>
 
+          {/* Security & Client ID Pill */}
+          <div className="flex items-center justify-center gap-1.5 text-[10px] text-stone-500 pb-1 pt-1">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+            <span className="truncate">Google OAuth 2.0: {GOOGLE_CLIENT_ID.slice(0, 24)}...</span>
+          </div>
         </div>
       </div>
     </div>

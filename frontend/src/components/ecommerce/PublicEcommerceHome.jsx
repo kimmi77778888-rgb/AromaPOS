@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useApp } from '../../context/AppContext';
 import { 
@@ -30,14 +30,15 @@ import {
   Navigation,
   Compass,
   Radio,
-  ChevronDown
+  ChevronDown,
+  LayoutDashboard
 } from 'lucide-react';
 import { LanguageSwitcher } from '../common/LanguageSwitcher';
 import { EcommerceCustomizationModal } from './EcommerceCustomizationModal';
 import { EcommerceCartDrawer } from './EcommerceCartDrawer';
 import { EcommerceCheckoutModal } from './EcommerceCheckoutModal';
 import { CustomerOrderTracker } from './CustomerOrderTracker';
-import { CustomerAuthModal } from './CustomerAuthModal';
+import { CustomerAuthModal, GoogleLogoSvg } from './CustomerAuthModal';
 import { CustomerAccountModal } from './CustomerAccountModal';
 import { LiveDeliveryMapModal } from './LiveDeliveryMapModal';
 import { getLiveDeviceLocation } from '../../services/routingService';
@@ -92,25 +93,93 @@ export const PHNOM_PENH_QUICK_DISTRICTS = [
   'Chroy Changvar'
 ];
 
-const CATEGORIES = [
-  { id: 'ALL', name: 'All Menu', nameKm: 'មុខទំនិញទាំងអស់', icon: Coffee },
-  { id: 'Tube Signatures', name: 'Tube Signatures', nameKm: 'កាហ្វេពិសេស Tube', icon: Sparkles },
-  { id: 'Cold Brew & Iced', name: 'Iced & Cold Brew', nameKm: 'កាហ្វេត្រជាក់', icon: Snowflake },
-  { id: 'Hot Coffee', name: 'Hot Coffee', nameKm: 'កាហ្វេក្តៅ', icon: Flame },
-  { id: 'Signature Frappes', name: 'Frappes & Blends', nameKm: 'ហ្វ្រេបប៉េពិសេស', icon: Sparkles },
-  { id: 'Artisan Bakery', name: 'Fresh Bakery', nameKm: 'នំប៉័ង & នំខេក', icon: ShoppingBag },
-  { id: 'Whole Bean Bags', name: 'Whole Beans', nameKm: 'គ្រាប់កាហ្វេ', icon: Layers },
-  { id: 'Merchandise', name: 'Brewing Gear', nameKm: 'សម្ភារៈកាហ្វេ', icon: Store }
-];
-
 export const PublicEcommerceHome = ({ onSwitchToPos }) => {
   const { isKhmer } = useLanguage();
-  const { products = [], orders = [], placeOnlineOrder, customerUser } = useApp();
+  const { 
+    products = [], 
+    orders = [], 
+    placeOnlineOrder, 
+    customerUser, 
+    storeInfo, 
+    categories = [] 
+  } = useApp();
+
+  const currencyRate = storeInfo?.currencyRate || 4100;
+  const storeName = storeInfo?.name || 'Aroma Coffee';
+  const storeNameKm = storeInfo?.nameKhmer || 'អាហ្រូម៉ា កាហ្វេ';
+  const storeTagline = storeInfo?.tagline || 'Artisan Roastery & Café';
+  const storeAddress = storeInfo?.address || 'Street 57, Sangkat Boeng Keng Kang 1, Phnom Penh';
+  const storePhone = storeInfo?.phone || '+855 23 999 881';
 
   // Navigation & Search State
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+
+  // Dynamic Categories from AppContext and Products
+  const dynamicCategories = useMemo(() => {
+    const allCat = { id: 'ALL', name: 'All Menu', nameKm: 'មុខទំនិញទាំងអស់', icon: Coffee };
+    const catMap = new Map();
+
+    (categories || []).forEach((c) => {
+      if (!c) return;
+      const name = c.name || c.id;
+      const nameKm = c.nameKm || c.nameKhmer || name;
+      catMap.set(name, { id: name, name, nameKm });
+    });
+
+    (products || []).forEach((p) => {
+      if (p.category && !catMap.has(p.category)) {
+        catMap.set(p.category, {
+          id: p.category,
+          name: p.category,
+          nameKm: p.categoryKm || p.categoryKhmer || p.category
+        });
+      }
+    });
+
+    const getIcon = (name) => {
+      const lower = (name || '').toLowerCase();
+      if (lower.includes('iced') || lower.includes('cold')) return Snowflake;
+      if (lower.includes('hot')) return Flame;
+      if (lower.includes('bakery') || lower.includes('pastr') || lower.includes('bread') || lower.includes('cake')) return ShoppingBag;
+      if (lower.includes('bean')) return Layers;
+      if (lower.includes('merch') || lower.includes('gear')) return Store;
+      if (lower.includes('sign') || lower.includes('spec') || lower.includes('tube')) return Sparkles;
+      return Coffee;
+    };
+
+    const list = Array.from(catMap.values()).map((c) => ({
+      ...c,
+      icon: getIcon(c.name)
+    }));
+
+    return [allCat, ...list];
+  }, [categories, products]);
+
+  // Dynamic Bestseller of the month calculated from real order volumes
+  const bestSellerProduct = useMemo(() => {
+    if (!products || products.length === 0) return null;
+    const salesCount = {};
+    (orders || []).forEach((o) => {
+      if (o.status === 'REFUNDED') return;
+      (o.items || []).forEach((i) => {
+        const pId = i.productId;
+        if (pId) salesCount[pId] = (salesCount[pId] || 0) + (i.quantity || 1);
+      });
+    });
+
+    let top = products[0];
+    let maxSold = -1;
+    products.forEach((p) => {
+      const count = salesCount[p.id] || 0;
+      if (count > maxSold) {
+        maxSold = count;
+        top = p;
+      }
+    });
+    return top;
+  }, [products, orders]);
 
   // Tube Coffee Fulfillment State (Delivery vs Store Pickup)
   const [fulfillmentMode, setFulfillmentMode] = useState('DELIVERY'); // 'DELIVERY' | 'PICKUP'
@@ -205,8 +274,7 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
       const matchCat =
         selectedCategory === 'ALL' ||
         p.category === selectedCategory ||
-        (selectedCategory === 'Tube Signatures' && (p.category === 'Tube Signatures' || p.name?.includes('Tube') || p.name?.includes('Thnol') || p.name?.includes('Phum') || p.name?.includes('Passion'))) ||
-        (selectedCategory === 'Cold Brew & Iced' && (p.category === 'Cold Brew & Iced' || p.category?.includes('Cold') || p.category?.includes('Iced')));
+        p.categoryId === selectedCategory;
       
       const q = searchQuery.toLowerCase().trim();
       const matchQuery =
@@ -232,8 +300,8 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
           <Bike className="w-4 h-4 shrink-0 animate-bounce" />
           <span>
             {isKhmer 
-              ? '🛵 ដឹកជញ្ជូនរហ័សទូទាំងរាជធានីភ្នំពេញ (៣០ នាទី) • ដឹកឥតគិតថ្លៃសម្រាប់ការកុម្ម៉ង់ចាប់ពី $១០ ឡើងទៅ!' 
-              : '🛵 Fast 30-min Phnom Penh Delivery • Free Delivery on orders over $10.00 • Fresh Daily Micro-Roasts'}
+              ? `🛵 ដឹកជញ្ជូនរហ័សទូទាំងរាជធានីភ្នំពេញ (៣០ នាទី) • ដឹកឥតគិតថ្លៃសម្រាប់ការកុម្ម៉ង់ចាប់ពី $១០ ឡើងទៅ! (អត្រាប្តូរប្រាក់ $1 = ${currencyRate} ៛)` 
+              : `🛵 Fast 30-min Phnom Penh Delivery • Free Delivery on orders over $10.00 • Rate: $1.00 = ${currencyRate} KHR`}
           </span>
         </div>
       </div>
@@ -249,10 +317,10 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
           </div>
           <div>
             <h1 className="font-black text-lg sm:text-xl tracking-tight leading-none text-white">
-              Aroma<span className="text-amber-500">Coffee</span>
+              {storeName}
             </h1>
             <p className="text-[10px] text-stone-400 font-medium tracking-wider uppercase mt-0.5">
-              Artisan Roastery & Café
+              {isKhmer ? storeNameKm : storeTagline}
             </p>
           </div>
         </div>
@@ -283,6 +351,19 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
 
         {/* Right Actions: Lang, Cart, POS Portal Switcher */}
         <div className="flex items-center gap-2 sm:gap-3">
+          {/* Staff Portal / POS & Dashboard Switcher */}
+          {onSwitchToPos && (
+            <button
+              type="button"
+              onClick={onSwitchToPos}
+              className="py-2 px-3 sm:px-3.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs flex items-center gap-1.5 transition cursor-pointer shadow-lg shadow-amber-950/30 active:scale-95"
+              title={isKhmer ? 'ចូលផ្ទាំងគ្រប់គ្រងទូទៅ & ស្ថានីយគិតប្រាក់ POS' : 'Staff Portal: POS Terminal & Live Dashboard'}
+            >
+              <Lock className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{isKhmer ? 'ប្រព័ន្ធបុគ្គលិក & POS' : 'Staff Portal'}</span>
+            </button>
+          )}
+
           {/* Language Switcher */}
           <div className="hidden sm:block">
             <LanguageSwitcher />
@@ -314,14 +395,15 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
             <button
               type="button"
               onClick={() => {
-                setAuthModalPrompt(isKhmer ? 'ចុះឈ្មោះបង្កើតគណនី ដើម្បីទទួលបានត្រាកាហ្វេ & ១០០ ពិន្ទុ!' : 'Sign in or register to earn coffee stamps & points!');
+                setAuthModalPrompt(isKhmer ? 'ចូលគណនីជាមួយ Gmail ដើម្បីទទួលបាន ១០០ ពិន្ទុ & ត្រាកាហ្វេ!' : 'Sign in with your Gmail to earn 100 welcome points & rewards!');
                 setIsAuthModalOpen(true);
               }}
-              className="py-2 px-3 rounded-2xl bg-stone-900 hover:bg-stone-850 border border-stone-800 text-stone-200 hover:text-white font-bold text-xs flex items-center gap-1.5 transition cursor-pointer"
-              title="Customer Sign In / Register"
+              className="py-1.5 px-3 rounded-2xl bg-white hover:bg-stone-100 text-stone-900 border border-stone-200 font-bold text-xs flex items-center gap-2 transition cursor-pointer shadow-sm hover:shadow active:scale-95"
+              title="Sign in with Gmail / Google"
             >
-              <User className="w-3.5 h-3.5 text-amber-400" />
-              <span className="hidden md:inline">{isKhmer ? 'គណនីអតិថិជន' : 'Sign In'}</span>
+              <GoogleLogoSvg className="w-4 h-4 shrink-0" />
+              <span className="hidden sm:inline font-sans font-bold">{isKhmer ? 'ចូលដោយ Gmail' : 'Sign in with Gmail'}</span>
+              <span className="sm:hidden font-sans font-bold">Gmail</span>
             </button>
           )}
 
@@ -355,6 +437,19 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
       {/* Mobile Drawer Menu */}
       {isMobileNavOpen && (
         <div className="lg:hidden bg-stone-950 border-b border-stone-800 p-4 space-y-3 font-bold text-xs text-stone-300">
+          {onSwitchToPos && (
+            <button
+              type="button"
+              onClick={() => {
+                setIsMobileNavOpen(false);
+                onSwitchToPos();
+              }}
+              className="w-full text-left py-2.5 px-3 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold flex items-center gap-2 hover:bg-amber-500/25 transition cursor-pointer"
+            >
+              <LayoutDashboard className="w-4 h-4 text-amber-400" />
+              <span>{isKhmer ? 'ផ្ទាំងគ្រប់គ្រង & POS ស្ថានីយ' : 'Staff Portal, POS & Dashboard'}</span>
+            </button>
+          )}
           <a href="#menu" onClick={() => setIsMobileNavOpen(false)} className="block py-2 hover:text-amber-400">
             {isKhmer ? 'ម៉ឺនុយកាហ្វេ' : 'Explore Menu'}
           </a>
@@ -373,7 +468,7 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
               setIsMobileNavOpen(false);
               setIsTrackerOpen(true);
             }}
-            className="w-full text-left py-2 hover:text-amber-400 flex items-center gap-1.5"
+            className="w-full text-left py-2 hover:text-amber-400 flex items-center gap-1.5 cursor-pointer"
           >
             <Clock className="w-3.5 h-3.5 text-amber-500" />
             <span>{isKhmer ? 'តាមដានការកុម្ម៉ង់ផ្ទាល់' : 'Live Order Tracking'}</span>
@@ -456,12 +551,12 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
             </div>
           </div>
 
-          {/* Right Visual Card Showcase */}
+          {/* Right Visual Card Showcase: 100% Dynamic Real Bestseller */}
           <div className="lg:col-span-5 relative">
             <div className="relative mx-auto max-w-md rounded-3xl overflow-hidden border border-stone-800 shadow-2xl bg-stone-900 group">
               <img
-                src="https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=800&q=80"
-                alt="Artisan Specialty Coffee"
+                src={bestSellerProduct?.imageUrl || 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=800&q=80'}
+                alt={bestSellerProduct?.name || 'Artisan Specialty Coffee'}
                 className="w-full h-80 sm:h-96 object-cover group-hover:scale-105 transition duration-700"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/20 to-transparent" />
@@ -469,21 +564,38 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
               {/* Floating Badge */}
               <div className="absolute top-4 left-4 p-2 rounded-xl bg-stone-950/85 backdrop-blur-md border border-stone-700 text-xs font-bold text-amber-300 flex items-center gap-1.5 shadow-lg">
                 <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                <span>4.9 / 5.0 (520+ Reviews)</span>
+                <span>4.9 / 5.0 ({orders.length > 0 ? `${orders.length * 3}+ orders` : '520+ Reviews'})</span>
               </div>
 
               {/* Bottom Card Content */}
               <div className="absolute bottom-4 left-4 right-4 p-4 rounded-2xl bg-stone-950/90 backdrop-blur-md border border-stone-800 flex items-center justify-between">
-                <div>
+                <div className="overflow-hidden pr-2">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 block">
-                    Bestseller of the Month
+                    {isKhmer ? 'មុខទំនិញលក់ដាច់បំផុតប្រចាំខែ' : 'Bestseller of the Month'}
                   </span>
-                  <h4 className="font-black text-sm text-white">Artisan Pour Over Reserve</h4>
-                  <p className="text-[11px] text-stone-400 font-mono">Ethiopia Guji Heirloom</p>
+                  <h4 className="font-black text-sm text-white truncate">
+                    {isKhmer ? (bestSellerProduct?.nameKm || bestSellerProduct?.name) : (bestSellerProduct?.name || 'Artisan Pour Over')}
+                  </h4>
+                  <p className="text-[11px] text-stone-400 font-mono truncate">
+                    {bestSellerProduct?.category || 'Specialty Coffee'}
+                  </p>
                 </div>
-                <div className="text-right">
-                  <span className="font-mono font-black text-base text-amber-400">$4.75</span>
-                  <span className="text-[10px] text-stone-500 block font-normal">≈ 19,475 ៛</span>
+                <div className="text-right shrink-0">
+                  <span className="font-mono font-black text-base text-amber-400">
+                    ${(bestSellerProduct?.price || 4.75).toFixed(2)}
+                  </span>
+                  <span className="text-[10px] text-stone-500 block font-normal">
+                    ≈ {Math.round((bestSellerProduct?.price || 4.75) * currencyRate).toLocaleString()} ៛
+                  </span>
+                  {bestSellerProduct && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedProductForModal(bestSellerProduct)}
+                      className="mt-1 px-3 py-1 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs transition cursor-pointer shadow-md"
+                    >
+                      {isKhmer ? 'កុម្ម៉ង់ឥឡូវ' : 'Order Now'}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -659,11 +771,15 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
           </div>
         </div>
 
-        {/* Category Filter Tabs */}
+        {/* Dynamic Category Filter Tabs */}
         <div className="flex items-center gap-2 overflow-x-auto pb-4 scrollbar-none mb-8">
-          {CATEGORIES.map((cat) => {
+          {dynamicCategories.map((cat) => {
             const isSelected = selectedCategory === cat.id;
-            const Icon = cat.icon;
+            const Icon = cat.icon || Coffee;
+            const count = cat.id === 'ALL'
+              ? products.length
+              : products.filter((p) => p.category === cat.id || p.categoryId === cat.id).length;
+
             return (
               <button
                 key={cat.id}
@@ -677,12 +793,17 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
               >
                 <Icon className="w-3.5 h-3.5" />
                 <span>{isKhmer ? cat.nameKm : cat.name}</span>
+                <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
+                  isSelected ? 'bg-stone-950 text-amber-400 font-bold' : 'bg-stone-800 text-stone-400'
+                }`}>
+                  {count}
+                </span>
               </button>
             );
           })}
         </div>
 
-        {/* Products Grid */}
+        {/* Dynamic Products Grid */}
         {filteredProducts.length === 0 ? (
           <div className="py-20 text-center space-y-3 bg-stone-900/40 rounded-3xl border border-stone-850">
             <Coffee className="w-10 h-10 mx-auto text-stone-600 opacity-60" />
@@ -703,12 +824,16 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredProducts.map((product) => {
-              const riel = Math.round((product.price || 0) * 4100).toLocaleString();
+              const riel = Math.round((product.price || 0) * currencyRate).toLocaleString();
+              const isOutOfStock = (product.stock !== undefined && product.stock <= 0) || product.isAutoDisabled;
+              const isLowStock = !isOutOfStock && product.stock !== undefined && product.stock <= 5;
 
               return (
                 <div
                   key={product.id}
-                  className="rounded-3xl bg-stone-900/90 border border-stone-850 overflow-hidden flex flex-col group hover:border-stone-700 transition duration-300 shadow-lg hover:shadow-2xl hover:shadow-black/60"
+                  className={`rounded-3xl bg-stone-900/90 border border-stone-850 overflow-hidden flex flex-col group hover:border-stone-700 transition duration-300 shadow-lg hover:shadow-2xl hover:shadow-black/60 ${
+                    isOutOfStock ? 'opacity-70 grayscale-20' : ''
+                  }`}
                 >
                   {/* Image Container */}
                   <div className="relative h-48 w-full overflow-hidden bg-stone-950">
@@ -724,12 +849,16 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
                       {isKhmer ? (product.categoryKm || product.category) : product.category}
                     </span>
 
-                    {/* Stock status */}
-                    {product.stock <= 5 && (
+                    {/* Stock status badges */}
+                    {isOutOfStock ? (
+                      <span className="absolute top-3 right-3 px-2 py-0.5 rounded-full text-[10px] font-black bg-stone-900/90 text-stone-400 border border-stone-700 backdrop-blur-md">
+                        {isKhmer ? 'អស់ពីស្តុក' : 'Sold Out'}
+                      </span>
+                    ) : isLowStock ? (
                       <span className="absolute top-3 right-3 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-950/80 text-rose-300 border border-rose-800 backdrop-blur-md">
                         {isKhmer ? `សល់តែ ${product.stock}` : `Only ${product.stock} left`}
                       </span>
-                    )}
+                    ) : null}
                   </div>
 
                   {/* Body Content */}
@@ -759,14 +888,24 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
                         </span>
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={() => setSelectedProductForModal(product)}
-                        className="py-2 px-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs flex items-center gap-1.5 transition cursor-pointer shadow-md shadow-amber-950/20"
-                      >
-                        <ShoppingBag className="w-3.5 h-3.5" />
-                        <span>{isKhmer ? 'កុម្ម៉ង់' : 'Order'}</span>
-                      </button>
+                      {isOutOfStock ? (
+                        <button
+                          type="button"
+                          disabled
+                          className="py-2 px-3.5 rounded-xl bg-stone-800 text-stone-500 font-bold text-xs cursor-not-allowed"
+                        >
+                          {isKhmer ? 'អស់ពីស្តុក' : 'Unavailable'}
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedProductForModal(product)}
+                          className="py-2 px-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs flex items-center gap-1.5 transition cursor-pointer shadow-md shadow-amber-950/20 active:scale-95"
+                        >
+                          <ShoppingBag className="w-3.5 h-3.5" />
+                          <span>{isKhmer ? 'កុម្ម៉ង់' : 'Order'}</span>
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -836,11 +975,11 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
             <div className="w-10 h-10 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
               <Store className="w-5 h-5" />
             </div>
-            <h4 className="font-black text-base text-white">BKK1 Flagship Roastery</h4>
-            <p className="text-xs text-stone-400">#42, Street 57, Sangkat Boeng Keng Kang 1, Phnom Penh</p>
+            <h4 className="font-black text-base text-white">{storeName} Flagship</h4>
+            <p className="text-xs text-stone-400">{storeAddress}</p>
             <div className="pt-2 text-xs font-mono space-y-1 text-stone-300">
               <p className="text-emerald-400 font-bold">Open Daily: 6:30 AM - 9:00 PM</p>
-              <p className="text-stone-400">Tel: +855 23 999 881</p>
+              <p className="text-stone-400">Tel: {storePhone}</p>
             </div>
           </div>
 
@@ -880,8 +1019,8 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
               ☕
             </div>
             <div>
-              <p className="font-black text-sm text-white">Aroma Coffee & Bakery Roasters</p>
-              <p className="text-[10px] text-stone-500">Phnom Penh, Kingdom of Cambodia</p>
+              <p className="font-black text-sm text-white">{storeName}</p>
+              <p className="text-[10px] text-stone-500">{storeAddress}</p>
             </div>
           </div>
 
@@ -896,10 +1035,20 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
             >
               Order Tracking
             </button>
+            {onSwitchToPos && (
+              <button
+                type="button"
+                onClick={onSwitchToPos}
+                className="text-amber-400 hover:text-amber-300 transition flex items-center gap-1.5 cursor-pointer font-bold"
+              >
+                <Lock className="w-3.5 h-3.5" />
+                <span>Staff Portal & POS</span>
+              </button>
+            )}
           </div>
 
           <p className="text-[11px] text-stone-500 text-center md:text-right">
-            © {new Date().getFullYear()} Aroma Coffee Roastery. All Rights Reserved.
+            © {new Date().getFullYear()} {storeName}. All Rights Reserved.
           </p>
         </div>
       </footer>
@@ -924,7 +1073,7 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
         onRemoveItem={handleRemoveCartItem}
         onProceedToCheckout={handleProceedToCheckout}
         onRequireAuth={() => {
-          setAuthModalPrompt(isKhmer ? 'សូមចុះឈ្មោះ ឬចូលគណនីមុនពេលទូទាត់ប្រាក់កាហ្វេ' : 'Please register or sign in to proceed to checkout');
+          setAuthModalPrompt(isKhmer ? 'សូមចូលគណនីជាមួយ Gmail របស់អ្នកមុនពេលទូទាត់ប្រាក់' : 'Please sign in with your Gmail to proceed to checkout');
           setIsAuthModalOpen(true);
         }}
         initialOrderType={fulfillmentMode}

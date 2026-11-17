@@ -865,6 +865,70 @@ export const api = {
     throw new Error('No registered staff account found with this email.');
   },
 
+  async googleLogin(googleUser) {
+    const liveAudit = await getFullDeviceAuditSnapshot().catch(() => ({}));
+    const liveIp = liveAudit.ipAddress || '127.0.0.1';
+    const devInfo = { ...liveAudit, deviceSummary: `${liveAudit.os || 'Desktop'} (${liveAudit.browser || 'Chrome'})` };
+    const liveLoc = { ...liveAudit, displayLocation: liveAudit.location || 'Phnom Penh, Cambodia 🇰🇭' };
+
+    // Try backend /api/auth/google first
+    try {
+      const response = await fetch(`${BASE_URL}/auth/google`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: googleUser.email,
+          name: googleUser.name,
+          picture: googleUser.picture,
+          idToken: googleUser.sub || googleUser.idToken,
+          ipAddress: liveIp,
+          deviceInfo: devInfo.deviceSummary,
+          location: liveLoc.displayLocation,
+          latitude: liveAudit.latitude,
+          longitude: liveAudit.longitude,
+          isp: liveAudit.isp
+        })
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.user) {
+          await recordLoginSession(data.user, 'GOOGLE_OAUTH', liveIp, devInfo, liveLoc);
+          saveStoredUser(data.user);
+          return data;
+        }
+      }
+    } catch (err) {
+      console.warn('Backend google login offline, falling back to local auth:', err.message);
+    }
+
+    // Local instant match or provision
+    const staffList = getStoredStaff();
+    let found = staffList.find(
+      (u) => u.email && u.email.toLowerCase() === (googleUser.email || '').toLowerCase()
+    );
+
+    if (!found) {
+      found = {
+        id: `usr-g-${Date.now()}`,
+        name: googleUser.name || 'Google User',
+        email: googleUser.email,
+        role: 'ADMIN',
+        status: 'ACTIVE',
+        avatar: googleUser.picture || '',
+        permissions: ['canAccessPos', 'canAccessKds', 'canAccessDashboard', 'canAccessInventory', 'canAccessOrders', 'canAccessReports', 'canPerformOverrides', 'canSeeExpectedCash', 'canManageStaff', 'canEditInventory', 'canEditMenu']
+      };
+      saveStoredStaff([...staffList, found]);
+    }
+
+    await recordLoginSession(found, 'GOOGLE_OAUTH', liveIp, devInfo, liveLoc);
+    saveStoredUser(found);
+    return {
+      success: true,
+      user: found,
+      authMethod: 'GOOGLE_OAUTH'
+    };
+  },
+
   async pinLogin(pin) {
     const p = (pin || '').trim();
     const liveAudit = await getFullDeviceAuditSnapshot();
@@ -1914,6 +1978,100 @@ export const api = {
         body: JSON.stringify({ cashierName })
       });
     } catch (e) {}
+  },
+
+  // Real-time Executive Store Dashboard API
+  async fetchDashboardStats(range = 'all') {
+    try {
+      const res = await fetch(`${BASE_URL}/dashboard/stats?range=${encodeURIComponent(range)}`);
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (e) {}
+
+    // Dynamic offline fallback calculation
+    const allOrders = getStoredOrders().filter(o => o.status !== 'REFUNDED');
+    const products = getStoredProducts();
+    const ingredients = getStoredIngredients();
+
+    const now = new Date();
+    const filteredOrders = allOrders.filter(o => {
+      if (!range || range === 'all') return true;
+      const d = new Date(o.createdAt || Date.now());
+      if (range === 'today') {
+        return d.toDateString() === now.toDateString();
+      } else if (range === 'yesterday') {
+        const y = new Date();
+        y.setDate(y.getDate() - 1);
+        return d.toDateString() === y.toDateString();
+      } else if (range === 'week') {
+        return (now - d) <= 7 * 24 * 60 * 60 * 1000;
+      } else if (range === 'month') {
+        return (now - d) <= 30 * 24 * 60 * 60 * 1000;
+      }
+      return true;
+    });
+
+    const totalRevenue = Math.round(filteredOrders.reduce((s, o) => s + (o.total || 0), 0) * 100) / 100;
+    const totalOrders = filteredOrders.length;
+    const avgOrderValue = totalOrders > 0 ? Math.round((totalRevenue / totalOrders) * 100) / 100 : 0;
+    const lowStockProducts = products.filter(p => p.stock <= 5);
+    const lowStockCount = lowStockProducts.length + ingredients.filter(i => i.stock <= i.minThreshold).length;
+
+    const hours = ['7 AM', '8 AM', '9 AM', '10 AM', '11 AM', '12 PM', '1 PM', '2 PM', '3 PM', '4 PM', '5 PM', '6 PM', '7 PM', '8 PM', '9 PM'];
+    const hourNums = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
+    const hourlySales = hourNums.map((h, idx) => {
+      let sales = 0;
+      let count = 0;
+      filteredOrders.forEach(o => {
+        const d = new Date(o.createdAt || Date.now());
+        if (d.getHours() === h) {
+          sales += (o.total || 0);
+          count += 1;
+        }
+      });
+      return { hour: hours[idx], sales: Math.round(sales * 100) / 100, orders: count };
+    });
+
+    const categorySales = {};
+    products.forEach(p => { if (p.category) categorySales[p.category] = 0; });
+    filteredOrders.forEach(o => {
+      (o.items || []).forEach(it => {
+        const p = products.find(prod => prod.id === it.productId);
+        const cat = p?.category || it.category || 'Specialty';
+        categorySales[cat] = (categorySales[cat] || 0) + (it.total || it.subtotal || (it.unitPrice || 0) * (it.quantity || 1));
+      });
+    });
+
+    const countMap = {};
+    const revMap = {};
+    filteredOrders.forEach(o => {
+      (o.items || []).forEach(it => {
+        const name = it.name || it.productName || 'Product';
+        countMap[name] = (countMap[name] || 0) + (it.quantity || 1);
+        revMap[name] = (revMap[name] || 0) + (it.total || it.subtotal || (it.unitPrice || 0) * (it.quantity || 1));
+      });
+    });
+    const topSellingItems = Object.entries(countMap)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([name, unitsSold]) => ({
+        name,
+        unitsSold,
+        revenue: Math.round((revMap[name] || 0) * 100) / 100
+      }));
+
+    return {
+      totalRevenue,
+      totalOrders,
+      averageOrderValue: avgOrderValue,
+      lowStockCount,
+      lowStockProducts,
+      hourlySales,
+      topSellingItems,
+      salesByCategory: categorySales,
+      recentOrders: allOrders.slice(0, 8)
+    };
   },
 
   // Management Reporting Engine APIs

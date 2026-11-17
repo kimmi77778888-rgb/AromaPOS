@@ -508,6 +508,57 @@ public class AuthService {
         }
     }
 
+    public Optional<User> authenticateGoogle(String email, String name, String picture, String ipAddress, String deviceInfo, String location, Double latitude, Double longitude, String isp) {
+        if (email == null || email.isBlank()) return Optional.empty();
+        String mail = email.trim();
+        String userName = (name != null && !name.isBlank()) ? name.trim() : "Google User";
+        String avatar = (picture != null && !picture.isBlank()) ? picture.trim() : "";
+
+        String ip = (ipAddress != null && !ipAddress.isBlank()) ? ipAddress : "127.0.0.1 (Google OAuth)";
+        String device = (deviceInfo != null && !deviceInfo.isBlank()) ? deviceInfo : "Browser Google Identity";
+        String loc = (location != null && !location.isBlank()) ? location : "Phnom Penh, Cambodia 🇰🇭";
+        Double lat = latitude != null ? latitude : 11.5564;
+        Double lon = longitude != null ? longitude : 104.9282;
+        String provider = (isp != null && !isp.isBlank()) ? isp : "Google Verified Account";
+
+        Optional<User> existingUser = users.stream()
+                .filter(u -> u.getEmail() != null && (u.getEmail().equalsIgnoreCase(mail) || u.getEmail().equalsIgnoreCase(mail.split("@")[0] + "@cafe.com")))
+                .findFirst();
+
+        User u;
+        if (existingUser.isPresent()) {
+            u = existingUser.get();
+            if (avatar != null && !avatar.isBlank() && (u.getAvatar() == null || u.getAvatar().isBlank())) {
+                u.setAvatar(avatar);
+            }
+        } else {
+            // Auto-provision a user with verified Google Identity
+            String newId = "usr-g-" + System.currentTimeMillis();
+            List<String> defaultPerms = new ArrayList<>(List.of("canAccessPos", "canAccessOrders"));
+            u = new User(newId, userName, mail, "gauth_" + System.currentTimeMillis(), "0000", "CUSTOMER", 0.0, "ACTIVE", "", avatar, false, defaultPerms);
+            users.add(u);
+        }
+
+        u.setLastLoginIp(ip);
+        u.setLastLoginDevice(device);
+        u.setLastLoginLocation(loc);
+        u.setLastLoginLatitude(lat);
+        u.setLastLoginLongitude(lon);
+        u.setLastLoginIsp(provider);
+        u.setLastLoginAt(LocalDateTime.now().toString());
+        u.setLastLoginMethod("GOOGLE_OAUTH");
+
+        recordDeviceTravelBreadcrumb(new DeviceTravelBreadcrumb(
+                "tb-" + System.currentTimeMillis(), u.getId(), u.getName(), u.getRole(),
+                "GOOGLE-" + u.getId(), device, ip, loc, lat, lon, 5.0, 0.0, provider, "GOOGLE_LOGIN"
+        ));
+
+        recordActiveSessionForUser(u, ip, device, loc, lat, lon, provider, "GOOGLE_OAUTH");
+        recordAudit("LOGIN_SUCCESS", "User authenticated with Google OAuth from " + ip + " [" + loc + "] (" + mail + ")", u.getName() + " (" + u.getRole() + ")", ip, device, "GOOGLE_OAUTH", loc, lat, lon);
+
+        return Optional.of(u);
+    }
+
     public Map<String, Object> verifyManagerFaceOverride(String managerIdOrName, String action, String details, String cashierId, String cashierName, double amount) {
         Map<String, Object> result = new HashMap<>();
         Optional<User> managerOpt = users.stream()

@@ -29,6 +29,7 @@ import {
   Trash2,
   Image as ImageIcon
 } from 'lucide-react';
+import { GoogleLogoSvg } from './CustomerAuthModal';
 
 const PHNOM_PENH_DISTRICTS = [
   'Boeng Keng Kang',
@@ -310,6 +311,12 @@ export const CustomerAccountModal = ({
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">
                   {customerUser.tier || 'Gold VIP Member'}
                 </span>
+                {customerUser.email && (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-300 border border-blue-500/30 flex items-center gap-1 font-mono">
+                    <GoogleLogoSvg className="w-3 h-3" />
+                    <span>{customerUser.email}</span>
+                  </span>
+                )}
                 <button
                   type="button"
                   onClick={() => setActiveTab('PROFILE')}
@@ -320,13 +327,13 @@ export const CustomerAccountModal = ({
                   <span>{isKhmer ? 'កែប្រែ' : 'Edit'}</span>
                 </button>
               </div>
-              <p className="text-xs text-stone-400 font-mono flex items-center gap-2 mt-0.5">
-                <span>📞 {customerUser.phone}</span>
+              <div className="text-xs text-stone-400 font-mono flex items-center gap-2 mt-0.5 flex-wrap">
+                {customerUser.phone && <span>📞 {customerUser.phone}</span>}
                 {customerUser.district && <span>• 📍 {customerUser.district}</span>}
                 {customerUser.points !== undefined && (
                   <span className="text-amber-400 font-bold">• 🌟 {customerUser.points} Pts</span>
                 )}
-              </p>
+              </div>
             </div>
           </div>
 

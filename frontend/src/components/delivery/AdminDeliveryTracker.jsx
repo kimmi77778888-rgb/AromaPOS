@@ -64,8 +64,8 @@ export const AdminDeliveryTracker = () => {
 
     // 1. Process active orders from AppContext
     orders.forEach((o) => {
-      const isOnlineDelivery = (o.orderType === 'DELIVERY' || o.channel === 'ONLINE_ECOMMERCE');
-      if (isOnlineDelivery && !seenIds.has(o.id)) {
+      const isDelivery = o.orderType === 'DELIVERY' || (o.deliveryAddress && !o.deliveryAddress.toLowerCase().includes('pickup') && o.orderType !== 'PICKUP');
+      if (isDelivery && !seenIds.has(o.id)) {
         seenIds.add(o.id);
         list.push({
           id: o.id,

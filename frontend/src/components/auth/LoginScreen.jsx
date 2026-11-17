@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { Coffee, Lock, Mail, Eye, EyeOff, ArrowRight, ShieldCheck, ScanFace, Globe, Monitor, MapPin } from 'lucide-react';
 import { LanguageSwitcher } from '../common/LanguageSwitcher';
 import { FaceScannerModal } from './FaceScannerModal';
 import { getFullDeviceAuditSnapshot } from '../../utils/deviceDetector';
+import { initGoogleSignInButton, promptGoogleOneTap } from '../../utils/googleAuth';
+import { GoogleLogoSvg } from '../ecommerce/CustomerAuthModal';
 
 export const LoginScreen = ({ onReturnToEcommerce }) => {
-  const { login, faceLogin } = useApp();
+  const { login, faceLogin, googleLogin } = useApp();
   const { isKhmer } = useLanguage();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -18,12 +20,36 @@ export const LoginScreen = ({ onReturnToEcommerce }) => {
   const [failedCount, setFailedCount] = useState(0);
   const [isFaceModalOpen, setIsFaceModalOpen] = useState(false);
   const [clientAudit, setClientAudit] = useState(null);
+  const googleBtnRef = useRef(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     getFullDeviceAuditSnapshot().then((audit) => {
       setClientAudit(audit);
     }).catch(() => {});
   }, []);
+
+  // Initialize official Google Sign-In button for staff
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (googleBtnRef.current) {
+        initGoogleSignInButton(googleBtnRef.current, async (googleProfile) => {
+          setIsLoading(true);
+          try {
+            await googleLogin(googleProfile);
+          } catch (err) {
+            setError(err.message || 'Google authentication failed');
+          } finally {
+            setIsLoading(false);
+          }
+        }, {
+          width: 320,
+          theme: 'filled_black'
+        });
+      }
+    }, 200);
+
+    return () => clearTimeout(timer);
+  }, [googleLogin]);
 
   // Countdown timer for security lockout
   React.useEffect(() => {
@@ -248,6 +274,39 @@ export const LoginScreen = ({ onReturnToEcommerce }) => {
               </div>
               <span className="font-khmer">{isKhmer ? 'ស្កេនផ្ទៃមុខចូល (Face ID Login)' : 'Touchless Face ID Login (0.3s)'}</span>
             </button>
+
+            {/* Google OAuth Divider */}
+            <div className="relative flex py-1 items-center">
+              <div className="flex-grow border-t border-stone-850"></div>
+              <span className="flex-shrink mx-3 text-[11px] font-semibold text-stone-500 uppercase tracking-wider">
+                {isKhmer ? 'ឬចូលដោយ Google' : 'Or Google Sign-In'}
+              </span>
+              <div className="flex-grow border-t border-stone-850"></div>
+            </div>
+
+            {/* Google 1-Click Sign-In Container */}
+            <div className="flex flex-col items-center justify-center gap-2 pb-1">
+              <div ref={googleBtnRef} className="w-full flex justify-center min-h-[44px]" />
+              <button
+                type="button"
+                onClick={() => {
+                  promptGoogleOneTap(async (p) => {
+                    setIsLoading(true);
+                    try {
+                      await googleLogin(p);
+                    } catch (err) {
+                      setError(err.message || 'Google login failed');
+                    } finally {
+                      setIsLoading(false);
+                    }
+                  });
+                }}
+                className="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-stone-100 text-stone-900 font-bold text-xs flex items-center justify-center gap-2.5 transition shadow border border-stone-300 cursor-pointer active:scale-95"
+              >
+                <GoogleLogoSvg className="w-4 h-4" />
+                <span>{isKhmer ? 'ចូលដោយគណនី Google (Staff Workspace)' : 'Sign In with Google Workspace'}</span>
+              </button>
+            </div>
           </form>
 
           {/* Biometric Face Scanner Modal */}

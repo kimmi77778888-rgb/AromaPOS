@@ -57,7 +57,8 @@ export const Sidebar = () => {
     activeShift,
     openShiftModal,
     storeInfo,
-    setIsStoreSettingsOpen
+    setIsStoreSettingsOpen,
+    changeAppMode
   } = useApp();
 
   const { isKhmer } = useLanguage();
@@ -262,6 +263,37 @@ export const Sidebar = () => {
               </div>
             </div>
           )}
+
+        {/* Quick Link to Public E-Commerce Storefront */}
+        {changeAppMode && (
+          !isCollapsed ? (
+            <div className="px-3 pt-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => changeAppMode('ecommerce')}
+                className="w-full py-2 px-3 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 font-bold text-xs flex items-center justify-between transition cursor-pointer group shadow-xs"
+                title={isKhmer ? 'បើកហាងកាហ្វេអនឡាញ' : 'Open Public E-Commerce Storefront'}
+              >
+                <div className="flex items-center gap-2">
+                  <Globe className="w-3.5 h-3.5 text-amber-400 group-hover:rotate-12 transition" />
+                  <span>{isKhmer ? 'ហាងអនឡាញ (Storefront)' : 'Online Storefront'}</span>
+                </div>
+                <ChevronRight className="w-3.5 h-3.5 text-amber-500/70" />
+              </button>
+            </div>
+          ) : (
+            <div className="pt-2 flex justify-center shrink-0">
+              <button
+                type="button"
+                onClick={() => changeAppMode('ecommerce')}
+                className="w-9 h-9 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 flex items-center justify-center transition cursor-pointer"
+                title={isKhmer ? 'បើកហាងកាហ្វេអនឡាញ' : 'Open Public E-Commerce Storefront'}
+              >
+                <Globe className="w-4 h-4" />
+              </button>
+            </div>
+          )
+        )}
 
         {/* Prominent Logged-In User Account Card */}
         {!isCollapsed ? (
@@ -685,6 +717,7 @@ export const Sidebar = () => {
               </div>
             </div>
           )}
+
         </div>
         
         {/* Toggle Expand / Collapse Action Footer */}

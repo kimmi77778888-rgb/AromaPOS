@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
+import { useApp } from '../../context/AppContext';
 import { soundService } from '../../services/soundService';
 import { downloadInvoice } from '../../utils/invoiceDownloader';
 import confetti from 'canvas-confetti';
@@ -40,6 +41,8 @@ export const EcommerceCheckoutModal = ({
   onOpenAccountModal
 }) => {
   const { isKhmer } = useLanguage();
+  const { storeInfo } = useApp();
+  const currencyRate = storeInfo?.currencyRate || 4100;
 
   // Modal Flow Stages: 'PAYMENT' -> 'PROCESSING' -> 'SUCCESS'
   const [flowState, setFlowState] = useState('PAYMENT');
@@ -143,6 +146,9 @@ export const EcommerceCheckoutModal = ({
             orderNumber,
             channel: 'ONLINE_ECOMMERCE',
             orderType: orderData.orderType || 'DELIVERY',
+            deliveryType: orderData.deliveryType || 'STANDARD',
+            deliveryMethod: orderData.deliveryMethod || (orderData.orderType === 'DELIVERY' ? 'Standard Delivery (20-30 mins)' : 'Store Pickup'),
+            deliveryTimeEstimate: orderData.deliveryTimeEstimate || (orderData.orderType === 'DELIVERY' ? '20-30 mins' : '10-15 mins'),
             status: 'IN_PREPARATION',
             createdAt: new Date().toISOString(),
             customerId: orderData.customerId,
@@ -172,11 +178,11 @@ export const EcommerceCheckoutModal = ({
             appliedPromo: orderData.appliedPromo,
             deliveryFee: orderData.deliveryFee || 0,
             total: orderData.grandTotal,
-            rielTotal: orderData.rielGrandTotal,
+            rielTotal: orderData.rielGrandTotal || Math.round(orderData.grandTotal * currencyRate).toLocaleString(),
             paymentMethod: paymentMethod,
             paymentStatus: paymentMethod === 'KHQR' ? 'PAID' : 'PENDING_ON_DELIVERY',
             cashChangeNote: paymentMethod === 'COD' ? cashChangeNote : null,
-            notes: `Online Store (${orderData.orderType === 'DELIVERY' ? 'Phnom Penh Delivery' : 'Store Pickup'})`
+            notes: `Online Store (${orderData.orderType === 'DELIVERY' ? 'Standard Phnom Penh Delivery (20-30m)' : 'Store Pickup'})`
           };
 
           setConfirmedOrder(newOrderPayload);
@@ -266,8 +272,8 @@ export const EcommerceCheckoutModal = ({
             <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 text-stone-200">
               {/* Customer & Destination Summary Pill */}
               <div className="p-3.5 rounded-2xl bg-stone-950 border border-stone-800/80 flex items-center justify-between text-xs">
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-2">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-bold text-white flex items-center gap-1.5">
                       <User className="w-3.5 h-3.5 text-amber-400" />
                       <span>{orderData.customerName}</span>
@@ -275,6 +281,16 @@ export const EcommerceCheckoutModal = ({
                     <span className="font-mono text-stone-400 text-[11px]">
                       ({orderData.customerPhone})
                     </span>
+                    {orderData.orderType === 'DELIVERY' ? (
+                      <span className="px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold text-[10px] flex items-center gap-1">
+                        <Bike className="w-3 h-3 text-amber-400" />
+                        <span>Standard (20-30m)</span>
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded-full bg-stone-800 border border-stone-700 text-stone-300 font-bold text-[10px]">
+                        Pickup
+                      </span>
+                    )}
                   </div>
                   <p className="text-stone-400 flex items-center gap-1 text-[11px] truncate max-w-xs sm:max-w-md">
                     <MapPin className="w-3 h-3 text-rose-400 shrink-0" />
@@ -284,9 +300,18 @@ export const EcommerceCheckoutModal = ({
                         : `Pickup at ${orderData.pickupBranch?.name || 'Aroma Coffee Roastery BKK1'}`}
                     </span>
                   </p>
+                  {orderData.deliveryNotes && (
+                    <p className="text-[10px] text-stone-500 italic">
+                      Note: "{orderData.deliveryNotes}"
+                    </p>
+                  )}
                 </div>
                 <div className="text-right shrink-0">
-                  <span className="text-[10px] text-stone-500 font-bold uppercase block">Total Due</span>
+                  <span className="text-[10px] text-stone-500 font-bold uppercase block">
+                    {orderData.orderType === 'DELIVERY' 
+                      ? (orderData.deliveryFee === 0 ? <span className="text-emerald-400">Delivery Free</span> : 'Delivery $1.00')
+                      : 'Store Pickup'}
+                  </span>
                   <span className="font-mono font-black text-amber-400 text-sm sm:text-base">
                     ${orderData.grandTotal.toFixed(2)}
                   </span>
@@ -592,15 +617,32 @@ export const EcommerceCheckoutModal = ({
               </div>
 
               {/* Customer & Destination */}
-              <div className="text-xs space-y-1 text-stone-300">
-                <p className="flex items-center gap-2">
-                  <span className="font-bold text-white">👤 {confirmedOrder.customerName}</span>
-                  <span className="text-stone-500 font-mono">({confirmedOrder.customerPhone})</span>
-                </p>
+              <div className="text-xs space-y-1.5 text-stone-300">
+                <div className="flex items-center justify-between">
+                  <p className="flex items-center gap-2">
+                    <span className="font-bold text-white">👤 {confirmedOrder.customerName}</span>
+                    <span className="text-stone-500 font-mono">({confirmedOrder.customerPhone})</span>
+                  </p>
+                  {confirmedOrder.orderType === 'DELIVERY' ? (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 flex items-center gap-1">
+                      <Bike className="w-3 h-3 text-amber-400" />
+                      <span>Standard Delivery (20-30m)</span>
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-stone-800 text-stone-300">
+                      Store Pickup
+                    </span>
+                  )}
+                </div>
                 <p className="flex items-start gap-1.5 text-stone-400">
                   <MapPin className="w-3.5 h-3.5 text-rose-400 shrink-0 mt-0.5" />
                   <span>{confirmedOrder.deliveryAddress || 'Aroma Coffee Roastery BKK1'}</span>
                 </p>
+                {confirmedOrder.deliveryNotes && (
+                  <p className="text-[10px] text-stone-500 italic pl-5">
+                    Instructions: "{confirmedOrder.deliveryNotes}"
+                  </p>
+                )}
               </div>
 
               {/* Loyalty Reward Earned Badge */}

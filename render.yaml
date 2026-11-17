@@ -27,6 +27,10 @@ services:
         value: 8789211551:AAExoknzxZxTQ6QfW9aoEphQ5YpS9GyDabs
       - key: TELEGRAM_CHAT_ID
         value: "1886655363"
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
 
   # ---------------------------------------------------------------------------
   # 2. Next.js Enterprise Frontend POS & Customer Display
@@ -50,4 +54,8 @@ services:
         value: https://aromapos-backend.onrender.com
       - key: NEXT_PUBLIC_API_URL
         value: https://aromapos-backend.onrender.com
+      - key: NEXT_PUBLIC_GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
 

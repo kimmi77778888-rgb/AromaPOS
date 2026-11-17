@@ -1,5 +1,6 @@
 package com.example.demo.controller;
 
+import com.example.demo.config.GoogleAuthConfig;
 import com.example.demo.model.AuditLog;
 import com.example.demo.model.DeviceTravelBreadcrumb;
 import com.example.demo.model.LoginSession;
@@ -19,9 +20,11 @@ import java.util.Optional;
 @RequestMapping("/api/auth")
 public class AuthController {
     private final AuthService authService;
+    private final GoogleAuthConfig googleAuthConfig;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, GoogleAuthConfig googleAuthConfig) {
         this.authService = authService;
+        this.googleAuthConfig = googleAuthConfig;
     }
 
     private String extractClientIp(HttpServletRequest request, String overrideIp) {
@@ -177,6 +180,40 @@ public class AuthController {
         public void setSpeed(Double speed) { this.speed = speed; }
         public Double getAccuracy() { return accuracy; }
         public void setAccuracy(Double accuracy) { this.accuracy = accuracy; }
+    }
+
+    public static class GoogleLoginRequest {
+        private String idToken;
+        private String email;
+        private String name;
+        private String picture;
+        private String ipAddress;
+        private String deviceInfo;
+        private String location;
+        private Double latitude;
+        private Double longitude;
+        private String isp;
+
+        public String getIdToken() { return idToken; }
+        public void setIdToken(String idToken) { this.idToken = idToken; }
+        public String getEmail() { return email; }
+        public void setEmail(String email) { this.email = email; }
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
+        public String getPicture() { return picture; }
+        public void setPicture(String picture) { this.picture = picture; }
+        public String getIpAddress() { return ipAddress; }
+        public void setIpAddress(String ipAddress) { this.ipAddress = ipAddress; }
+        public String getDeviceInfo() { return deviceInfo; }
+        public void setDeviceInfo(String deviceInfo) { this.deviceInfo = deviceInfo; }
+        public String getLocation() { return location; }
+        public void setLocation(String location) { this.location = location; }
+        public Double getLatitude() { return latitude; }
+        public void setLatitude(Double latitude) { this.latitude = latitude; }
+        public Double getLongitude() { return longitude; }
+        public void setLongitude(Double longitude) { this.longitude = longitude; }
+        public String getIsp() { return isp; }
+        public void setIsp(String isp) { this.isp = isp; }
     }
 
     public static class DeviceTravelPingRequest {
@@ -366,6 +403,59 @@ public class AuthController {
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(Map.of("message", "Biometric Face Scan did not match an active enrolled staff member."));
+    }
+
+    @GetMapping("/google/config")
+    public ResponseEntity<?> getGoogleConfig() {
+        return ResponseEntity.ok(Map.of(
+                "clientId", googleAuthConfig.getClientId(),
+                "enabled", true
+        ));
+    }
+
+    @PostMapping("/google")
+    public ResponseEntity<?> googleLogin(@RequestBody GoogleLoginRequest request, HttpServletRequest servletRequest) {
+        if (request.getEmail() == null || request.getEmail().isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Google account email is required"));
+        }
+
+        String clientIp = extractClientIp(servletRequest, request.getIpAddress());
+        String deviceInfo = extractDeviceInfo(servletRequest, request.getDeviceInfo());
+        String location = request.getLocation() != null && !request.getLocation().isBlank() ? request.getLocation().trim() : "Phnom Penh, Cambodia 🇰🇭";
+        Double lat = request.getLatitude() != null ? request.getLatitude() : 11.5564;
+        Double lon = request.getLongitude() != null ? request.getLongitude() : 104.9282;
+        String isp = request.getIsp() != null && !request.getIsp().isBlank() ? request.getIsp() : "Google OAuth Network";
+
+        Optional<User> user = authService.authenticateGoogle(
+                request.getEmail(),
+                request.getName(),
+                request.getPicture(),
+                clientIp,
+                deviceInfo,
+                location,
+                lat,
+                lon,
+                isp
+        );
+
+        if (user.isPresent()) {
+            User u = user.get();
+            Map<String, Object> resp = new HashMap<>();
+            resp.put("success", true);
+            resp.put("token", "jwt-google-" + u.getId() + "-" + System.currentTimeMillis());
+            resp.put("user", u);
+            resp.put("clientIp", clientIp);
+            resp.put("deviceInfo", deviceInfo);
+            resp.put("location", u.getLastLoginLocation());
+            resp.put("latitude", u.getLastLoginLatitude());
+            resp.put("longitude", u.getLastLoginLongitude());
+            resp.put("isp", u.getLastLoginIsp());
+            resp.put("authMethod", "GOOGLE_OAUTH");
+            return ResponseEntity.ok(resp);
+        }
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of("message", "Unable to authenticate with Google."));
     }
 
     @PostMapping("/face-override")
