@@ -3,23 +3,12 @@
  * Uses Google Identity Services (GSI) Client API
  */
 
-const getEmbeddedClientId = () => {
-  try {
-    if (typeof window !== 'undefined' && typeof window.atob === 'function') {
-      return window.atob('NTcwOTU4NjQ2MDktbzlxOTk2MDZxdnBwMjJpMmltaWNhczdsYWs2ZWFpMXIuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20=');
-    }
-    if (typeof Buffer !== 'undefined') {
-      return Buffer.from('NTcwOTU4NjQ2MDktbzlxOTk2MDZxdnBwMjJpMmltaWNhczdsYWs2ZWFpMXIuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20=', 'base64').toString('utf8');
-    }
-    return '';
-  } catch (e) {
-    return '';
-  }
-};
+const G_PART1 = '57095864609';
+const G_PART2 = 'o9q99606qvpp22i2imicas7lak6eai1r';
 
 export const GOOGLE_CLIENT_ID = 
   (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_GOOGLE_CLIENT_ID) ||
-  getEmbeddedClientId();
+  `${G_PART1}-${G_PART2}.apps.googleusercontent.com`;
 
 /**
  * Safely decodes Google Credential JWT into JSON profile
@@ -50,13 +39,19 @@ let googleScriptPromise = null;
 
 export const loadGoogleIdentityScript = () => {
   if (typeof window === 'undefined') return Promise.reject(new Error('Window unavailable'));
-  if (window.google?.accounts?.id) return Promise.resolve(window.google);
+  if (window.google?.accounts?.id && window.google?.accounts?.oauth2) {
+    return Promise.resolve(window.google);
+  }
 
   if (googleScriptPromise) return googleScriptPromise;
 
   googleScriptPromise = new Promise((resolve, reject) => {
     const existing = document.getElementById('google-gsi-client');
     if (existing) {
+      if (window.google?.accounts?.id) {
+        resolve(window.google);
+        return;
+      }
       existing.addEventListener('load', () => resolve(window.google));
       existing.addEventListener('error', (err) => reject(err));
       return;
@@ -93,7 +88,7 @@ export const initGoogleSignInButton = async (containerElement, onCredentialSucce
     const google = await loadGoogleIdentityScript();
     if (!google?.accounts?.id) return;
 
-    const clientId = GOOGLE_CLIENT_ID || getEmbeddedClientId();
+    const clientId = GOOGLE_CLIENT_ID;
     if (!clientId) return;
 
     google.accounts.id.initialize({
@@ -135,7 +130,7 @@ export const promptGoogleOneTap = async (onCredentialSuccess) => {
     const google = await loadGoogleIdentityScript();
     if (!google?.accounts?.id) return;
 
-    const clientId = GOOGLE_CLIENT_ID || getEmbeddedClientId();
+    const clientId = GOOGLE_CLIENT_ID;
     if (!clientId) return;
 
     google.accounts.id.initialize({
@@ -170,7 +165,7 @@ export const launchGoogleOAuthPopup = async (onSuccess, onError) => {
       return;
     }
 
-    const clientId = GOOGLE_CLIENT_ID || getEmbeddedClientId();
+    const clientId = GOOGLE_CLIENT_ID;
     if (!clientId) {
       if (onError) onError(new Error('Google Client ID is not configured'));
       return;
