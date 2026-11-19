@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useLanguage } from '../../context/LanguageContext';
-import { Coffee, Lock, Mail, Eye, EyeOff, ArrowRight, ShieldCheck, ScanFace, MapPin, Sparkles, HelpCircle, Check, Copy } from 'lucide-react';
+import { Coffee, Lock, Mail, Eye, EyeOff, ArrowRight, ShieldCheck, ScanFace, MapPin, Sparkles, HelpCircle, Check, Copy, LayoutDashboard, UserCheck } from 'lucide-react';
 import { LanguageSwitcher } from '../common/LanguageSwitcher';
 import { FaceScannerModal } from './FaceScannerModal';
 import { getFullDeviceAuditSnapshot } from '../../utils/deviceDetector';
@@ -9,7 +9,7 @@ import { initGoogleSignInButton, promptGoogleOneTap, launchGoogleOAuthPopup } fr
 import { GoogleLogoSvg } from '../ecommerce/CustomerAuthModal';
 
 export const LoginScreen = ({ onReturnToEcommerce }) => {
-  const { login, faceLogin, googleLogin } = useApp();
+  const { login, faceLogin, googleLogin, customerUser } = useApp();
   const { isKhmer } = useLanguage();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -88,14 +88,7 @@ export const LoginScreen = ({ onReturnToEcommerce }) => {
 
     const cleanInput = (email || '').trim();
     if (!cleanInput) {
-      setError(isKhmer ? 'សូមបំពេញ Email ឬ Username!' : 'Please enter your Email or Username (admin@cafe.com)!');
-      return;
-    }
-
-    const isOwner = cleanInput.toLowerCase() === 'lensophara@gmail.com' || cleanInput.toLowerCase() === 'lensophara';
-
-    if (!isOwner && (!password || password.length < 3)) {
-      setError(isKhmer ? 'Passcode ត្រូវមានយ៉ាងតិច ៤ ខ្ទង់!' : 'Passcode must be at least 4 characters!');
+      setError(isKhmer ? 'សូមបំពេញ Email ឬ Username!' : 'Please enter your Email or Username (lensophara@gmail.com or admin@cafe.com)!');
       return;
     }
 
@@ -214,6 +207,36 @@ export const LoginScreen = ({ onReturnToEcommerce }) => {
             </button>
           </div>
 
+          {/* Quick Login Card for Logged-In User / Customer Account */}
+          {customerUser && (
+            <div className="p-3.5 rounded-2xl bg-gradient-to-r from-blue-500/15 via-indigo-600/10 to-stone-900 border border-blue-500/30 flex items-center justify-between gap-3 shadow-lg">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white font-black flex items-center justify-center text-sm shadow shrink-0">
+                  {(customerUser.name || 'U').charAt(0).toUpperCase()}
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-bold text-sm text-stone-100 truncate">{customerUser.name}</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 font-bold border border-blue-500/30 shrink-0">
+                      👤 {customerUser.tier || 'USER'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-stone-400 font-mono truncate">{customerUser.email}</p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handleDirectRealEmailLogin(customerUser.email, customerUser.name)}
+                disabled={isLoading}
+                className="py-2 px-3.5 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 text-white font-bold text-xs shadow-md transition active:scale-95 shrink-0 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                <LayoutDashboard className="w-3.5 h-3.5" />
+                <span>{isKhmer ? 'ចូល Dashboard' : 'Dashboard'}</span>
+              </button>
+            </div>
+          )}
+
           {/* Error Alert */}
           {error && (
             <div className="flex items-start gap-3 bg-rose-950/50 border border-rose-800/60 rounded-2xl px-4 py-3.5">
@@ -228,7 +251,7 @@ export const LoginScreen = ({ onReturnToEcommerce }) => {
             {/* Email */}
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-stone-400 uppercase tracking-wider">
-                Staff Email / Username
+                {isKhmer ? 'អ៊ីមែលចូលប្រើប្រាស់ (Email / Username)' : 'User / Staff Email'}
               </label>
               <div className="relative group">
                 <Mail className="w-4 h-4 text-stone-500 group-focus-within:text-amber-400 absolute left-4 top-1/2 -translate-y-1/2 transition" />
@@ -238,23 +261,26 @@ export const LoginScreen = ({ onReturnToEcommerce }) => {
                   id="station_identity"
                   value={email}
                   onChange={(e) => { setEmail(e.target.value); setError(''); }}
-                  placeholder="admin@cafe.com (or admin)"
+                  placeholder="lensophara@gmail.com ឬ admin@cafe.com"
                   autoComplete="off"
                   data-lpignore="true"
                   data-1p-ignore="true"
                   data-form-type="other"
                   spellCheck="false"
                   required
-                  className="w-full pl-11 pr-4 py-3.5 bg-stone-900 border border-stone-800 hover:border-stone-700 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 text-stone-100 text-sm rounded-2xl outline-none transition placeholder:text-stone-600"
+                  className="w-full pl-11 pr-4 py-3.5 bg-stone-900 border border-stone-800 hover:border-stone-700 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 text-stone-100 text-sm rounded-2xl outline-none transition placeholder:text-stone-600 font-mono"
                 />
               </div>
             </div>
 
             {/* Passcode / PIN */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-stone-400 uppercase tracking-wider block">
-                Passcode / PIN
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold text-stone-400 uppercase tracking-wider block">
+                  {isKhmer ? 'Passcode / PIN (ស្រេចចិត្ត Optional)' : 'Passcode / PIN (Optional)'}
+                </label>
+                <span className="text-[10px] text-stone-500 font-mono">default: admin</span>
+              </div>
               <div className="relative group">
                 <Lock className="w-4 h-4 text-stone-500 group-focus-within:text-amber-400 absolute left-4 top-1/2 -translate-y-1/2 transition" />
                 <input
@@ -263,7 +289,7 @@ export const LoginScreen = ({ onReturnToEcommerce }) => {
                   id="station_code"
                   value={password}
                   onChange={(e) => { setPassword(e.target.value); setError(''); }}
-                  placeholder="••••••••"
+                  placeholder="admin"
                   autoComplete="off"
                   aria-autocomplete="none"
                   data-lpignore="true"
@@ -272,7 +298,6 @@ export const LoginScreen = ({ onReturnToEcommerce }) => {
                   data-form-type="other"
                   data-protonpass-ignore="true"
                   spellCheck="false"
-                  required
                   className="w-full pl-11 pr-12 py-3.5 bg-stone-900 border border-stone-800 hover:border-stone-700 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 text-stone-100 text-sm rounded-2xl outline-none transition placeholder:text-stone-600 font-mono"
                 />
                 <button
@@ -294,13 +319,14 @@ export const LoginScreen = ({ onReturnToEcommerce }) => {
               {isLoading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-stone-950/30 border-t-stone-950 rounded-full animate-spin"></div>
-                  <span>កំពុងផ្ទៀងផ្ទាត់...</span>
+                  <span>{isKhmer ? 'កំពុងផ្ទៀងផ្ទាត់...' : 'Verifying...'}</span>
                 </>
               ) : lockoutSeconds > 0 ? (
                 <span>ជាប់សោរសុវត្ថិភាព ({lockoutSeconds}s)</span>
               ) : (
                 <>
-                  <span>Access Terminal</span>
+                  <LayoutDashboard className="w-4 h-4" />
+                  <span>{isKhmer ? 'ចូលផ្ទាំងគ្រប់គ្រង Dashboard & POS' : 'Enter Live Dashboard & POS'}</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}

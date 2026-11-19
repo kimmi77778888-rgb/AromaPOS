@@ -689,6 +689,44 @@ export const ROLE_PERMISSIONS = {
       'canAccessPos', 'canAccessDashboard', 'canAccessOrders', 'canAccessReports', 
       'canPerformOverrides', 'canSeeExpectedCash', 'canManageStaff'
     ]
+  },
+  USER: {
+    role: "USER",
+    title: "Authorized User",
+    titleKm: "អ្នកប្រើប្រាស់មានសិទ្ធិ",
+    badgeColor: "bg-indigo-950/80 text-indigo-300 border-indigo-800",
+    description: "Access to live dashboard, orders, inventory, and POS.",
+    descriptionKm: "សិទ្ធិចូលមើលផ្ទាំងគ្រប់គ្រងផ្ទាល់ ប្រវត្តិបញ្ជាទិញ និងស្ថានីយ POS។",
+    allowedTabs: ['dashboard', 'pos', 'inventory', 'orders', 'delivery', 'reports', 'kds', 'staff'],
+    canPerformOverrides: true,
+    canSeeExpectedCash: true,
+    canManageStaff: true,
+    canEditInventory: true,
+    canEditMenu: true,
+    permissions: [
+      'canAccessPos', 'canAccessKds', 'canAccessDashboard', 'canAccessInventory', 
+      'canAccessOrders', 'canAccessReports', 'canPerformOverrides', 'canSeeExpectedCash', 
+      'canManageStaff', 'canEditInventory', 'canEditMenu'
+    ]
+  },
+  CUSTOMER: {
+    role: "CUSTOMER",
+    title: "Customer & VIP",
+    titleKm: "សមាជិកអតិថិជន VIP",
+    badgeColor: "bg-amber-950/80 text-amber-300 border-amber-800",
+    description: "Access to live dashboard, order history, and POS terminal.",
+    descriptionKm: "សិទ្ធិចូលមើលផ្ទាំងគ្រប់គ្រងផ្ទាល់ ប្រវត្តិកម្ម៉ង់ និងស្ថានីយ POS។",
+    allowedTabs: ['dashboard', 'pos', 'inventory', 'orders', 'delivery', 'reports', 'kds', 'staff'],
+    canPerformOverrides: true,
+    canSeeExpectedCash: true,
+    canManageStaff: true,
+    canEditInventory: true,
+    canEditMenu: true,
+    permissions: [
+      'canAccessPos', 'canAccessKds', 'canAccessDashboard', 'canAccessInventory', 
+      'canAccessOrders', 'canAccessReports', 'canPerformOverrides', 'canSeeExpectedCash', 
+      'canManageStaff', 'canEditInventory', 'canEditMenu'
+    ]
   }
 };
 

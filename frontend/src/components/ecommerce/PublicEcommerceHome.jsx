@@ -385,16 +385,16 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
 
           {/* Right Action Controls */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-            {/* Staff Portal / POS Switcher (Discreet & Professional) */}
+            {/* Staff Portal / POS & Dashboard Switcher */}
             {onSwitchToPos && (
               <button
                 type="button"
                 onClick={onSwitchToPos}
-                className="py-2 px-3 rounded-2xl bg-stone-900/90 hover:bg-stone-850 border border-stone-800 text-stone-300 hover:text-amber-400 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-sm active:scale-95"
-                title={isKhmer ? 'ចូលផ្ទាំងគ្រប់គ្រងទូទៅ & ស្ថានីយគិតប្រាក់ POS' : 'Staff Portal: POS Terminal & Live Dashboard'}
+                className="py-2 px-3 rounded-2xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 hover:text-amber-200 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-sm active:scale-95"
+                title={isKhmer ? 'ចូលផ្ទាំងគ្រប់គ្រងទូទៅ & ស្ថានីយគិតប្រាក់ POS' : 'Live Dashboard & POS Terminal'}
               >
-                <Lock className="w-3.5 h-3.5 text-amber-500" />
-                <span className="hidden xl:inline">{isKhmer ? 'ប្រព័ន្ធបុគ្គលិក' : 'Staff Portal'}</span>
+                <LayoutDashboard className="w-3.5 h-3.5 text-amber-400" />
+                <span className="hidden sm:inline">{isKhmer ? 'ផ្ទាំងគ្រប់គ្រង Dashboard' : 'Dashboard'}</span>
               </button>
             )}
 
@@ -484,7 +484,7 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
               className="w-full text-left py-3 px-4 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-300 font-black flex items-center gap-2.5 hover:bg-amber-500/25 transition cursor-pointer"
             >
               <LayoutDashboard className="w-4 h-4 text-amber-400" />
-              <span>{isKhmer ? 'ប្រព័ន្ធបុគ្គលិក & POS ស្ថានីយ' : 'Staff Portal & POS Register'}</span>
+              <span>{isKhmer ? 'ផ្ទាំងគ្រប់គ្រងទូទៅ & POS' : 'Admin Dashboard & POS'}</span>
             </button>
           )}
 

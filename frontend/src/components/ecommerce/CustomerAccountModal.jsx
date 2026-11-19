@@ -20,7 +20,8 @@ import {
   Check, 
   Camera, 
   Search, 
-  Navigation 
+  Navigation,
+  LayoutDashboard 
 } from 'lucide-react';
 import { GoogleLogoSvg } from './CustomerAuthModal';
 
@@ -52,7 +53,9 @@ export const CustomerAccountModal = ({
     orders = [], 
     setOrders, 
     updateCustomerProfile, 
-    showToast 
+    showToast,
+    googleLogin,
+    changeAppMode 
   } = useApp();
 
   const [activeTab, setActiveTab] = useState('ORDERS'); // 'ORDERS' | 'DELIVERY' | 'PROFILE'
@@ -315,6 +318,30 @@ export const CustomerAccountModal = ({
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
+            {/* Direct Dashboard Access Button */}
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  if (googleLogin) {
+                    await googleLogin({
+                      email: customerUser.email,
+                      name: customerUser.name,
+                      picture: customerUser.avatar,
+                      sub: `cust-${customerUser.id}`
+                    });
+                  }
+                } catch (e) {}
+                if (changeAppMode) changeAppMode('pos');
+                onClose();
+              }}
+              className="py-1.5 px-3 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-sm active:scale-95"
+              title={isKhmer ? 'ចូលផ្ទាំងគ្រប់គ្រង Dashboard & POS' : 'Enter Live Dashboard & POS'}
+            >
+              <LayoutDashboard className="w-3.5 h-3.5 text-amber-400" />
+              <span className="hidden sm:inline">{isKhmer ? 'Dashboard' : 'Dashboard'}</span>
+            </button>
+
             <button
               type="button"
               onClick={() => {
