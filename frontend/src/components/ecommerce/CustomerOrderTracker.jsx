@@ -11,14 +11,10 @@ import {
   Bike, 
   Store, 
   Coffee, 
-  MapPin, 
   Phone, 
-  Sparkles, 
-  ChevronRight,
-  ArrowLeft,
-  ExternalLink,
+  PackageCheck,
   FileText,
-  PackageCheck
+  Sparkles
 } from 'lucide-react';
 
 export const CustomerOrderTracker = ({
@@ -33,11 +29,15 @@ export const CustomerOrderTracker = ({
   const [searchCode, setSearchCode] = useState('');
   const [searchedOrder, setSearchedOrder] = useState(null);
   const [searchError, setSearchError] = useState('');
+  const [orderStatusOverride, setOrderStatusOverride] = useState({});
 
   if (!isOpen) return null;
 
   // Use active order or user's search
-  const currentOrder = searchedOrder || activeOrder || (allOrders.length > 0 ? allOrders[0] : null);
+  const rawOrder = searchedOrder || activeOrder || (allOrders.length > 0 ? allOrders[0] : null);
+  const currentOrder = rawOrder
+    ? { ...rawOrder, status: orderStatusOverride[rawOrder.id || rawOrder.orderNumber] || rawOrder.status }
+    : null;
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -60,14 +60,14 @@ export const CustomerOrderTracker = ({
   };
 
   // Determine Current Step (1..4)
-  const getStepIndex = (status, orderType) => {
+  const getStepIndex = (status) => {
     if (status === 'COMPLETED') return 4;
     if (status === 'READY' || status === 'OUT_FOR_DELIVERY') return 3;
     if (status === 'IN_PREPARATION') return 2;
     return 1; // PENDING or NEW
   };
 
-  const currentStep = currentOrder ? getStepIndex(currentOrder.status, currentOrder.orderType) : 1;
+  const currentStep = currentOrder ? getStepIndex(currentOrder.status) : 1;
 
   const steps = [
     {
@@ -257,20 +257,24 @@ export const CustomerOrderTracker = ({
                           origin: { y: 0.6 },
                           colors: ['#10B981', '#F59E0B', '#3B82F6']
                         });
-                      } catch (e) {}
-                      if (currentOrder?.id) {
-                        const targetId = currentOrder.id;
+                      } catch {
+                        // ignore audio/confetti failure
+                      }
+                      if (currentOrder?.id || currentOrder?.orderNumber) {
+                        const targetKey = currentOrder.id || currentOrder.orderNumber;
                         try {
                           const stored = JSON.parse(localStorage.getItem('aromapos_orders') || '[]');
                           const updated = stored.map((o) =>
-                            o.id === targetId || o.orderNumber === currentOrder.orderNumber
+                            o.id === currentOrder.id || o.orderNumber === currentOrder.orderNumber
                               ? { ...o, status: 'COMPLETED', isDelivered: true, deliveredAt: new Date().toISOString() }
                               : o
                           );
                           localStorage.setItem('aromapos_orders', JSON.stringify(updated));
-                        } catch (err) {}
+                        } catch {
+                          // ignore storage error
+                        }
+                        setOrderStatusOverride((prev) => ({ ...prev, [targetKey]: 'COMPLETED' }));
                         if (searchedOrder) setSearchedOrder({ ...searchedOrder, status: 'COMPLETED' });
-                        else if (activeOrder) activeOrder.status = 'COMPLETED';
                       }
                     }}
                     className="sm:col-span-2 w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-stone-950 font-black text-xs flex items-center justify-center gap-2 transition shadow-lg shadow-emerald-950/40 cursor-pointer active:scale-95"

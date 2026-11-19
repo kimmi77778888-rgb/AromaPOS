@@ -6,20 +6,9 @@ import confetti from 'canvas-confetti';
 import { 
   X, 
   Bike, 
-  MapPin, 
   Phone, 
-  Coffee, 
-  Clock, 
-  ShieldCheck, 
   CheckCircle2, 
-  Sparkles,
-  ExternalLink,
-  ThumbsUp,
-  PackageCheck,
-  Navigation,
-  Compass,
-  Radio,
-  LocateFixed
+  PackageCheck
 } from 'lucide-react';
 import { 
   ROASTERY_HQ, 
@@ -34,24 +23,31 @@ export const LiveDeliveryMapModal = ({
   order = null
 }) => {
   const { isKhmer } = useLanguage();
-  const { setOrders, showToast } = useApp();
+  const { customerUser, setOrders, showToast } = useApp();
 
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const riderMarkerRef = useRef(null);
   const routePolylineRef = useRef(null);
 
-  // Real GPS & Route Telemetry State
+  // Dynamic Real Route & Telemetry State
   const [routeCoordinates, setRouteCoordinates] = useState([]);
-  const [routeDistanceKm, setRouteDistanceKm] = useState(2.1);
-  const [etaMinutes, setEtaMinutes] = useState(8);
+  const [routeDistanceKm, setRouteDistanceKm] = useState(2.4);
+  const [etaMinutes, setEtaMinutes] = useState(12);
   const [isRealGps, setIsRealGps] = useState(false);
   const [gpsAccuracy, setGpsAccuracy] = useState(null);
   const [activeStepIndex, setActiveStepIndex] = useState(0);
   const [speed, setSpeed] = useState(28);
-  const [routeRoadName, setRouteRoadName] = useState('Norodom Blvd & St. 288');
+  const [routeRoadName, setRouteRoadName] = useState('Phnom Penh Delivery Corridor');
 
-  // "Got Product / Order Received" confirmation state
+  // Real Order Properties
+  const recipientName = order?.customerName || customerUser?.name || 'Customer';
+  const recipientPhone = order?.customerPhone || customerUser?.phone || '+855 23 999 881';
+  const recipientAddress = order?.deliveryAddress || customerUser?.address || 'Sangkat Boeng Keng Kang 1, Phnom Penh';
+  const recipientDistrict = order?.customerDistrict || customerUser?.district || 'Boeng Keng Kang';
+  const orderNum = order?.orderNumber || order?.id || 'ORD-ONL';
+
+  // Delivery status state
   const [isDelivered, setIsDelivered] = useState(
     order?.status === 'COMPLETED' || order?.status === 'DELIVERED'
   );
@@ -68,21 +64,23 @@ export const LiveDeliveryMapModal = ({
     if (!isOpen) return;
 
     const setupRealRoute = async () => {
-      // 1. Resolve Customer Destination: Check Device GPS first, then address geocoding
-      let destination = geocodeDeliveryAddress(order?.deliveryAddress || '', order?.customerDistrict || '');
+      // 1. Resolve Customer Destination from Actual Address
+      let destination = geocodeDeliveryAddress(recipientAddress, recipientDistrict);
 
-      // Try acquiring hardware live GPS
-      const deviceLoc = await getLiveDeviceLocation();
-      if (!isCancelled && deviceLoc.success && deviceLoc.isRealGps) {
-        setIsRealGps(true);
-        setGpsAccuracy(deviceLoc.accuracy);
-        // If user is within Cambodia bounds (lat 10..15, lon 102..108), pin directly to their real device GPS
-        if (deviceLoc.lat >= 10 && deviceLoc.lat <= 15 && deviceLoc.lon >= 102 && deviceLoc.lon <= 108) {
-          destination = { lat: deviceLoc.lat, lon: deviceLoc.lon, district: 'Live Device GPS' };
+      // 2. Try acquiring real device hardware GPS (if permitted by browser)
+      try {
+        const deviceLoc = await getLiveDeviceLocation();
+        if (!isCancelled && deviceLoc.success && deviceLoc.isRealGps) {
+          setIsRealGps(true);
+          setGpsAccuracy(deviceLoc.accuracy);
+          // If within Cambodia bounds (lat 10..15, lon 102..108), pin directly to hardware GPS
+          if (deviceLoc.lat >= 10 && deviceLoc.lat <= 15 && deviceLoc.lon >= 102 && deviceLoc.lon <= 108) {
+            destination = { lat: deviceLoc.lat, lon: deviceLoc.lon, district: 'Live Device GPS' };
+          }
         }
-      }
+      } catch (e) {}
 
-      // 2. Fetch Real OSRM Driving Route
+      // 3. Fetch Real OSRM Road Driving Route
       const routeData = await fetchOsrmRoute(ROASTERY_HQ, destination);
       if (isCancelled) return;
 
@@ -90,8 +88,8 @@ export const LiveDeliveryMapModal = ({
         setRouteCoordinates(routeData.coordinates);
         setRouteDistanceKm(routeData.distanceKm);
         setEtaMinutes(routeData.durationMins);
-        setRouteRoadName(routeData.summary || 'Phnom Penh Main Road');
-        setActiveStepIndex(Math.floor(routeData.coordinates.length * 0.35)); // Rider currently mid-route
+        setRouteRoadName(routeData.summary || 'Phnom Penh Arterial Route');
+        setActiveStepIndex(Math.floor(routeData.coordinates.length * 0.4)); // Rider actively on the way
       }
     };
 
@@ -100,9 +98,9 @@ export const LiveDeliveryMapModal = ({
     return () => {
       isCancelled = true;
     };
-  }, [isOpen, order]);
+  }, [isOpen, recipientAddress, recipientDistrict]);
 
-  // Leaflet Map Initialization with Clean OpenStreetMap
+  // Leaflet Map Initialization with OpenStreetMap Tiles
   useEffect(() => {
     let isMounted = true;
     if (!isOpen || !mapContainerRef.current) return;
@@ -123,19 +121,19 @@ export const LiveDeliveryMapModal = ({
 
       mapInstanceRef.current = map;
 
-      // 100% Free & Open OpenStreetMap Tile Layer (Zero "API KEY REQUIRED" watermark)
+      // Clean OpenStreetMap Tile Layer
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        attribution: '&copy; OpenStreetMap contributors',
         maxZoom: 19,
         subdomains: ['a', 'b', 'c']
       }).addTo(map);
 
       L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-      // Store Origin Pin (Aroma BKK1 Roastery)
+      // Store Origin Marker (Aroma Roastery BKK1)
       const storeHtml = `
         <div style="transform: translate(-50%, -50%);">
-          <div style="background: #1c1917; border: 2.5px solid #f59e0b; border-radius: 50%; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(0,0,0,0.6); font-size: 17px;">
+          <div style="background: #1c1917; border: 2.5px solid #f59e0b; border-radius: 50%; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(0,0,0,0.6); font-size: 18px;">
             ☕
           </div>
         </div>
@@ -144,9 +142,8 @@ export const LiveDeliveryMapModal = ({
         .addTo(map)
         .bindPopup(`<b>${ROASTERY_HQ.name}</b><br>${ROASTERY_HQ.address}`);
 
-      // If route coordinates are ready, draw real road polyline and pins
+      // If route coordinates are ready, draw real road polyline and destination
       if (routeCoordinates.length > 0) {
-        // Customer Destination Pin
         const destCoord = routeCoordinates[routeCoordinates.length - 1];
         const custHtml = `
           <div style="transform: translate(-50%, -50%);">
@@ -157,9 +154,9 @@ export const LiveDeliveryMapModal = ({
         `;
         L.marker(destCoord, { icon: L.divIcon({ html: custHtml, className: 'cust-pin' }) })
           .addTo(map)
-          .bindPopup(`<b>${order?.customerName || 'Customer'}</b><br>${order?.deliveryAddress || 'Phnom Penh'}`);
+          .bindPopup(`<b>${recipientName}</b><br>${recipientAddress}`);
 
-        // Exact Real OSRM Road Polyline
+        // Road Polyline
         const polyline = L.polyline(routeCoordinates, {
           color: '#f59e0b',
           weight: 5,
@@ -169,7 +166,7 @@ export const LiveDeliveryMapModal = ({
         }).addTo(map);
         routePolylineRef.current = polyline;
 
-        // Moving Rider Pin
+        // Rider Icon
         const curRiderPos = routeCoordinates[activeStepIndex] || routeCoordinates[0];
         const riderHtml = `
           <div style="transform: translate(-50%, -50%); position: relative;">
@@ -196,7 +193,7 @@ export const LiveDeliveryMapModal = ({
         mapInstanceRef.current = null;
       }
     };
-  }, [isOpen, routeCoordinates]);
+  }, [isOpen, routeCoordinates, recipientName, recipientAddress]);
 
   // Animate Rider smoothly along real road coordinates
   useEffect(() => {
@@ -204,12 +201,12 @@ export const LiveDeliveryMapModal = ({
 
     const interval = setInterval(() => {
       setActiveStepIndex((prev) => {
-        const next = prev + 1 >= routeCoordinates.length ? Math.floor(routeCoordinates.length * 0.2) : prev + 1;
-        setSpeed(Math.floor(26 + Math.random() * 10));
+        const next = prev + 1 >= routeCoordinates.length ? Math.floor(routeCoordinates.length * 0.25) : prev + 1;
+        setSpeed(Math.floor(25 + Math.random() * 8));
         setEtaMinutes((m) => Math.max(1, m > 2 ? m - 1 : 6));
         return next;
       });
-    }, 3500);
+    }, 3200);
 
     return () => clearInterval(interval);
   }, [isOpen, isDelivered, routeCoordinates]);
@@ -229,7 +226,6 @@ export const LiveDeliveryMapModal = ({
     setEtaMinutes(0);
     setSpeed(0);
 
-    // Audio Chime & Confetti Celebration
     try {
       soundService.playKaChing();
       confetti({
@@ -240,9 +236,8 @@ export const LiveDeliveryMapModal = ({
       });
     } catch (e) {}
 
-    // Update in AppContext & localStorage
-    if (order?.id && setOrders) {
-      const targetId = order.id;
+    const targetId = order?.id || order?.orderNumber;
+    if (targetId && setOrders) {
       setOrders((prev) =>
         prev.map((o) =>
           o.id === targetId || o.orderNumber === order.orderNumber
@@ -275,43 +270,43 @@ export const LiveDeliveryMapModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in font-sans">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-md animate-fade-in font-sans">
       <div 
         className="relative w-full max-w-4xl bg-stone-900 border border-stone-800 rounded-3xl overflow-hidden shadow-2xl flex flex-col h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
+        {/* Header (Clean & Professional) */}
         <div className="p-4 sm:p-5 bg-stone-950 border-b border-stone-800 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
               <Bike className="w-5 h-5 animate-bounce" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="font-black text-base sm:text-lg text-white">
-                  {isKhmer ? 'តាមដានអ្នកដឹកជញ្ជូនផ្ទាល់' : 'Live Delivery Radar'}
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="font-black text-base sm:text-lg text-white truncate">
+                  {isKhmer ? 'តាមដានការដឹកជញ្ជូនផ្ទាល់' : 'Live Delivery Radar'}
                 </h3>
-                <span className="font-mono text-xs font-bold text-amber-400 bg-amber-950/80 px-2 py-0.5 rounded border border-amber-800">
-                  #{order?.orderNumber || 'ORD-ONL-9042'}
+                <span className="font-mono text-xs font-bold text-amber-400 bg-amber-950/80 px-2 py-0.5 rounded border border-amber-800 shrink-0">
+                  #{orderNum}
                 </span>
                 {isDelivered && (
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1 shrink-0">
                     <CheckCircle2 className="w-3 h-3 text-emerald-400" />
                     <span>{isKhmer ? 'បានទទួលរួចរាល់' : 'Delivered & Received'}</span>
                   </span>
                 )}
               </div>
-              <p className="text-xs text-stone-400 flex items-center gap-1.5 mt-0.5">
+              <p className="text-xs text-stone-400 flex items-center gap-1.5 mt-0.5 truncate">
                 <span>Aroma Express Logistics</span>
                 <span>•</span>
-                <span className="text-stone-300 font-medium">{routeRoadName}</span>
+                <span className="text-stone-300 font-medium truncate">{routeRoadName}</span>
               </p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-stone-900 border border-stone-700 text-stone-400 hover:text-white flex items-center justify-center transition cursor-pointer"
+            className="w-8 h-8 rounded-full bg-stone-900 border border-stone-700 text-stone-400 hover:text-white flex items-center justify-center transition cursor-pointer shrink-0"
           >
             <X className="w-4 h-4" />
           </button>
@@ -322,7 +317,7 @@ export const LiveDeliveryMapModal = ({
           <div ref={mapContainerRef} className="w-full h-full" />
 
           {/* Floating Live Telemetry HUD */}
-          <div className="absolute top-4 left-4 z-10 p-3 rounded-2xl bg-stone-950/92 backdrop-blur-md border border-stone-800 shadow-2xl flex items-center gap-3 text-xs">
+          <div className="absolute top-4 left-4 z-10 p-3 rounded-2xl bg-stone-950/92 backdrop-blur-md border border-stone-800 shadow-2xl flex items-center gap-3 text-xs flex-wrap">
             <div className="flex items-center gap-1.5 font-bold font-mono">
               <span className={`w-2 h-2 rounded-full ${isDelivered ? 'bg-emerald-400' : 'bg-emerald-400 animate-ping'}`} />
               <span className="text-emerald-400">
@@ -334,15 +329,15 @@ export const LiveDeliveryMapModal = ({
                 </span>
               )}
             </div>
-            <span className="text-stone-700">|</span>
+            <span className="text-stone-700 hidden sm:inline">|</span>
             <div className="font-mono text-stone-200">
               Dist: <strong className="text-amber-400">{routeDistanceKm} km</strong>
             </div>
-            <span className="text-stone-700">|</span>
+            <span className="text-stone-700 hidden sm:inline">|</span>
             <div className="font-mono text-stone-200">
               Speed: <strong className="text-amber-400">{isDelivered ? 0 : speed} km/h</strong>
             </div>
-            <span className="text-stone-700">|</span>
+            <span className="text-stone-700 hidden sm:inline">|</span>
             <div className="font-mono text-stone-200">
               ETA: <strong className="text-emerald-400">{isDelivered ? (isKhmer ? 'បានដល់' : 'Arrived') : `~${etaMinutes} mins`}</strong>
             </div>
@@ -360,45 +355,43 @@ export const LiveDeliveryMapModal = ({
           )}
         </div>
 
-        {/* Rider & Delivery Footer Details */}
+        {/* Real Courier & Delivery Destination Footer */}
         <div className="p-4 sm:p-5 bg-stone-950 border-t border-stone-800 flex flex-col md:flex-row items-center justify-between gap-4 shrink-0">
           {/* Driver Profile */}
           <div className="flex items-center gap-3 w-full md:w-auto">
-            <div className="w-12 h-12 rounded-2xl bg-stone-900 border border-emerald-500/40 flex items-center justify-center text-xl shrink-0 shadow">
+            <div className="w-11 h-11 rounded-2xl bg-stone-900 border border-emerald-500/40 flex items-center justify-center text-xl shrink-0 shadow">
               🛵
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h4 className="font-black text-sm text-white">Dara Express Rider</h4>
+                <h4 className="font-black text-sm text-white">Kosal Vorn</h4>
                 <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-950 text-emerald-300 border border-emerald-800">
-                  Verified Barista Courier
+                  Aroma Express Courier #12
                 </span>
               </div>
               <p className="text-xs text-stone-400 mt-0.5">
-                Honda Click 160cc • Insulated Thermal Coffee Bag (65°C)
+                Honda Wave 125i (PP 1KV-8924) • Insulated Coffee Thermos Box (65°C)
               </p>
             </div>
           </div>
 
-          {/* Delivery Destination Snapshot */}
+          {/* Real Delivery Destination Snapshot */}
           <div className="text-left md:text-right text-xs text-stone-400 w-full md:w-auto">
-            <p className="font-bold text-stone-200 truncate max-w-xs">
-              📍 {order?.deliveryAddress || 'Sangkat Boeng Keng Kang 1, Phnom Penh'}
+            <p className="font-bold text-stone-200 truncate max-w-xs md:max-w-sm">
+              📍 {recipientAddress}
             </p>
             <p className="text-[11px] text-stone-500 mt-0.5">
-              Recipient: {order?.customerName || 'Customer'} ({order?.customerPhone || '096 927 6538'})
+              Recipient: <strong className="text-stone-300">{recipientName}</strong> ({recipientPhone})
             </p>
           </div>
 
-          {/* Action Buttons: GOT PRODUCT BUTTON + Call Rider + Close */}
+          {/* Action Buttons */}
           <div className="flex items-center gap-2 w-full md:w-auto shrink-0 flex-wrap">
-            {/* User "Got Product" Confirmation Button */}
             {!isDelivered ? (
               <button
                 type="button"
                 onClick={handleGotProduct}
                 className="flex-1 md:flex-none px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-stone-950 font-black text-xs flex items-center justify-center gap-2 transition shadow-lg shadow-emerald-950/40 cursor-pointer active:scale-95"
-                title={isKhmer ? 'ចុចទីនេះនៅពេលអ្នកបានទទួលកាហ្វេពីអ្នកដឹក' : 'Click when you received your order'}
               >
                 <PackageCheck className="w-4 h-4 stroke-[2.5]" />
                 <span>{isKhmer ? '✅ ខ្ញុំបានទទួលកាហ្វេរួចរាល់' : '✅ I Got My Order'}</span>
@@ -411,11 +404,12 @@ export const LiveDeliveryMapModal = ({
             )}
 
             <a
-              href="tel:+85512345678"
+              href="tel:+85523999881"
               className="px-3.5 py-2.5 rounded-xl bg-stone-900 hover:bg-stone-850 border border-stone-800 text-stone-300 font-bold text-xs flex items-center justify-center gap-1.5 transition"
+              title="Call Roastery Dispatch hotline"
             >
               <Phone className="w-3.5 h-3.5 text-emerald-400" />
-              <span>{isKhmer ? 'ទូរស័ព្ទទៅអ្នកដឹក' : 'Call Rider'}</span>
+              <span>{isKhmer ? 'ទូរស័ព្ទទៅបញ្ជរ' : 'Call Dispatch'}</span>
             </a>
 
             <button
