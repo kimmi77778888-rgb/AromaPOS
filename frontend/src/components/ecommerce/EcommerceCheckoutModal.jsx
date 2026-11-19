@@ -129,15 +129,15 @@ export const EcommerceCheckoutModal = ({
     setFlowState('PROCESSING');
     setProcessingStep(1);
 
-    // Step 1: Connecting to NBC Bakong Gateway (700ms)
+    // Step 1: Connecting to NBC Bakong Gateway (200ms)
     setTimeout(() => {
       setProcessingStep(2);
 
-      // Step 2: Validating KHQR transaction settlement & merchant signature (800ms)
+      // Step 2: Validating transaction settlement & merchant signature (250ms)
       setTimeout(() => {
         setProcessingStep(3);
 
-        // Step 3: Dispatching to POS register, kitchen KDS & loyalty sync (600ms)
+        // Step 3: Dispatching to POS register, kitchen KDS & loyalty sync (200ms)
         setTimeout(() => {
           const orderNumber = `ORD-ONL-${Math.floor(1000 + Math.random() * 9000)}`;
 
@@ -199,12 +199,13 @@ export const EcommerceCheckoutModal = ({
             });
           } catch (e) {}
 
+          // Immediately clear the cart and register the order
           if (onOrderPlaced) {
             onOrderPlaced(newOrderPayload);
           }
-        }, 600);
-      }, 800);
-    }, 700);
+        }, 200);
+      }, 250);
+    }, 200);
   };
 
   const handleDownloadInvoice = () => {

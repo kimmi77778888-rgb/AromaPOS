@@ -253,6 +253,10 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
     setCartItems((prev) => prev.filter((_, idx) => idx !== index));
   };
 
+  const handleClearCart = () => {
+    setCartItems([]);
+  };
+
   // Checkout Pipeline
   const handleProceedToCheckout = (orderData) => {
     setPendingCheckoutOrderData(orderData);
@@ -261,11 +265,17 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
   };
 
   const handleOrderPlacedSuccess = (newOrder) => {
-    if (placeOnlineOrder) {
-      placeOnlineOrder(newOrder);
+    try {
+      if (placeOnlineOrder) {
+        placeOnlineOrder(newOrder);
+      }
+    } catch (e) {
+      console.error('Error placing online order:', e);
     }
     setLatestPlacedOrder(newOrder);
     setCartItems([]);
+    setPendingCheckoutOrderData(null);
+    setIsCartOpen(false);
   };
 
   // Filter Products
@@ -1071,6 +1081,7 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
         cartItems={cartItems}
         onUpdateQuantity={handleUpdateCartQuantity}
         onRemoveItem={handleRemoveCartItem}
+        onClearCart={handleClearCart}
         onProceedToCheckout={handleProceedToCheckout}
         onRequireAuth={() => {
           setAuthModalPrompt(isKhmer ? 'សូមចូលគណនីជាមួយ Gmail របស់អ្នកមុនពេលទូទាត់ប្រាក់' : 'Please sign in with your Gmail to proceed to checkout');

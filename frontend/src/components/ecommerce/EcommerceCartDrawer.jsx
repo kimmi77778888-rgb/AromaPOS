@@ -65,6 +65,7 @@ export const EcommerceCartDrawer = ({
   cartItems,
   onUpdateQuantity,
   onRemoveItem,
+  onClearCart,
   onProceedToCheckout,
   onRequireAuth,
   initialOrderType = 'DELIVERY',
@@ -228,13 +229,26 @@ export const EcommerceCartDrawer = ({
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-8 h-8 rounded-full bg-stone-900 border border-stone-700 text-stone-400 hover:text-white flex items-center justify-center transition cursor-pointer"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            {cartItems.length > 0 && onClearCart && (
+              <button
+                type="button"
+                onClick={onClearCart}
+                className="px-2.5 py-1.5 rounded-xl bg-stone-900 hover:bg-rose-950/60 border border-stone-800 hover:border-rose-750 text-stone-400 hover:text-rose-300 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer"
+                title={isKhmer ? 'សម្អាតកន្ត្រកទាំងមូល' : 'Clear entire cart'}
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>{isKhmer ? 'សម្អាតកន្ត្រក' : 'Clear'}</span>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-8 h-8 rounded-full bg-stone-900 border border-stone-700 text-stone-400 hover:text-white flex items-center justify-center transition cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {/* Scrollable Content */}
