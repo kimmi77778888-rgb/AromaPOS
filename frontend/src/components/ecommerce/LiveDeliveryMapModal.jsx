@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useApp } from '../../context/AppContext';
 import { soundService } from '../../services/soundService';
@@ -8,7 +8,8 @@ import {
   Bike, 
   Phone, 
   CheckCircle2, 
-  PackageCheck
+  PackageCheck,
+  RotateCw
 } from 'lucide-react';
 import { 
   ROASTERY_HQ, 
@@ -37,8 +38,9 @@ export const LiveDeliveryMapModal = ({
   const [isRealGps, setIsRealGps] = useState(false);
   const [gpsAccuracy, setGpsAccuracy] = useState(null);
   const [activeStepIndex, setActiveStepIndex] = useState(0);
-  const [speed, setSpeed] = useState(28);
+  const [speed, setSpeed] = useState(0);
   const [routeRoadName, setRouteRoadName] = useState('Phnom Penh Delivery Corridor');
+  const [isRefreshingGps, setIsRefreshingGps] = useState(false);
 
   // Real Order Properties
   const recipientName = order?.customerName || customerUser?.name || 'Customer';
@@ -48,9 +50,8 @@ export const LiveDeliveryMapModal = ({
   const orderNum = order?.orderNumber || order?.id || 'ORD-ONL';
 
   // Delivery status state
-  const [isDelivered, setIsDelivered] = useState(
-    order?.status === 'COMPLETED' || order?.status === 'DELIVERED'
-  );
+  const isOrderCompleted = order?.status === 'COMPLETED' || order?.status === 'DELIVERED';
+  const [isDelivered, setIsDelivered] = useState(isOrderCompleted);
 
   useEffect(() => {
     if (order) {
@@ -58,47 +59,83 @@ export const LiveDeliveryMapModal = ({
     }
   }, [order]);
 
+  // Determine stage description
+  const getDeliveryStage = () => {
+    if (isDelivered || order?.status === 'COMPLETED') {
+      return {
+        text: isKhmer ? 'បានមកដល់គោលដៅ (Arrived)' : 'Arrived at Destination',
+        badgeClass: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+      };
+    }
+    if (order?.status === 'READY' || order?.status === 'OUT_FOR_DELIVERY') {
+      return {
+        text: isKhmer ? 'កំពុងធ្វើដំណើរលើផ្លូវ (En Route)' : 'In Transit / En Route',
+        badgeClass: 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+      };
+    }
+    return {
+      text: isKhmer ? 'នៅហាងរៀបចំកាហ្វេ (At Roastery HQ)' : 'Preparing at Store',
+      badgeClass: 'bg-sky-500/20 text-sky-300 border-sky-500/40'
+    };
+  };
+
   // Load Real Device GPS & Calculate Real OSRM Road Route
-  useEffect(() => {
-    let isCancelled = false;
-    if (!isOpen) return;
+  const setupRealRoute = useCallback(async () => {
+    // 1. Resolve Customer Destination from Actual Address
+    let destination = geocodeDeliveryAddress(recipientAddress, recipientDistrict);
 
-    const setupRealRoute = async () => {
-      // 1. Resolve Customer Destination from Actual Address
-      let destination = geocodeDeliveryAddress(recipientAddress, recipientDistrict);
-
-      // 2. Try acquiring real device hardware GPS (if permitted by browser)
-      try {
-        const deviceLoc = await getLiveDeviceLocation();
-        if (!isCancelled && deviceLoc.success && deviceLoc.isRealGps) {
-          setIsRealGps(true);
-          setGpsAccuracy(deviceLoc.accuracy);
-          // If within Cambodia bounds (lat 10..15, lon 102..108), pin directly to hardware GPS
-          if (deviceLoc.lat >= 10 && deviceLoc.lat <= 15 && deviceLoc.lon >= 102 && deviceLoc.lon <= 108) {
-            destination = { lat: deviceLoc.lat, lon: deviceLoc.lon, district: 'Live Device GPS' };
-          }
+    // 2. Try acquiring real device hardware GPS (if permitted by browser)
+    try {
+      const deviceLoc = await getLiveDeviceLocation();
+      if (deviceLoc?.success && deviceLoc?.isRealGps) {
+        setIsRealGps(true);
+        setGpsAccuracy(deviceLoc.accuracy);
+        if (deviceLoc.lat >= 10 && deviceLoc.lat <= 15 && deviceLoc.lon >= 102 && deviceLoc.lon <= 108) {
+          destination = { lat: deviceLoc.lat, lon: deviceLoc.lon, district: 'Live Device GPS' };
         }
-      } catch (e) {}
-
-      // 3. Fetch Real OSRM Road Driving Route
-      const routeData = await fetchOsrmRoute(ROASTERY_HQ, destination);
-      if (isCancelled) return;
-
-      if (routeData && routeData.coordinates.length > 0) {
-        setRouteCoordinates(routeData.coordinates);
-        setRouteDistanceKm(routeData.distanceKm);
-        setEtaMinutes(routeData.durationMins);
-        setRouteRoadName(routeData.summary || 'Phnom Penh Arterial Route');
-        setActiveStepIndex(Math.floor(routeData.coordinates.length * 0.4)); // Rider actively on the way
       }
-    };
+    } catch {
+      // ignore gps permissions
+    }
 
+    // 3. Fetch Real OSRM Road Driving Route
+    const routeData = await fetchOsrmRoute(ROASTERY_HQ, destination);
+
+    if (routeData && routeData.coordinates.length > 0) {
+      const coords = routeData.coordinates;
+      setRouteCoordinates(coords);
+      setRouteDistanceKm(routeData.distanceKm);
+      setRouteRoadName(routeData.summary || 'Phnom Penh Arterial Route');
+
+      // Set steady, realistic rider location based strictly on actual order status
+      if (isDelivered || order?.status === 'COMPLETED' || order?.status === 'DELIVERED') {
+        setActiveStepIndex(coords.length - 1);
+        setSpeed(0);
+        setEtaMinutes(0);
+      } else if (order?.status === 'READY' || order?.status === 'OUT_FOR_DELIVERY') {
+        const midPoint = Math.min(Math.floor(coords.length * 0.45), coords.length - 1);
+        setActiveStepIndex(midPoint);
+        setSpeed(28);
+        setEtaMinutes(routeData.durationMins);
+      } else {
+        // At store preparing
+        setActiveStepIndex(0);
+        setSpeed(0);
+        setEtaMinutes(routeData.durationMins + 5);
+      }
+    }
+  }, [recipientAddress, recipientDistrict, isDelivered, order]);
+
+  useEffect(() => {
+    if (!isOpen) return;
     setupRealRoute();
+  }, [isOpen, setupRealRoute]);
 
-    return () => {
-      isCancelled = true;
-    };
-  }, [isOpen, recipientAddress, recipientDistrict]);
+  const handleManualRefresh = async () => {
+    setIsRefreshingGps(true);
+    await setupRealRoute();
+    setTimeout(() => setIsRefreshingGps(false), 600);
+  };
 
   // Leaflet Map Initialization with OpenStreetMap Tiles
   useEffect(() => {
@@ -166,11 +203,11 @@ export const LiveDeliveryMapModal = ({
         }).addTo(map);
         routePolylineRef.current = polyline;
 
-        // Rider Icon
+        // Rider Icon positioned at steady actual step index
         const curRiderPos = routeCoordinates[activeStepIndex] || routeCoordinates[0];
         const riderHtml = `
           <div style="transform: translate(-50%, -50%); position: relative;">
-            <div style="position: absolute; inset: -4px; border-radius: 50%; background: rgba(16, 185, 129, 0.45); animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
+            <div style="position: absolute; inset: -4px; border-radius: 50%; background: rgba(16, 185, 129, 0.45); animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
             <div style="position: relative; background: #047857; border: 2.5px solid #ffffff; border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(4,120,87,0.7); font-size: 20px; color: white;">
               🛵
             </div>
@@ -184,7 +221,7 @@ export const LiveDeliveryMapModal = ({
 
         map.fitBounds(polyline.getBounds(), { padding: [55, 55] });
       }
-    }).catch(err => console.error('Leaflet load error', err));
+    }).catch((err) => console.error('Leaflet load error', err));
 
     return () => {
       isMounted = false;
@@ -193,25 +230,9 @@ export const LiveDeliveryMapModal = ({
         mapInstanceRef.current = null;
       }
     };
-  }, [isOpen, routeCoordinates, recipientName, recipientAddress]);
+  }, [isOpen, routeCoordinates, recipientName, recipientAddress, activeStepIndex]);
 
-  // Animate Rider smoothly along real road coordinates
-  useEffect(() => {
-    if (!isOpen || isDelivered || routeCoordinates.length === 0) return;
-
-    const interval = setInterval(() => {
-      setActiveStepIndex((prev) => {
-        const next = prev + 1 >= routeCoordinates.length ? Math.floor(routeCoordinates.length * 0.25) : prev + 1;
-        setSpeed(Math.floor(25 + Math.random() * 8));
-        setEtaMinutes((m) => Math.max(1, m > 2 ? m - 1 : 6));
-        return next;
-      });
-    }, 3200);
-
-    return () => clearInterval(interval);
-  }, [isOpen, isDelivered, routeCoordinates]);
-
-  // Update Rider Marker position dynamically
+  // Update Rider Marker position dynamically when activeStepIndex changes
   useEffect(() => {
     if (!riderMarkerRef.current || routeCoordinates.length === 0) return;
     const pt = routeCoordinates[activeStepIndex];
@@ -225,6 +246,9 @@ export const LiveDeliveryMapModal = ({
     setIsDelivered(true);
     setEtaMinutes(0);
     setSpeed(0);
+    if (routeCoordinates.length > 0) {
+      setActiveStepIndex(routeCoordinates.length - 1);
+    }
 
     try {
       soundService.playKaChing();
@@ -234,7 +258,9 @@ export const LiveDeliveryMapModal = ({
         origin: { y: 0.6 },
         colors: ['#10B981', '#F59E0B', '#3B82F6', '#D97706']
       });
-    } catch (e) {}
+    } catch {
+      // ignore sound error
+    }
 
     const targetId = order?.id || order?.orderNumber;
     if (targetId && setOrders) {
@@ -254,7 +280,9 @@ export const LiveDeliveryMapModal = ({
             : o
         );
         localStorage.setItem('aromapos_orders', JSON.stringify(updated));
-      } catch (err) {}
+      } catch {
+        // ignore storage error
+      }
     }
 
     if (showToast) {
@@ -269,32 +297,32 @@ export const LiveDeliveryMapModal = ({
 
   if (!isOpen) return null;
 
+  const stage = getDeliveryStage();
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-md animate-fade-in font-sans">
       <div 
         className="relative w-full max-w-4xl bg-stone-900 border border-stone-800 rounded-3xl overflow-hidden shadow-2xl flex flex-col h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header (Clean & Professional) */}
+        {/* Header */}
         <div className="p-4 sm:p-5 bg-stone-950 border-b border-stone-800 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-10 h-10 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
-              <Bike className="w-5 h-5 animate-bounce" />
+              <Bike className="w-5 h-5" />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="font-black text-base sm:text-lg text-white truncate">
-                  {isKhmer ? 'តាមដានការដឹកជញ្ជូនផ្ទាល់' : 'Live Delivery Radar'}
+                  {isKhmer ? 'តាមដានការដឹកជញ្ជូនជាក់ស្តែង' : 'Live Delivery Tracking'}
                 </h3>
                 <span className="font-mono text-xs font-bold text-amber-400 bg-amber-950/80 px-2 py-0.5 rounded border border-amber-800 shrink-0">
                   #{orderNum}
                 </span>
-                {isDelivered && (
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1 shrink-0">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                    <span>{isKhmer ? 'បានទទួលរួចរាល់' : 'Delivered & Received'}</span>
-                  </span>
-                )}
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border flex items-center gap-1 shrink-0 ${stage.badgeClass}`}>
+                  {isDelivered && <CheckCircle2 className="w-3 h-3 text-emerald-400" />}
+                  <span>{stage.text}</span>
+                </span>
               </div>
               <p className="text-xs text-stone-400 flex items-center gap-1.5 mt-0.5 truncate">
                 <span>Aroma Express Logistics</span>
@@ -303,25 +331,38 @@ export const LiveDeliveryMapModal = ({
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-8 h-8 rounded-full bg-stone-900 border border-stone-700 text-stone-400 hover:text-white flex items-center justify-center transition cursor-pointer shrink-0"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={handleManualRefresh}
+              className={`p-2 rounded-xl bg-stone-900 border border-stone-700 text-stone-300 hover:text-white transition cursor-pointer flex items-center gap-1 text-xs font-bold ${
+                isRefreshingGps ? 'animate-spin text-amber-400' : ''
+              }`}
+              title="Refresh GPS & Route"
+            >
+              <RotateCw className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{isKhmer ? 'ផ្ទុកឡើងវិញ' : 'Refresh'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-8 h-8 rounded-full bg-stone-900 border border-stone-700 text-stone-400 hover:text-white flex items-center justify-center transition cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {/* Map Container */}
         <div className="flex-1 relative w-full h-full min-h-[300px] bg-stone-950">
           <div ref={mapContainerRef} className="w-full h-full" />
 
-          {/* Floating Live Telemetry HUD */}
+          {/* Floating Live Telemetry HUD (Stationary, Real Status) */}
           <div className="absolute top-4 left-4 z-10 p-3 rounded-2xl bg-stone-950/92 backdrop-blur-md border border-stone-800 shadow-2xl flex items-center gap-3 text-xs flex-wrap">
             <div className="flex items-center gap-1.5 font-bold font-mono">
-              <span className={`w-2 h-2 rounded-full ${isDelivered ? 'bg-emerald-400' : 'bg-emerald-400 animate-ping'}`} />
+              <span className={`w-2 h-2 rounded-full ${isDelivered ? 'bg-emerald-400' : 'bg-emerald-400 animate-pulse'}`} />
               <span className="text-emerald-400">
-                {isDelivered ? 'DELIVERED' : isRealGps ? '🛰️ REAL GPS' : '🗺️ OSRM ROUTE'}
+                {isDelivered ? 'DELIVERED' : isRealGps ? '🛰️ REAL GPS' : '🗺️ OSRM ROAD'}
               </span>
               {gpsAccuracy && !isDelivered && (
                 <span className="text-[10px] text-stone-400 font-normal">
@@ -335,7 +376,7 @@ export const LiveDeliveryMapModal = ({
             </div>
             <span className="text-stone-700 hidden sm:inline">|</span>
             <div className="font-mono text-stone-200">
-              Speed: <strong className="text-amber-400">{isDelivered ? 0 : speed} km/h</strong>
+              Speed: <strong className="text-amber-400">{speed} km/h</strong>
             </div>
             <span className="text-stone-700 hidden sm:inline">|</span>
             <div className="font-mono text-stone-200">
