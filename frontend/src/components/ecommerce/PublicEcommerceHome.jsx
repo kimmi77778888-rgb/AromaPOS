@@ -303,150 +303,177 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
   return (
     <div className="min-h-screen bg-stone-950 text-stone-100 font-sans selection:bg-amber-500 selection:text-stone-950">
       {/* ─────────────────────────────────────────────────────────────
-          1. TOP ANNOUNCEMENT & DELIVERY BANNER
+          1. TOP ANNOUNCEMENT & DELIVERY BANNER (CLEAN & MODERN)
       ────────────────────────────────────────────────────────────── */}
-      <div className="bg-gradient-to-r from-amber-600 via-amber-500 to-amber-700 py-2 px-4 text-stone-950 font-bold text-xs flex items-center justify-between shadow-md">
-        <div className="flex items-center gap-2 mx-auto">
-          <Bike className="w-4 h-4 shrink-0 animate-bounce" />
-          <span>
-            {isKhmer 
-              ? `🛵 ដឹកជញ្ជូនរហ័សទូទាំងរាជធានីភ្នំពេញ (៣០ នាទី) • ដឹកឥតគិតថ្លៃសម្រាប់ការកុម្ម៉ង់ចាប់ពី $១០ ឡើងទៅ! (អត្រាប្តូរប្រាក់ $1 = ${currencyRate} ៛)` 
-              : `🛵 Fast 30-min Phnom Penh Delivery • Free Delivery on orders over $10.00 • Rate: $1.00 = ${currencyRate} KHR`}
-          </span>
+      <div className="bg-stone-950/95 border-b border-stone-850/80 py-2 px-4 sm:px-8 text-xs font-medium text-stone-400 select-none">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2 text-stone-300 font-medium">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
+            <span className="truncate">
+              {isKhmer 
+                ? `🛵 ដឹកជញ្ជូនរហ័សទូទាំងភ្នំពេញ (២០-៣០ នាទី) • ដឹកឥតគិតថ្លៃសម្រាប់ការកុម្ម៉ង់ចាប់ពី $១០+` 
+                : `🛵 Fast 20-30m City Delivery • Free Delivery on orders $10.00+`}
+            </span>
+          </div>
+
+          <div className="hidden md:flex items-center gap-4 text-stone-400 font-mono text-[11px] shrink-0">
+            <span>Rate: <strong className="text-stone-300 font-semibold">$1 = {currencyRate} ៛</strong></span>
+            <span>•</span>
+            <span>Hotline: <a href="tel:+85523999881" className="text-amber-400 hover:underline font-bold">023 999 881</a></span>
+            <span>•</span>
+            <span className="text-stone-400 font-sans">📍 BKK1 Roastery HQ</span>
+          </div>
         </div>
       </div>
 
       {/* ─────────────────────────────────────────────────────────────
-          2. STICKY PUBLIC NAVBAR
+          2. STICKY PUBLIC NAVBAR (CLEAN, MODERN, STANDARD)
       ────────────────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-40 bg-stone-950/90 backdrop-blur-md border-b border-stone-850 px-4 sm:px-8 py-3.5 flex items-center justify-between gap-4">
-        {/* Brand Logo */}
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center text-stone-950 shadow-lg shadow-amber-950/40">
-            <Coffee className="w-6 h-6 stroke-[2.2]" />
-          </div>
-          <div>
-            <h1 className="font-black text-lg sm:text-xl tracking-tight leading-none text-white">
-              {storeName}
-            </h1>
-            <p className="text-[10px] text-stone-400 font-medium tracking-wider uppercase mt-0.5">
-              {isKhmer ? storeNameKm : storeTagline}
-            </p>
-          </div>
-        </div>
+      <header className="sticky top-0 z-40 bg-stone-950/85 backdrop-blur-xl border-b border-stone-850/80 shadow-lg shadow-black/15 transition-all">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 h-18 sm:h-20 flex items-center justify-between gap-4">
+          {/* Brand Logo & Title */}
+          <a href="#" className="flex items-center gap-3 group cursor-pointer text-left">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 border border-amber-500/40 flex items-center justify-center text-amber-400 shadow-inner group-hover:border-amber-400 transition shrink-0">
+              <Coffee className="w-5 h-5 sm:w-6 sm:h-6 stroke-[2.2]" />
+            </div>
+            <div>
+              <h1 className="font-black text-lg sm:text-xl tracking-tight leading-none text-white flex items-center gap-1">
+                <span>{storeName}</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+              </h1>
+              <p className="text-[10px] text-stone-400 font-medium tracking-widest uppercase mt-0.5">
+                {isKhmer ? 'រោងកាហ្វេ & ហាងកាហ្វេពិសេស' : 'Artisan Roastery & Café'}
+              </p>
+            </div>
+          </a>
 
-        {/* Desktop Navigation Links */}
-        <nav className="hidden lg:flex items-center gap-6 text-xs font-bold text-stone-300">
-          <a href="#menu" className="hover:text-amber-400 transition">
-            {isKhmer ? 'ម៉ឺនុយកាហ្វេ' : 'Explore Menu'}
-          </a>
-          <a href="#promos" className="hover:text-amber-400 transition">
-            {isKhmer ? 'ប្រូម៉ូសិនពិសេស' : 'Special Offers'}
-          </a>
-          <a href="#roastery" className="hover:text-amber-400 transition">
-            {isKhmer ? 'រោងកាហ្វេ' : 'Our Roastery'}
-          </a>
-          <a href="#locations" className="hover:text-amber-400 transition">
-            {isKhmer ? 'ទីតាំង & ម៉ោងបើក' : 'Locations & Hours'}
-          </a>
-          <button
-            type="button"
-            onClick={() => setIsTrackerOpen(true)}
-            className="hover:text-amber-400 transition flex items-center gap-1 cursor-pointer"
-          >
-            <Clock className="w-3.5 h-3.5 text-amber-500" />
-            <span>{isKhmer ? 'តាមដានការកុម្ម៉ង់' : 'Track Order'}</span>
-          </button>
-        </nav>
-
-        {/* Right Actions: Lang, Cart, POS Portal Switcher */}
-        <div className="flex items-center gap-2 sm:gap-3">
-          {/* Staff Portal / POS & Dashboard Switcher */}
-          {onSwitchToPos && (
+          {/* Desktop Center Navigation Capsule */}
+          <nav className="hidden lg:flex items-center gap-1 p-1 rounded-2xl bg-stone-900/60 border border-stone-800/60 backdrop-blur-md">
+            <a 
+              href="#menu" 
+              className="px-3.5 py-1.5 rounded-xl font-bold text-xs text-stone-300 hover:text-white hover:bg-stone-800/80 transition-all cursor-pointer"
+            >
+              {isKhmer ? 'ម៉ឺនុយកាហ្វេ' : 'Menu'}
+            </a>
+            <a 
+              href="#promos" 
+              className="px-3.5 py-1.5 rounded-xl font-bold text-xs text-stone-300 hover:text-white hover:bg-stone-800/80 transition-all cursor-pointer"
+            >
+              {isKhmer ? 'ប្រូម៉ូសិន' : 'Offers'}
+            </a>
             <button
               type="button"
-              onClick={onSwitchToPos}
-              className="py-2 px-3 sm:px-3.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs flex items-center gap-1.5 transition cursor-pointer shadow-lg shadow-amber-950/30 active:scale-95"
-              title={isKhmer ? 'ចូលផ្ទាំងគ្រប់គ្រងទូទៅ & ស្ថានីយគិតប្រាក់ POS' : 'Staff Portal: POS Terminal & Live Dashboard'}
+              onClick={() => setIsTrackerOpen(true)}
+              className="px-3.5 py-1.5 rounded-xl font-bold text-xs text-stone-300 hover:text-white hover:bg-stone-800/80 transition-all flex items-center gap-1.5 cursor-pointer"
             >
-              <Lock className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">{isKhmer ? 'ប្រព័ន្ធបុគ្គលិក & POS' : 'Staff Portal'}</span>
+              <Clock className="w-3.5 h-3.5 text-amber-500" />
+              <span>{isKhmer ? 'តាមដានការកុម្ម៉ង់' : 'Track Order'}</span>
             </button>
-          )}
-
-          {/* Language Switcher */}
-          <div className="hidden sm:block">
-            <LanguageSwitcher />
-          </div>
-
-          {/* Customer Account Profile / Sign In Pill */}
-          {customerUser ? (
-            <button
-              type="button"
-              onClick={() => setIsAccountModalOpen(true)}
-              className="py-1.5 px-3 rounded-2xl bg-amber-950/60 hover:bg-amber-900/60 border border-amber-600/60 text-amber-300 font-bold text-xs flex items-center gap-2 transition cursor-pointer shadow-sm"
-              title="My Account & Purchase History"
+            <a 
+              href="#roastery" 
+              className="px-3.5 py-1.5 rounded-xl font-bold text-xs text-stone-300 hover:text-white hover:bg-stone-800/80 transition-all cursor-pointer"
             >
-              {customerUser.avatar && !customerUser.avatar.includes('images.unsplash.com') ? (
-                <img
-                  src={customerUser.avatar}
-                  alt={customerUser.name}
-                  className="w-5 h-5 rounded-full object-cover border border-amber-400"
-                />
-              ) : (
-                <div className="w-5 h-5 rounded-full bg-amber-500 text-stone-950 font-black text-[10px] flex items-center justify-center">
-                  {(customerUser.name || 'U').charAt(0).toUpperCase()}
-                </div>
-              )}
-              <span className="hidden md:inline truncate max-w-[90px]">{customerUser.name}</span>
-              <span className="text-[10px] font-mono text-amber-400 font-black">⭐ {customerUser.points || 0}</span>
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => {
-                setAuthModalPrompt(isKhmer ? 'ចូលគណនីជាមួយ Gmail ដើម្បីទទួលបាន ១០០ ពិន្ទុ & ត្រាកាហ្វេ!' : 'Sign in with your Gmail to earn 100 welcome points & rewards!');
-                setIsAuthModalOpen(true);
-              }}
-              className="py-1.5 px-3 rounded-2xl bg-white hover:bg-stone-100 text-stone-900 border border-stone-200 font-bold text-xs flex items-center gap-2 transition cursor-pointer shadow-sm hover:shadow active:scale-95"
-              title="Sign in with Gmail / Google"
+              {isKhmer ? 'រោងកាហ្វេ' : 'Roastery'}
+            </a>
+            <a 
+              href="#locations" 
+              className="px-3.5 py-1.5 rounded-xl font-bold text-xs text-stone-300 hover:text-white hover:bg-stone-800/80 transition-all cursor-pointer"
             >
-              <GoogleLogoSvg className="w-4 h-4 shrink-0" />
-              <span className="hidden sm:inline font-sans font-bold">{isKhmer ? 'ចូលដោយ Gmail' : 'Sign in with Gmail'}</span>
-              <span className="sm:hidden font-sans font-bold">Gmail</span>
-            </button>
-          )}
+              {isKhmer ? 'សាខាហាង' : 'Locations'}
+            </a>
+          </nav>
 
-          {/* Cart Bag Button */}
-          <button
-            type="button"
-            onClick={() => setIsCartOpen(true)}
-            className="relative p-2.5 sm:px-4 sm:py-2 rounded-2xl bg-stone-900 hover:bg-stone-850 border border-stone-800 text-stone-200 font-bold text-xs flex items-center gap-2 transition cursor-pointer shadow-md"
-            title="Open Shopping Bag"
-          >
-            <ShoppingBag className="w-4 h-4 text-amber-400" />
-            <span className="hidden sm:inline">{isKhmer ? 'កន្ត្រក' : 'Bag'}</span>
-            {totalCartCount > 0 && (
-              <span className="w-5 h-5 rounded-full bg-amber-500 text-stone-950 font-black text-[11px] flex items-center justify-center -mr-1 shadow">
-                {totalCartCount}
-              </span>
+          {/* Right Action Controls */}
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            {/* Staff Portal / POS Switcher (Discreet & Professional) */}
+            {onSwitchToPos && (
+              <button
+                type="button"
+                onClick={onSwitchToPos}
+                className="py-2 px-3 rounded-2xl bg-stone-900/90 hover:bg-stone-850 border border-stone-800 text-stone-300 hover:text-amber-400 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-sm active:scale-95"
+                title={isKhmer ? 'ចូលផ្ទាំងគ្រប់គ្រងទូទៅ & ស្ថានីយគិតប្រាក់ POS' : 'Staff Portal: POS Terminal & Live Dashboard'}
+              >
+                <Lock className="w-3.5 h-3.5 text-amber-500" />
+                <span className="hidden xl:inline">{isKhmer ? 'ប្រព័ន្ធបុគ្គលិក' : 'Staff Portal'}</span>
+              </button>
             )}
-          </button>
 
-          {/* Mobile Menu Hamburger */}
-          <button
-            type="button"
-            onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
-            className="lg:hidden p-2 rounded-xl bg-stone-900 border border-stone-800 text-stone-300"
-          >
-            {isMobileNavOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
+            {/* Language Switcher */}
+            <div className="hidden sm:block">
+              <LanguageSwitcher />
+            </div>
+
+            {/* Customer Account Profile / Sign In Pill */}
+            {customerUser ? (
+              <button
+                type="button"
+                onClick={() => setIsAccountModalOpen(true)}
+                className="py-1.5 px-3 rounded-2xl bg-stone-900/90 hover:bg-stone-850 border border-amber-600/40 text-stone-200 font-bold text-xs flex items-center gap-2 transition cursor-pointer shadow-sm hover:border-amber-500"
+                title="My Account & Purchase History"
+              >
+                {customerUser.avatar && !customerUser.avatar.includes('images.unsplash.com') ? (
+                  <img
+                    src={customerUser.avatar}
+                    alt={customerUser.name}
+                    className="w-5 h-5 rounded-full object-cover border border-amber-400"
+                  />
+                ) : (
+                  <div className="w-5 h-5 rounded-full bg-amber-500 text-stone-950 font-black text-[10px] flex items-center justify-center">
+                    {(customerUser.name || 'U').charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <span className="hidden md:inline truncate max-w-[90px]">{customerUser.name}</span>
+                <span className="text-[10px] font-mono text-amber-400 font-black">⭐ {customerUser.points || 0}</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthModalPrompt(isKhmer ? 'ចូលគណនីជាមួយ Gmail ដើម្បីទទួលបាន ១០០ ពិន្ទុ & ត្រាកាហ្វេ!' : 'Sign in with your Gmail to earn 100 welcome points & rewards!');
+                  setIsAuthModalOpen(true);
+                }}
+                className="py-2 px-3.5 rounded-2xl bg-white hover:bg-stone-100 text-stone-900 border border-stone-200 font-bold text-xs flex items-center gap-2 transition cursor-pointer shadow-sm hover:shadow active:scale-95"
+                title="Sign in with Gmail / Google"
+              >
+                <GoogleLogoSvg className="w-4 h-4 shrink-0" />
+                <span className="hidden sm:inline font-sans font-bold">{isKhmer ? 'ចូលគណនី' : 'Sign In'}</span>
+                <span className="sm:hidden font-sans font-bold">Gmail</span>
+              </button>
+            )}
+
+            {/* Cart Bag Pill Button with dynamic price & badge */}
+            <button
+              type="button"
+              onClick={() => setIsCartOpen(true)}
+              className="relative py-2 px-3.5 sm:px-4 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-black text-xs flex items-center gap-2 transition cursor-pointer shadow-lg shadow-amber-950/30 active:scale-95"
+              title="Open Shopping Bag"
+            >
+              <ShoppingBag className="w-4 h-4" />
+              <span className="hidden sm:inline font-bold">
+                {totalCartCount > 0 ? `$${subtotal.toFixed(2)}` : (isKhmer ? 'កន្ត្រក' : 'Bag')}
+              </span>
+              {totalCartCount > 0 && (
+                <span className="w-5 h-5 rounded-full bg-stone-950 text-amber-400 font-black text-[11px] flex items-center justify-center -mr-1 shadow">
+                  {totalCartCount}
+                </span>
+              )}
+            </button>
+
+            {/* Mobile Menu Hamburger */}
+            <button
+              type="button"
+              onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
+              className="lg:hidden p-2 rounded-2xl bg-stone-900 border border-stone-800 text-stone-300 hover:text-white transition cursor-pointer"
+            >
+              {isMobileNavOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
         </div>
       </header>
 
-      {/* Mobile Drawer Menu */}
+      {/* Mobile Drawer Menu (Clean & Modern Glass Dropdown) */}
       {isMobileNavOpen && (
-        <div className="lg:hidden bg-stone-950 border-b border-stone-800 p-4 space-y-3 font-bold text-xs text-stone-300">
+        <div className="lg:hidden bg-stone-950/95 backdrop-blur-xl border-b border-stone-800/80 p-5 space-y-4 font-bold text-xs text-stone-300 shadow-2xl animate-fade-in">
           {onSwitchToPos && (
             <button
               type="button"
@@ -454,36 +481,65 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
                 setIsMobileNavOpen(false);
                 onSwitchToPos();
               }}
-              className="w-full text-left py-2.5 px-3 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold flex items-center gap-2 hover:bg-amber-500/25 transition cursor-pointer"
+              className="w-full text-left py-3 px-4 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-300 font-black flex items-center gap-2.5 hover:bg-amber-500/25 transition cursor-pointer"
             >
               <LayoutDashboard className="w-4 h-4 text-amber-400" />
-              <span>{isKhmer ? 'ផ្ទាំងគ្រប់គ្រង & POS ស្ថានីយ' : 'Staff Portal, POS & Dashboard'}</span>
+              <span>{isKhmer ? 'ប្រព័ន្ធបុគ្គលិក & POS ស្ថានីយ' : 'Staff Portal & POS Register'}</span>
             </button>
           )}
-          <a href="#menu" onClick={() => setIsMobileNavOpen(false)} className="block py-2 hover:text-amber-400">
-            {isKhmer ? 'ម៉ឺនុយកាហ្វេ' : 'Explore Menu'}
-          </a>
-          <a href="#promos" onClick={() => setIsMobileNavOpen(false)} className="block py-2 hover:text-amber-400">
-            {isKhmer ? 'ប្រូម៉ូសិនពិសេស' : 'Special Offers'}
-          </a>
-          <a href="#roastery" onClick={() => setIsMobileNavOpen(false)} className="block py-2 hover:text-amber-400">
-            {isKhmer ? 'រោងកាហ្វេ' : 'Our Roastery'}
-          </a>
-          <a href="#locations" onClick={() => setIsMobileNavOpen(false)} className="block py-2 hover:text-amber-400">
-            {isKhmer ? 'ទីតាំង & ម៉ោងបើក' : 'Locations & Hours'}
-          </a>
+
+          <div className="grid grid-cols-2 gap-2 text-stone-300">
+            <a 
+              href="#menu" 
+              onClick={() => setIsMobileNavOpen(false)} 
+              className="p-3 rounded-xl bg-stone-900/80 border border-stone-800/80 hover:text-amber-400 hover:border-amber-500/40 transition flex items-center gap-2"
+            >
+              <Coffee className="w-4 h-4 text-amber-400" />
+              <span>{isKhmer ? 'ម៉ឺនុយកាហ្វេ' : 'Explore Menu'}</span>
+            </a>
+            <a 
+              href="#promos" 
+              onClick={() => setIsMobileNavOpen(false)} 
+              className="p-3 rounded-xl bg-stone-900/80 border border-stone-800/80 hover:text-amber-400 hover:border-amber-500/40 transition flex items-center gap-2"
+            >
+              <Tag className="w-4 h-4 text-amber-400" />
+              <span>{isKhmer ? 'ប្រូម៉ូសិន' : 'Offers'}</span>
+            </a>
+            <a 
+              href="#roastery" 
+              onClick={() => setIsMobileNavOpen(false)} 
+              className="p-3 rounded-xl bg-stone-900/80 border border-stone-800/80 hover:text-amber-400 hover:border-amber-500/40 transition flex items-center gap-2"
+            >
+              <Sparkles className="w-4 h-4 text-amber-400" />
+              <span>{isKhmer ? 'រោងកាហ្វេ' : 'Our Roastery'}</span>
+            </a>
+            <a 
+              href="#locations" 
+              onClick={() => setIsMobileNavOpen(false)} 
+              className="p-3 rounded-xl bg-stone-900/80 border border-stone-800/80 hover:text-amber-400 hover:border-amber-500/40 transition flex items-center gap-2"
+            >
+              <Store className="w-4 h-4 text-amber-400" />
+              <span>{isKhmer ? 'សាខាហាង' : 'Locations'}</span>
+            </a>
+          </div>
+
           <button
             type="button"
             onClick={() => {
               setIsMobileNavOpen(false);
               setIsTrackerOpen(true);
             }}
-            className="w-full text-left py-2 hover:text-amber-400 flex items-center gap-1.5 cursor-pointer"
+            className="w-full text-left py-3 px-4 rounded-2xl bg-stone-900 border border-stone-800 hover:border-amber-500/40 text-stone-200 hover:text-amber-400 flex items-center justify-between transition cursor-pointer"
           >
-            <Clock className="w-3.5 h-3.5 text-amber-500" />
-            <span>{isKhmer ? 'តាមដានការកុម្ម៉ង់ផ្ទាល់' : 'Live Order Tracking'}</span>
+            <div className="flex items-center gap-2">
+              <Clock className="w-4 h-4 text-amber-400" />
+              <span>{isKhmer ? 'តាមដានការកុម្ម៉ង់ផ្ទាល់' : 'Live Order Tracking'}</span>
+            </div>
+            <ChevronRight className="w-4 h-4 text-stone-500" />
           </button>
-          <div className="pt-2 border-t border-stone-800">
+
+          <div className="pt-3 border-t border-stone-800/80 flex items-center justify-between">
+            <span className="text-stone-400">{isKhmer ? 'ប្តូរភាសា:' : 'Language:'}</span>
             <LanguageSwitcher />
           </div>
         </div>
