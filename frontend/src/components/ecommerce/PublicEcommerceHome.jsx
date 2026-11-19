@@ -385,19 +385,6 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
 
           {/* Right Action Controls */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-            {/* Staff Portal / POS & Dashboard Switcher */}
-            {onSwitchToPos && (
-              <button
-                type="button"
-                onClick={onSwitchToPos}
-                className="py-2 px-3 rounded-2xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 hover:text-amber-200 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-sm active:scale-95"
-                title={isKhmer ? 'ចូលផ្ទាំងគ្រប់គ្រងទូទៅ & ស្ថានីយគិតប្រាក់ POS' : 'Live Dashboard & POS Terminal'}
-              >
-                <LayoutDashboard className="w-3.5 h-3.5 text-amber-400" />
-                <span className="hidden sm:inline">{isKhmer ? 'ផ្ទាំងគ្រប់គ្រង Dashboard' : 'Dashboard'}</span>
-              </button>
-            )}
-
             {/* Language Switcher */}
             <div className="hidden sm:block">
               <LanguageSwitcher />
@@ -474,20 +461,6 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
       {/* Mobile Drawer Menu (Clean & Modern Glass Dropdown) */}
       {isMobileNavOpen && (
         <div className="lg:hidden bg-stone-950/95 backdrop-blur-xl border-b border-stone-800/80 p-5 space-y-4 font-bold text-xs text-stone-300 shadow-2xl animate-fade-in">
-          {onSwitchToPos && (
-            <button
-              type="button"
-              onClick={() => {
-                setIsMobileNavOpen(false);
-                onSwitchToPos();
-              }}
-              className="w-full text-left py-3 px-4 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-300 font-black flex items-center gap-2.5 hover:bg-amber-500/25 transition cursor-pointer"
-            >
-              <LayoutDashboard className="w-4 h-4 text-amber-400" />
-              <span>{isKhmer ? 'ផ្ទាំងគ្រប់គ្រងទូទៅ & POS' : 'Admin Dashboard & POS'}</span>
-            </button>
-          )}
-
           <div className="grid grid-cols-2 gap-2 text-stone-300">
             <a 
               href="#menu" 

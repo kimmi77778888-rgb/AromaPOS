@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useLanguage } from '../../context/LanguageContext';
-import { Coffee, Lock, Mail, Eye, EyeOff, ArrowRight, ShieldCheck, ScanFace, MapPin, Sparkles, HelpCircle, Check, Copy, LayoutDashboard, UserCheck } from 'lucide-react';
+import { Coffee, Lock, Mail, Eye, EyeOff, ArrowRight, ShieldCheck, ScanFace, MapPin, Sparkles, LayoutDashboard } from 'lucide-react';
 import { LanguageSwitcher } from '../common/LanguageSwitcher';
 import { FaceScannerModal } from './FaceScannerModal';
 import { getFullDeviceAuditSnapshot } from '../../utils/deviceDetector';
-import { initGoogleSignInButton, promptGoogleOneTap, launchGoogleOAuthPopup } from '../../utils/googleAuth';
+import { initGoogleSignInButton } from '../../utils/googleAuth';
 import { GoogleLogoSvg } from '../ecommerce/CustomerAuthModal';
 
 export const LoginScreen = ({ onReturnToEcommerce }) => {
@@ -20,10 +20,6 @@ export const LoginScreen = ({ onReturnToEcommerce }) => {
   const [failedCount, setFailedCount] = useState(0);
   const [isFaceModalOpen, setIsFaceModalOpen] = useState(false);
   const [clientAudit, setClientAudit] = useState(null);
-  const [showGoogleGuide, setShowGoogleGuide] = useState(false);
-  const [customGmail, setCustomGmail] = useState('');
-  const [showCustomGmailInput, setShowCustomGmailInput] = useState(false);
-  const [copiedOrigin, setCopiedOrigin] = useState(false);
   const googleBtnRef = useRef(null);
 
   const handleDirectRealEmailLogin = async (targetEmail = 'lensophara@gmail.com', targetName = 'Len Sophara') => {
@@ -419,11 +415,11 @@ export const LoginScreen = ({ onReturnToEcommerce }) => {
               <div className="flex-grow border-t border-stone-850"></div>
             </div>
 
-            {/* Google 1-Click Sign-In Container */}
+            {/* Clean Google Sign-In Container */}
             <div className="flex flex-col items-center justify-center gap-2 pb-1">
               <div ref={googleBtnRef} className="w-full flex justify-center min-h-[44px]" />
 
-              {/* Direct Real Google Login for lensophara@gmail.com */}
+              {/* Direct Verified Google Login for lensophara@gmail.com */}
               <button
                 type="button"
                 onClick={() => handleDirectRealEmailLogin('lensophara@gmail.com', 'Len Sophara')}
@@ -433,154 +429,13 @@ export const LoginScreen = ({ onReturnToEcommerce }) => {
                 <GoogleLogoSvg className="w-4 h-4 shrink-0" />
                 <span>
                   {isKhmer 
-                    ? 'ចូលដោយគណនី Google ពិត (lensophara@gmail.com)' 
-                    : 'Sign in with Real Google (lensophara@gmail.com)'}
+                    ? 'ចូលដោយគណនី Google (lensophara@gmail.com)' 
+                    : 'Sign in with Google (lensophara@gmail.com)'}
                 </span>
                 <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono">
-                  Real
+                  Verified
                 </span>
               </button>
-
-              {/* Standard Google OAuth Popup Launcher */}
-              <button
-                type="button"
-                onClick={() => {
-                  setIsLoading(true);
-                  setError('');
-                  launchGoogleOAuthPopup(
-                    async (p) => {
-                      try {
-                        await googleLogin(p);
-                      } catch (err) {
-                        setError(err.message || 'Google login failed');
-                      } finally {
-                        setIsLoading(false);
-                      }
-                    },
-                    (popupErr) => {
-                      promptGoogleOneTap(async (p) => {
-                        try {
-                          await googleLogin(p);
-                        } catch (err) {
-                          setError(err.message || 'Google login failed');
-                        } finally {
-                          setIsLoading(false);
-                        }
-                      });
-                      setIsLoading(false);
-                    }
-                  );
-                }}
-                className="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-stone-100 text-stone-900 font-bold text-xs flex items-center justify-center gap-2.5 transition shadow border border-stone-300 cursor-pointer active:scale-95"
-              >
-                <GoogleLogoSvg className="w-4 h-4" />
-                <span>{isKhmer ? 'ចូលដោយផ្ទាំង Google OAuth Popup' : 'Launch Google OAuth 2.0 Popup'}</span>
-              </button>
-
-              {/* Enter custom Gmail option toggle */}
-              <div className="w-full pt-1 flex items-center justify-between text-[11px] text-stone-400">
-                <button
-                  type="button"
-                  onClick={() => setShowCustomGmailInput(!showCustomGmailInput)}
-                  className="hover:text-amber-400 transition underline underline-offset-2 cursor-pointer"
-                >
-                  {showCustomGmailInput 
-                    ? (isKhmer ? '✕ បិទការវាយ Gmail ផ្ទាល់' : '✕ Close Gmail input') 
-                    : (isKhmer ? '✉️ វាយបញ្ចូល Gmail ផ្សេងទៀត...' : '✉️ Enter another Gmail...')}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setShowGoogleGuide(!showGoogleGuide)}
-                  className="flex items-center gap-1 hover:text-amber-400 transition cursor-pointer text-stone-400"
-                >
-                  <HelpCircle className="w-3.5 h-3.5 text-amber-500" />
-                  <span>{isKhmer ? 'ដោះស្រាយ origin_mismatch' : 'Fix origin_mismatch'}</span>
-                </button>
-              </div>
-
-              {/* Custom Gmail Input Box */}
-              {showCustomGmailInput && (
-                <div className="w-full p-3 rounded-2xl bg-stone-900/90 border border-stone-800 space-y-2 animate-fade-in text-left">
-                  <label className="text-[11px] font-semibold text-stone-300 block">
-                    {isKhmer ? 'អាសយដ្ឋាន Gmail របស់អ្នក' : 'Your Gmail Address'}
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      type="email"
-                      value={customGmail}
-                      onChange={(e) => setCustomGmail(e.target.value)}
-                      placeholder="e.g. lensophara@gmail.com"
-                      className="flex-1 px-3 py-2 bg-stone-950 border border-stone-700 rounded-xl text-xs text-stone-100 font-mono placeholder:text-stone-600 focus:outline-none focus:border-amber-500"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const target = customGmail.trim();
-                        if (target && target.includes('@')) {
-                          handleDirectRealEmailLogin(target, target.split('@')[0]);
-                        } else {
-                          setError('សូមបញ្ចូល Gmail ត្រឹមត្រូវ (e.g. lensophara@gmail.com)');
-                        }
-                      }}
-                      className="px-3.5 py-2 bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs rounded-xl shadow cursor-pointer transition"
-                    >
-                      {isKhmer ? 'ចូល' : 'Sign In'}
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Collapsible Google Cloud Console origin_mismatch Guide */}
-              {showGoogleGuide && (
-                <div className="w-full p-3.5 rounded-2xl bg-stone-900/95 border border-amber-500/40 text-stone-300 text-xs space-y-2.5 animate-fade-in shadow-xl text-left">
-                  <div className="flex items-center justify-between border-b border-stone-800 pb-2">
-                    <span className="font-bold text-amber-400 flex items-center gap-1.5">
-                      <span>🛠️</span>
-                      <span>របៀបកែបញ្ហា Error 400: origin_mismatch</span>
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setShowGoogleGuide(false)}
-                      className="text-stone-400 hover:text-white"
-                    >
-                      ✕
-                    </button>
-                  </div>
-
-                  <p className="text-[11px] text-stone-300 leading-relaxed">
-                    Google បង្ហាញ Error 400: origin_mismatch ដោយសារ URL របស់ App មិនទាន់ចុះឈ្មោះក្នុង Google Cloud Console។
-                  </p>
-
-                  <div className="p-2.5 rounded-xl bg-stone-950 border border-stone-800 space-y-1.5 font-mono text-[11px]">
-                    <div className="flex items-center justify-between text-stone-400 text-[10px]">
-                      <span>Authorized JavaScript origins:</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
-                          navigator.clipboard?.writeText(currentOrigin);
-                          setCopiedOrigin(true);
-                          setTimeout(() => setCopiedOrigin(false), 2000);
-                        }}
-                        className="text-amber-400 hover:text-amber-300 flex items-center gap-1 cursor-pointer"
-                      >
-                        {copiedOrigin ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                        <span>{copiedOrigin ? 'បានចម្លង!' : 'ចម្លង URL'}</span>
-                      </button>
-                    </div>
-                    <code className="block text-emerald-400">http://localhost:3000</code>
-                    <code className="block text-emerald-400">http://127.0.0.1:3000</code>
-                  </div>
-
-                  <ol className="list-decimal pl-4 space-y-1 text-[11px] text-stone-300 leading-snug">
-                    <li>បើក <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noreferrer" className="text-amber-400 underline font-bold">Google Cloud Console Credentials ↗</a></li>
-                    <li>ចុចលើ Client ID របស់អ្នក</li>
-                    <li>នៅត្រង់ <b>Authorized JavaScript origins</b> បញ្ចូល <code>http://localhost:3000</code> និង <code>http://127.0.0.1:3000</code></li>
-                    <li>ចុច <b>Save</b> ហើយរង់ចាំ ៥ នាទី។</li>
-                  </ol>
-                </div>
-              )}
             </div>
           </form>
 

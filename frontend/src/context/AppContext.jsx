@@ -16,29 +16,24 @@ export const AppProvider = ({ children }) => {
   const [activeTab, setActiveTab] = useState('pos'); // pos, kds, dashboard, inventory, orders, reports, staff
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Omnichannel App Mode: 'ecommerce' (Public Storefront) vs 'pos' (Staff POS Terminal)
+  // Omnichannel App Mode: Determined strictly by URL path ('/pos', '/staff', '/login', '/admin')
   const [appMode, setAppMode] = useState(() => {
     if (typeof window !== 'undefined') {
       const path = window.location.pathname;
-      if (path.startsWith('/pos') || path.startsWith('/staff') || path.startsWith('/login')) return 'pos';
-      if (path.startsWith('/shop')) return 'ecommerce';
+      if (path.startsWith('/pos') || path.startsWith('/staff') || path.startsWith('/login') || path.startsWith('/admin')) return 'pos';
 
       const urlParams = new URLSearchParams(window.location.search);
       const urlView = urlParams.get('view') || urlParams.get('mode');
-      if (urlView === 'pos' || urlView === 'staff' || urlView === 'login') return 'pos';
-      if (urlView === 'ecommerce' || urlView === 'shop') return 'ecommerce';
-      if (path === '/' || path === '') return 'ecommerce';
-      const saved = localStorage.getItem('aromapos_app_mode');
-      if (saved) return saved;
+      if (urlView === 'pos' || urlView === 'staff' || urlView === 'login' || urlView === 'admin') return 'pos';
     }
-    return 'ecommerce'; // Default landing page is the Public E-Commerce storefront
+    return 'ecommerce'; // Default root '/' is ALWAYS the Public E-Commerce storefront
   });
 
   const changeAppMode = (mode) => {
     setAppMode(mode);
     if (typeof window !== 'undefined') {
       try {
-        localStorage.setItem('aromapos_app_mode', mode);
+        localStorage.removeItem('aromapos_app_mode');
         if (mode === 'pos') {
           // If customer user is logged in with email, auto-bridge into staff session for dashboard access
           if (!user && customerUser?.email) {
@@ -50,12 +45,12 @@ export const AppProvider = ({ children }) => {
               }
             }).catch(() => {});
           }
-          if (!window.location.pathname.startsWith('/pos') && !window.location.pathname.startsWith('/staff') && !window.location.pathname.startsWith('/login')) {
-            window.history.pushState({}, '', '/pos');
+          if (!window.location.pathname.startsWith('/pos')) {
+            window.location.href = '/pos';
           }
         } else if (mode === 'ecommerce') {
-          if (window.location.pathname.startsWith('/pos') || window.location.pathname.startsWith('/staff') || window.location.pathname.startsWith('/login')) {
-            window.history.pushState({}, '', '/');
+          if (window.location.pathname !== '/') {
+            window.location.href = '/';
           }
         }
       } catch (e) {}

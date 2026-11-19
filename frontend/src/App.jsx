@@ -64,15 +64,20 @@ export const AppContent = ({ forcePos = false }) => {
     return <CustomerDisplay standalone={true} />;
   }
 
-  // Check if POS was explicitly requested via prop, state (appMode), path (/pos, /staff, /login), or URL query (?mode=pos / ?view=pos)
-  const isPosExplicit = (forcePos || appMode === 'pos' || (typeof window !== 'undefined' && 
-    (window.location.pathname.startsWith('/pos') || 
-     window.location.pathname.startsWith('/staff') || 
-     window.location.pathname.startsWith('/login') || 
-     new URLSearchParams(window.location.search).get('view') === 'pos' || 
-     new URLSearchParams(window.location.search).get('view') === 'staff' || 
-     new URLSearchParams(window.location.search).get('mode') === 'pos' || 
-     new URLSearchParams(window.location.search).get('mode') === 'staff'))) && appMode !== 'ecommerce';
+  // POS is ONLY shown when explicitly requested from the URL (/pos, /staff, /login, /admin, ?mode=pos, ?view=pos) or forcePos prop
+  const isPosFromUrl = typeof window !== 'undefined' && (
+    window.location.pathname.startsWith('/pos') || 
+    window.location.pathname.startsWith('/staff') || 
+    window.location.pathname.startsWith('/login') || 
+    window.location.pathname.startsWith('/admin') || 
+    new URLSearchParams(window.location.search).get('view') === 'pos' || 
+    new URLSearchParams(window.location.search).get('view') === 'staff' || 
+    new URLSearchParams(window.location.search).get('mode') === 'pos' || 
+    new URLSearchParams(window.location.search).get('mode') === 'staff' ||
+    new URLSearchParams(window.location.search).get('mode') === 'admin'
+  );
+
+  const isPosExplicit = Boolean(forcePos || isPosFromUrl);
 
   // 1. PUBLIC E-COMMERCE STOREFRONT (Default homepage for all customers & public visitors)
   if (!isPosExplicit) {
