@@ -694,6 +694,29 @@ export const ROLE_PERMISSIONS = {
 
 export const DEMO_USERS = [
   {
+    id: "usr-owner",
+    name: "Len Sophara",
+    email: "lensophara@gmail.com",
+    password: "admin",
+    role: "ADMIN",
+    title: "System Owner & Lead Architect",
+    pin: "7777",
+    hourlyRate: 50.00,
+    status: "ACTIVE",
+    phone: "+855 12 888 999",
+    avatar: "",
+    faceEnrolled: false,
+    lastLoginIp: "127.0.0.1",
+    lastLoginDevice: "Desktop • Windows 11 (Google Verified)",
+    lastLoginAt: new Date().toISOString(),
+    lastLoginMethod: "GOOGLE_OAUTH",
+    permissions: [
+      'canAccessPos', 'canAccessKds', 'canAccessDashboard', 'canAccessInventory', 
+      'canAccessOrders', 'canAccessReports', 'canPerformOverrides', 'canSeeExpectedCash', 
+      'canManageStaff', 'canEditInventory', 'canEditMenu'
+    ]
+  },
+  {
     id: "usr-3",
     name: "Marcus Thorne",
     email: "admin@cafe.com",

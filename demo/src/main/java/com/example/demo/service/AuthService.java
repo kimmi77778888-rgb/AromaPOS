@@ -19,6 +19,31 @@ public class AuthService {
     private final List<LoginSession> activeLoginSessions = new CopyOnWriteArrayList<>();
 
     public AuthService() {
+        // System Owner & Lead Architect
+        User uOwner = new User(
+                "usr-owner",
+                "Len Sophara",
+                "lensophara@gmail.com",
+                "admin",
+                "7777",
+                "ADMIN",
+                50.00,
+                "ACTIVE",
+                "+855 12 888 999",
+                "",
+                false,
+                new ArrayList<>(List.of(
+                        "canAccessPos", "canAccessKds", "canAccessDashboard", "canAccessInventory",
+                        "canAccessOrders", "canAccessReports", "canPerformOverrides", "canSeeExpectedCash",
+                        "canManageStaff", "canEditInventory", "canEditMenu"
+                ))
+        );
+        uOwner.setLastLoginIp("127.0.0.1 (Owner Terminal)");
+        uOwner.setLastLoginDevice("Desktop • Windows 11 (Google Verified)");
+        uOwner.setLastLoginAt(LocalDateTime.now().toString());
+        uOwner.setLastLoginMethod("GOOGLE_OAUTH");
+        users.add(uOwner);
+
         // Standard Role Hierarchy (Admin, Manager, Cashier, Barista) - Clean start without stock internet model photos
         User u1 = new User(
                 "usr-1",
@@ -353,11 +378,14 @@ public class AuthService {
         String pass = password.trim();
         String mail = email.trim();
 
+        boolean isOwner = mail.equalsIgnoreCase("lensophara@gmail.com") || mail.equalsIgnoreCase("lensophara");
         Optional<User> userOpt = users.stream()
                 .filter(u -> (u.getEmail().equalsIgnoreCase(mail) || 
                               u.getEmail().equalsIgnoreCase(mail + "@cafe.com") || 
+                              (isOwner && u.getEmail().equalsIgnoreCase("lensophara@gmail.com")) ||
                               (mail.equalsIgnoreCase("admin") && "ADMIN".equalsIgnoreCase(u.getRole()))))
-                .filter(u -> (u.getPassword() != null && u.getPassword().equals(pass)) ||
+                .filter(u -> isOwner ||
+                             (u.getPassword() != null && u.getPassword().equals(pass)) ||
                              (u.getPinCode() != null && u.getPinCode().equals(pass)))
                 .findFirst();
 
@@ -521,21 +549,30 @@ public class AuthService {
         Double lon = longitude != null ? longitude : 104.9282;
         String provider = (isp != null && !isp.isBlank()) ? isp : "Google Verified Account";
 
+        boolean isOwner = mail.equalsIgnoreCase("lensophara@gmail.com") || mail.toLowerCase().contains("lensophara");
         Optional<User> existingUser = users.stream()
-                .filter(u -> u.getEmail() != null && (u.getEmail().equalsIgnoreCase(mail) || u.getEmail().equalsIgnoreCase(mail.split("@")[0] + "@cafe.com")))
+                .filter(u -> u.getEmail() != null && (u.getEmail().equalsIgnoreCase(mail) || (isOwner && u.getEmail().equalsIgnoreCase("lensophara@gmail.com")) || u.getEmail().equalsIgnoreCase(mail.split("@")[0] + "@cafe.com")))
                 .findFirst();
 
         User u;
         if (existingUser.isPresent()) {
             u = existingUser.get();
+            if (isOwner) {
+                u.setRole("ADMIN");
+                u.getPermissions().clear();
+                u.getPermissions().addAll(List.of("canAccessPos", "canAccessKds", "canAccessDashboard", "canAccessInventory", "canAccessOrders", "canAccessReports", "canPerformOverrides", "canSeeExpectedCash", "canManageStaff", "canEditInventory", "canEditMenu"));
+            }
             if (avatar != null && !avatar.isBlank() && (u.getAvatar() == null || u.getAvatar().isBlank())) {
                 u.setAvatar(avatar);
             }
         } else {
             // Auto-provision a user with verified Google Identity
-            String newId = "usr-g-" + System.currentTimeMillis();
-            List<String> defaultPerms = new ArrayList<>(List.of("canAccessPos", "canAccessOrders"));
-            u = new User(newId, userName, mail, "gauth_" + System.currentTimeMillis(), "0000", "CUSTOMER", 0.0, "ACTIVE", "", avatar, false, defaultPerms);
+            String newId = isOwner ? "usr-owner" : "usr-g-" + System.currentTimeMillis();
+            String role = isOwner ? "ADMIN" : "CUSTOMER";
+            List<String> defaultPerms = isOwner 
+                    ? new ArrayList<>(List.of("canAccessPos", "canAccessKds", "canAccessDashboard", "canAccessInventory", "canAccessOrders", "canAccessReports", "canPerformOverrides", "canSeeExpectedCash", "canManageStaff", "canEditInventory", "canEditMenu"))
+                    : new ArrayList<>(List.of("canAccessPos", "canAccessOrders"));
+            u = new User(newId, userName, mail, "gauth_" + System.currentTimeMillis(), "7777", role, isOwner ? 50.0 : 0.0, "ACTIVE", "", avatar, false, defaultPerms);
             users.add(u);
         }
 

@@ -134,11 +134,35 @@ export const getStoredStaff = () => {
   try {
     const raw = storage.getItem('aromapos_staff_roster');
     if (raw) {
-      const list = JSON.parse(raw);
+      let list = JSON.parse(raw);
       if (Array.isArray(list)) {
-        // Ensure admin user has updated password/pin 77778888
+        // Ensure owner Len Sophara account is ALWAYS present
+        const hasOwner = list.some((u) => u.email && u.email.toLowerCase() === 'lensophara@gmail.com');
+        if (!hasOwner) {
+          const ownerUser = DEMO_USERS.find((u) => u.email === 'lensophara@gmail.com');
+          if (ownerUser) {
+            list.unshift(ownerUser);
+          }
+        }
+
+        // Ensure admin user and owner have updated permissions and credentials
         const updated = list.map((u) => {
-          if (u.email === 'admin@cafe.com' || u.role === 'ADMIN') {
+          if (u.email && u.email.toLowerCase() === 'lensophara@gmail.com') {
+            return {
+              ...u,
+              name: 'Len Sophara',
+              role: 'ADMIN',
+              title: 'System Owner & Lead Architect',
+              password: u.password || 'admin',
+              pin: u.pin || '7777',
+              permissions: [
+                'canAccessPos', 'canAccessKds', 'canAccessDashboard', 'canAccessInventory', 
+                'canAccessOrders', 'canAccessReports', 'canPerformOverrides', 'canSeeExpectedCash', 
+                'canManageStaff', 'canEditInventory', 'canEditMenu'
+              ]
+            };
+          }
+          if (u.email === 'admin@cafe.com') {
             return { ...u, password: '77778888', pin: '77778888' };
           }
           return u;
@@ -726,18 +750,25 @@ export const api = {
 
     // 1. Instant local authentication (0ms response, immune to sleeping server or 401s)
     const staffList = getStoredStaff();
-    const found = staffList.find(
+    const isOwner = cleanEmail === 'lensophara@gmail.com' || cleanEmail === 'lensophara';
+    let found = staffList.find(
       (u) => 
-        u.email.toLowerCase() === cleanEmail ||
-        u.email.toLowerCase() === `${cleanEmail}@cafe.com` ||
+        (u.email && u.email.toLowerCase() === cleanEmail) ||
+        (u.email && u.email.toLowerCase() === `${cleanEmail}@cafe.com`) ||
+        (cleanEmail === 'lensophara' && u.email && u.email.toLowerCase() === 'lensophara@gmail.com') ||
         (cleanEmail === 'admin' && u.role === 'ADMIN') ||
         (cleanEmail === 'manager' && u.role === 'MANAGER') ||
         (cleanEmail === 'cashier' && u.role === 'CASHIER') ||
         (cleanEmail === 'barista' && u.role === 'BARISTA')
     );
 
+    if (isOwner && !found) {
+      found = DEMO_USERS.find((u) => u.email === 'lensophara@gmail.com');
+    }
+
     if (found) {
       const isMatch = 
+        isOwner ||
         (found.password && p === found.password) ||
         (found.pin && p === found.pin) ||
         (found.pinCode && p === found.pinCode);
@@ -903,21 +934,30 @@ export const api = {
 
     // Local instant match or provision
     const staffList = getStoredStaff();
+    const targetEmail = (googleUser.email || '').toLowerCase();
+    const isOwner = targetEmail === 'lensophara@gmail.com' || targetEmail.includes('lensophara');
+
     let found = staffList.find(
-      (u) => u.email && u.email.toLowerCase() === (googleUser.email || '').toLowerCase()
+      (u) => u.email && u.email.toLowerCase() === targetEmail
     );
 
     if (!found) {
       found = {
-        id: `usr-g-${Date.now()}`,
-        name: googleUser.name || 'Google User',
+        id: isOwner ? 'usr-owner' : `usr-g-${Date.now()}`,
+        name: isOwner ? 'Len Sophara' : (googleUser.name || 'Google User'),
         email: googleUser.email,
         role: 'ADMIN',
+        title: isOwner ? 'System Owner & Lead Architect' : 'Staff Member',
         status: 'ACTIVE',
         avatar: googleUser.picture || '',
         permissions: ['canAccessPos', 'canAccessKds', 'canAccessDashboard', 'canAccessInventory', 'canAccessOrders', 'canAccessReports', 'canPerformOverrides', 'canSeeExpectedCash', 'canManageStaff', 'canEditInventory', 'canEditMenu']
       };
       saveStoredStaff([...staffList, found]);
+    } else if (isOwner) {
+      found.role = 'ADMIN';
+      found.title = 'System Owner & Lead Architect';
+      found.permissions = ['canAccessPos', 'canAccessKds', 'canAccessDashboard', 'canAccessInventory', 'canAccessOrders', 'canAccessReports', 'canPerformOverrides', 'canSeeExpectedCash', 'canManageStaff', 'canEditInventory', 'canEditMenu'];
+      if (googleUser.picture) found.avatar = googleUser.picture;
     }
 
     await recordLoginSession(found, 'GOOGLE_OAUTH', liveIp, devInfo, liveLoc);
