@@ -21,6 +21,7 @@ import {
   Globe, 
   ShieldCheck,
   ChevronRight,
+  ChevronLeft,
   Filter,
   Tag,
   Menu,
@@ -31,7 +32,11 @@ import {
   Compass,
   Radio,
   ChevronDown,
-  LayoutDashboard
+  LayoutDashboard,
+  Send,
+  Mail,
+  Heart,
+  ArrowUp
 } from 'lucide-react';
 import { LanguageSwitcher } from '../common/LanguageSwitcher';
 import { EcommerceCustomizationModal } from './EcommerceCustomizationModal';
@@ -101,7 +106,8 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
     placeOnlineOrder, 
     customerUser, 
     storeInfo, 
-    categories = [] 
+    categories = [],
+    showToast
   } = useApp();
 
   const currencyRate = storeInfo?.currencyRate || 4100;
@@ -299,6 +305,109 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
 
   const totalCartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
   const subtotal = cartItems.reduce((sum, item) => sum + (item.totalPrice || item.unitPrice * item.quantity), 0);
+
+  // ── Footer Dynamic Slideshow State & Effects ──
+  const [footerSlideIndex, setFooterSlideIndex] = useState(0);
+  const [isFooterSlideHovered, setIsFooterSlideHovered] = useState(false);
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [isSubscribedNewsletter, setIsSubscribedNewsletter] = useState(false);
+
+  const footerSlides = useMemo(() => [
+    {
+      id: 'slide-roastery',
+      image: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1600&q=80',
+      tag: isKhmer ? 'រោងម៉ាស៊ីនលីងកាហ្វេ BKK1' : 'CRAFT ROASTERY • BKK1 PHNOM PENH',
+      title: isKhmer ? 'កាហ្វេសុទ្ធ 100% ពីចម្ការលំដាប់ខ្ពស់' : 'Farm-to-Cup Micro Batch Roasting',
+      description: isKhmer 
+        ? 'លីងថ្មីៗជារៀងរាល់ថ្ងៃក្នុងបរិមាណតិច ដើម្បីធានាក្លិនឈ្ងុយ និងរសជាតិកាហ្វេពិតៗ' 
+        : 'Slow-roasted daily in 5kg artisan batches to unlock exquisite chocolate, floral, and nutty notes.',
+      badge: isKhmer ? 'លីងស្រស់ៗរាល់ថ្ងៃ' : 'Fresh Daily Roast',
+      actionText: isKhmer ? 'ស្វែងរកមុខទំនិញ' : 'Explore Online Menu',
+      actionHref: '#menu'
+    },
+    {
+      id: 'slide-barista',
+      image: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=1600&q=80',
+      tag: isKhmer ? 'សិល្បៈឆុងកាហ្វេដោយដៃ' : 'SPECIALTY BARISTA BAR',
+      title: isKhmer ? 'ការឆុងកាហ្វេដោយម៉ត់ចត់ & ហ្វូមទឹកដោះគោទន់រលោង' : 'Velvety Microfoam & Pour-Over Precision',
+      description: isKhmer 
+        ? 'ឆុងយ៉ាងផ្ចិតផ្ចង់ដោយ Barista ជំនាញ ផ្តល់ជូននូវរសជាតិកាហ្វេដ៏ល្អឥតខ្ចោះគ្រប់កែវ' 
+        : 'Handcrafted flat whites, cold brews, and single-origin pour-overs pulled to perfection.',
+      badge: isKhmer ? 'ឆុងដោយ Barista ជំនាញ' : 'Artisan Crafted',
+      actionText: isKhmer ? 'កុម្ម៉ង់កាហ្វេឥឡូវនេះ' : 'Order Signature Drinks',
+      actionHref: '#menu'
+    },
+    {
+      id: 'slide-bakery',
+      image: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=1600&q=80',
+      tag: isKhmer ? 'នំប៉័ងដុតក្តៅៗរាល់ព្រឹក' : 'FRESH BAKED DAILY • 6:30 AM',
+      title: isKhmer ? 'នំ Croissant ប័រធម្មជាតិ និងនំសូកូឡាបារាំង' : 'Golden Normandy Butter Croissants',
+      description: isKhmer 
+        ? 'ដុតថ្មីៗស្រួយក្រៅទន់ក្នុង ល្អបំផុតសម្រាប់ការញ៉ាំជាមួយកាហ្វេពេលព្រឹក' 
+        : 'Flaky artisan French pastries and gourmet baked treats crafted every morning.',
+      badge: isKhmer ? 'ដុតក្តៅៗរាល់ព្រឹក' : 'Baked Fresh at 6:30 AM',
+      actionText: isKhmer ? 'មើលនំប៉័ងទាំងអស់' : 'Explore Bakery Treats',
+      actionHref: '#menu'
+    },
+    {
+      id: 'slide-delivery',
+      image: 'https://images.unsplash.com/photo-1526367790999-0150786686a2?auto=format&fit=crop&w=1600&q=80',
+      tag: isKhmer ? 'សេវាដឹកជញ្ជូនរហ័សទូទាំងភ្នំពេញ' : 'EXPRESS DELIVERY • 20-30 MINS',
+      title: isKhmer ? 'ដឹកជញ្ជូនរក្សាកម្តៅដល់គេហដ្ឋាន & ការិយាល័យ' : 'Temperature-Controlled City Delivery',
+      description: isKhmer 
+        ? 'ធានាកាហ្វេនៅតែក្តៅ ឬត្រជាក់ស្រស់ស្រាយ ជាមួយប្រព័ន្ធតាមដានផ្លូវជាក់ស្តែង' 
+        : 'Delivered in insulated thermoses with live GPS route telemetry to your doorstep.',
+      badge: isKhmer ? 'ដឹក ២០-៣០ នាទី' : '20-30 Mins Express',
+      actionText: isKhmer ? 'តាមដានការកុម្ម៉ង់' : 'Track Active Orders',
+      onAction: () => setIsTrackerOpen(true)
+    },
+    {
+      id: 'slide-loyalty',
+      image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1600&q=80',
+      tag: isKhmer ? 'កម្មវិធីសមាជិក AROMA CLUB VIP' : 'VIP REWARDS & BAKONG KHQR',
+      title: isKhmer ? 'សន្សំពិន្ទុប្តូរយកភេសជ្ជៈ និងរង្វាន់ជាច្រើន' : 'Instant Points & 1-Click Bakong KHQR',
+      description: isKhmer 
+        ? 'ទទួលបានពិន្ទុរៀងរាល់ការចំណាយ និងទូទាត់ប្រាក់ភ្លាមៗតាម QR កូដបាគង' 
+        : 'Earn reward points with every sip, unlock member perks, and enjoy instant bank checkouts.',
+      badge: isKhmer ? 'សន្សំពិន្ទុ & ត្រាកាហ្វេ' : 'Earn 1 Pt per $1',
+      actionText: isKhmer ? 'ចូលជាសមាជិក VIP' : 'Join Aroma Club',
+      onAction: () => {
+        setAuthModalPrompt(isKhmer ? 'ចូលគណនីជាមួយ Gmail ដើម្បីទទួលបាន ១០០ ពិន្ទុ & ត្រាកាហ្វេ!' : 'Sign in with your Gmail to earn 100 welcome points & rewards!');
+        setIsAuthModalOpen(true);
+      }
+    }
+  ], [isKhmer]);
+
+  // Slideshow Timer: Auto advance every 4.5 seconds
+  useEffect(() => {
+    if (isFooterSlideHovered) return;
+    const interval = setInterval(() => {
+      setFooterSlideIndex((prev) => (prev + 1) % footerSlides.length);
+    }, 4500);
+    return () => clearInterval(interval);
+  }, [isFooterSlideHovered, footerSlides.length]);
+
+  const handleNextFooterSlide = () => {
+    setFooterSlideIndex((prev) => (prev + 1) % footerSlides.length);
+  };
+
+  const handlePrevFooterSlide = () => {
+    setFooterSlideIndex((prev) => (prev - 1 + footerSlides.length) % footerSlides.length);
+  };
+
+  const handleNewsletterSubmit = (e) => {
+    e.preventDefault();
+    if (!newsletterEmail || !newsletterEmail.includes('@')) return;
+    setIsSubscribedNewsletter(true);
+    if (showToast) {
+      showToast(
+        isKhmer 
+          ? '🎉 អរគុណសម្រាប់ការចុះឈ្មោះ! លោកអ្នកទទួលបាន 50 ពិន្ទុបន្ថែមនៅក្នុង Aroma Club ☕' 
+          : '🎉 Welcome to Aroma Coffee Club! 50 bonus reward points added to your account ☕',
+        'success'
+      );
+    }
+  };
 
   return (
     <div className="min-h-screen bg-stone-950 text-stone-100 font-sans selection:bg-amber-500 selection:text-stone-950">
@@ -1049,48 +1158,410 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
       </section>
 
       {/* ─────────────────────────────────────────────────────────────
-          8. PUBLIC FOOTER
+          8. DYNAMIC SLIDESHOW FOOTER & LIVE MARQUEE SHOWCASE
       ────────────────────────────────────────────────────────────── */}
-      <footer className="border-t border-stone-850 bg-stone-950 py-12 px-4 sm:px-8 text-stone-400 text-xs">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-amber-500 flex items-center justify-center text-stone-950 font-black">
-              ☕
+      <section className="pt-16 pb-6 px-4 sm:px-8 bg-stone-950 border-t border-stone-850">
+        <div className="max-w-7xl mx-auto space-y-12">
+          
+          {/* 8A. DYNAMIC ROASTERY & MOMENTS SLIDESHOW */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-bold tracking-widest uppercase text-amber-400 font-mono flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>{isKhmer ? 'វិចិត្រសាល & សកម្មភាពផ្ទាល់' : 'Artisan Highlights & Story'}</span>
+                </span>
+                <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight mt-0.5">
+                  {isKhmer ? 'បទពិសោធន៍កាហ្វេសិល្បៈរបស់ Aroma' : 'The Aroma Coffee Roastery Experience'}
+                </h3>
+              </div>
+
+              {/* Slide Counter & Playback Indicator */}
+              <div className="hidden sm:flex items-center gap-3">
+                <span className="text-xs font-mono font-bold text-amber-400 bg-amber-500/10 px-3 py-1 rounded-xl border border-amber-500/20">
+                  0{footerSlideIndex + 1} / 0{footerSlides.length}
+                </span>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={handlePrevFooterSlide}
+                    className="p-2 rounded-xl bg-stone-900 hover:bg-amber-500 hover:text-stone-950 border border-stone-800 text-stone-300 transition cursor-pointer shadow-sm"
+                    title="Previous Slide"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleNextFooterSlide}
+                    className="p-2 rounded-xl bg-stone-900 hover:bg-amber-500 hover:text-stone-950 border border-stone-800 text-stone-300 transition cursor-pointer shadow-sm"
+                    title="Next Slide"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
             </div>
-            <div>
-              <p className="font-black text-sm text-white">{storeName}</p>
-              <p className="text-[10px] text-stone-500">{storeAddress}</p>
+
+            {/* Main Interactive Slide Display */}
+            <div 
+              className="relative w-full h-[360px] sm:h-[420px] md:h-[480px] rounded-3xl overflow-hidden border border-stone-800/90 shadow-2xl group select-none"
+              onMouseEnter={() => setIsFooterSlideHovered(true)}
+              onMouseLeave={() => setIsFooterSlideHovered(false)}
+            >
+              {/* Slides Background Images */}
+              {footerSlides.map((slide, idx) => (
+                <div
+                  key={slide.id}
+                  className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+                    idx === footerSlideIndex ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
+                  }`}
+                >
+                  <img
+                    src={slide.image}
+                    alt={slide.title}
+                    className="w-full h-full object-cover transform scale-100 group-hover:scale-105 transition-transform duration-1000"
+                  />
+                  {/* Luxury Cinematic Gradient Overlays */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/60 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-stone-950 via-stone-950/75 to-transparent" />
+                </div>
+              ))}
+
+              {/* Floating Slide Content Overlay */}
+              <div className="absolute inset-0 z-20 p-6 sm:p-10 md:p-12 flex flex-col justify-between">
+                {/* Top Badge */}
+                <div className="flex items-center justify-between">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 backdrop-blur-md shadow-lg">
+                    <Coffee className="w-3.5 h-3.5" />
+                    <span>{footerSlides[footerSlideIndex].badge}</span>
+                  </span>
+
+                  <span className="sm:hidden text-xs font-mono font-bold text-amber-300 bg-stone-950/80 px-2.5 py-1 rounded-xl border border-stone-800">
+                    0{footerSlideIndex + 1} / 0{footerSlides.length}
+                  </span>
+                </div>
+
+                {/* Bottom Story Content */}
+                <div className="max-w-2xl space-y-3 animate-fade-in">
+                  <span className="text-xs font-mono font-black text-amber-400 uppercase tracking-widest">
+                    {footerSlides[footerSlideIndex].tag}
+                  </span>
+                  <h4 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight leading-tight">
+                    {footerSlides[footerSlideIndex].title}
+                  </h4>
+                  <p className="text-xs sm:text-sm md:text-base text-stone-300 font-medium leading-relaxed max-w-xl">
+                    {footerSlides[footerSlideIndex].description}
+                  </p>
+
+                  <div className="pt-2">
+                    {footerSlides[footerSlideIndex].actionHref ? (
+                      <a
+                        href={footerSlides[footerSlideIndex].actionHref}
+                        className="inline-flex items-center gap-2 px-5 py-2.5 sm:px-6 sm:py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-black text-xs sm:text-sm transition cursor-pointer shadow-lg shadow-amber-950/50 active:scale-95"
+                      >
+                        <span>{footerSlides[footerSlideIndex].actionText}</span>
+                        <ArrowRight className="w-4 h-4 stroke-[2.5]" />
+                      </a>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={footerSlides[footerSlideIndex].onAction}
+                        className="inline-flex items-center gap-2 px-5 py-2.5 sm:px-6 sm:py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-black text-xs sm:text-sm transition cursor-pointer shadow-lg shadow-amber-950/50 active:scale-95"
+                      >
+                        <span>{footerSlides[footerSlideIndex].actionText}</span>
+                        <ArrowRight className="w-4 h-4 stroke-[2.5]" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Floating Left & Right Arrow Buttons on Large Screen */}
+                <button
+                  type="button"
+                  onClick={handlePrevFooterSlide}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-2xl bg-stone-950/70 hover:bg-amber-500 text-stone-200 hover:text-stone-950 border border-stone-700/80 backdrop-blur-md flex items-center justify-center transition cursor-pointer opacity-0 group-hover:opacity-100 shadow-xl"
+                  title="Previous"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleNextFooterSlide}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-2xl bg-stone-950/70 hover:bg-amber-500 text-stone-200 hover:text-stone-950 border border-stone-700/80 backdrop-blur-md flex items-center justify-center transition cursor-pointer opacity-0 group-hover:opacity-100 shadow-xl"
+                  title="Next"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+
+                {/* Pagination Dots at Bottom Center */}
+                <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 z-30">
+                  {footerSlides.map((_, dotIdx) => (
+                    <button
+                      key={dotIdx}
+                      type="button"
+                      onClick={() => setFooterSlideIndex(dotIdx)}
+                      className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                        dotIdx === footerSlideIndex 
+                          ? 'w-8 bg-amber-500 shadow-md shadow-amber-500/50' 
+                          : 'w-2 bg-stone-600 hover:bg-stone-400'
+                      }`}
+                      title={`Slide ${dotIdx + 1}`}
+                    />
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-6 font-medium">
-            <a href="#menu" className="hover:text-amber-400 transition">Online Menu</a>
-            <a href="#roastery" className="hover:text-amber-400 transition">Our Craft</a>
-            <a href="#locations" className="hover:text-amber-400 transition">Locations</a>
-            <button
-              type="button"
-              onClick={() => setIsTrackerOpen(true)}
-              className="hover:text-amber-400 transition cursor-pointer"
-            >
-              Order Tracking
-            </button>
-            {onSwitchToPos && (
+          {/* 8B. DYNAMIC INFINITE MARQUEE TICKER TAPE */}
+          <div className="overflow-hidden rounded-2xl bg-stone-900/60 border border-stone-850 py-3 relative select-none">
+            <div className="flex items-center gap-8 whitespace-nowrap animate-marquee font-mono text-xs text-stone-300 font-bold">
+              <span className="flex items-center gap-2 text-amber-400">
+                <span>☕</span>
+                <span>Fresh Micro-Batch Roasted Daily in BKK1</span>
+              </span>
+              <span className="text-stone-600">•</span>
+              <span className="flex items-center gap-2 text-emerald-400">
+                <span>🛵</span>
+                <span>20-30m Express Phnom Penh Delivery</span>
+              </span>
+              <span className="text-stone-600">•</span>
+              <span className="flex items-center gap-2 text-sky-400">
+                <span>⚡</span>
+                <span>Instant NBC Bakong KHQR Checkout</span>
+              </span>
+              <span className="text-stone-600">•</span>
+              <span className="flex items-center gap-2 text-amber-300">
+                <span>🥐</span>
+                <span>French Normandy Butter Pastries Baked 6:30 AM</span>
+              </span>
+              <span className="text-stone-600">•</span>
+              <span className="flex items-center gap-2 text-purple-400">
+                <span>⭐</span>
+                <span>Earn 1 VIP Point per $1 with Aroma Club</span>
+              </span>
+              <span className="text-stone-600">•</span>
+              <span className="flex items-center gap-2 text-emerald-300">
+                <span>🌾</span>
+                <span>100% Single Origin Arabica Beans</span>
+              </span>
+            </div>
+          </div>
+
+          {/* 8C. COMPREHENSIVE 4-COLUMN RICH MODERN FOOTER */}
+          <div className="pt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-10 text-xs">
+            {/* Column 1: Roastery Identity & Live Store Hours */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center text-stone-950 font-black shadow-lg shadow-amber-950/40 text-lg">
+                  ☕
+                </div>
+                <div>
+                  <h4 className="font-black text-base text-white">{storeName}</h4>
+                  <p className="text-[11px] text-amber-400 font-medium">{storeNameKm} • {storeTagline}</p>
+                </div>
+              </div>
+              <p className="text-stone-400 leading-relaxed text-[11px]">
+                {isKhmer 
+                  ? 'រោងម៉ាស៊ីនកាហ្វេសិល្បៈ និងហាងកាហ្វេពិសេសនៅរាជធានីភ្នំពេញ ផ្តល់ជូននូវរសជាតិកាហ្វេពិតៗ ឆុងស្រស់ៗ និងនំប៉័ងដុតរាល់ព្រឹក។' 
+                  : 'Specialty coffee roastery and artisan bakery in Phnom Penh, crafting direct farm-to-cup coffee and authentic French pastries.'}
+              </p>
+              <div className="space-y-2 pt-1 text-stone-300">
+                <div className="flex items-start gap-2">
+                  <MapPin className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                  <span className="text-[11px]">{storeAddress}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Phone className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <a href={`tel:${storePhone}`} className="text-[11px] hover:text-white transition font-mono">{storePhone}</a>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-sky-400 shrink-0" />
+                  <span className="text-[11px] font-mono text-emerald-400 font-bold">Open Daily: 6:30 AM - 9:00 PM</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Column 2: Quick Links & Menu Categories */}
+            <div className="space-y-3">
+              <h4 className="font-black text-sm text-white uppercase tracking-wider text-stone-200 border-b border-stone-850 pb-2">
+                {isKhmer ? 'ម៉ឺនុយ & ឆានែល' : 'Menu & Channels'}
+              </h4>
+              <ul className="space-y-2 text-stone-400 text-[11px] font-medium">
+                <li>
+                  <a href="#menu" className="hover:text-amber-400 transition flex items-center gap-1.5">
+                    <ChevronRight className="w-3 h-3 text-stone-600" />
+                    <span>Specialty Hot & Iced Coffee</span>
+                  </a>
+                </li>
+                <li>
+                  <a href="#menu" className="hover:text-amber-400 transition flex items-center gap-1.5">
+                    <ChevronRight className="w-3 h-3 text-stone-600" />
+                    <span>Nitro Cold Brew & Drip Bar</span>
+                  </a>
+                </li>
+                <li>
+                  <a href="#menu" className="hover:text-amber-400 transition flex items-center gap-1.5">
+                    <ChevronRight className="w-3 h-3 text-stone-600" />
+                    <span>French Butter Croissants & Pastries</span>
+                  </a>
+                </li>
+                <li>
+                  <a href="#locations" className="hover:text-amber-400 transition flex items-center gap-1.5">
+                    <ChevronRight className="w-3 h-3 text-stone-600" />
+                    <span>Store Locations & Branches</span>
+                  </a>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => setIsTrackerOpen(true)}
+                    className="hover:text-amber-400 transition flex items-center gap-1.5 cursor-pointer text-left"
+                  >
+                    <ChevronRight className="w-3 h-3 text-amber-500" />
+                    <span className="text-amber-400 font-bold">{isKhmer ? 'តាមដានការកុម្ម៉ង់ផ្ទាល់' : 'Live Order Tracking'}</span>
+                  </button>
+                </li>
+                {onSwitchToPos && (
+                  <li className="pt-1">
+                    <button
+                      type="button"
+                      onClick={onSwitchToPos}
+                      className="px-3 py-1.5 rounded-xl bg-stone-900 hover:bg-stone-850 border border-stone-800 text-amber-400 hover:text-amber-300 transition flex items-center gap-2 cursor-pointer font-bold"
+                    >
+                      <Lock className="w-3.5 h-3.5" />
+                      <span>{isKhmer ? 'ច្រកចូលបុគ្គលិក & POS' : 'Staff Terminal & POS'}</span>
+                    </button>
+                  </li>
+                )}
+              </ul>
+            </div>
+
+            {/* Column 3: Dynamic Cafe Reel / Instagram Photo Grid */}
+            <div className="space-y-3">
+              <h4 className="font-black text-sm text-white uppercase tracking-wider text-stone-200 border-b border-stone-850 pb-2 flex items-center justify-between">
+                <span>{isKhmer ? 'វិចិត្រសាលកាហ្វេ' : 'Roastery Moments'}</span>
+                <span className="text-[10px] text-amber-400 lowercase font-mono">@aromacoffeepnh</span>
+              </h4>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { id: 1, url: 'https://images.unsplash.com/photo-1518832553480-cd0e625ed3e6?auto=format&fit=crop&w=300&q=80', label: 'Roasting' },
+                  { id: 2, url: 'https://images.unsplash.com/photo-1534778101976-62847782c213?auto=format&fit=crop&w=300&q=80', label: 'Latte Art' },
+                  { id: 3, url: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=300&q=80', label: 'Pastry' },
+                  { id: 4, url: 'https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?auto=format&fit=crop&w=300&q=80', label: 'Cold Drip' },
+                  { id: 5, url: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=300&q=80', label: 'Pour Over' },
+                  { id: 6, url: 'https://images.unsplash.com/photo-1442512595331-e89e73853f31?auto=format&fit=crop&w=300&q=80', label: 'Cafe Ambience' }
+                ].map((photo) => (
+                  <div 
+                    key={photo.id}
+                    className="relative aspect-square rounded-xl overflow-hidden group/pic border border-stone-800 bg-stone-900"
+                  >
+                    <img 
+                      src={photo.url} 
+                      alt={photo.label}
+                      className="w-full h-full object-cover group-hover/pic:scale-115 transition-transform duration-500" 
+                    />
+                    <div className="absolute inset-0 bg-stone-950/40 opacity-0 group-hover/pic:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-bold">
+                      <Heart className="w-3.5 h-3.5 text-rose-400 fill-rose-400" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[10px] text-stone-500">
+                Tag #AromaCoffeeRoastery to be featured on our official channel.
+              </p>
+            </div>
+
+            {/* Column 4: Aroma Coffee Club VIP Newsletter */}
+            <div className="space-y-3">
+              <h4 className="font-black text-sm text-white uppercase tracking-wider text-stone-200 border-b border-stone-850 pb-2">
+                {isKhmer ? 'សមាជិក AROMA VIP CLUB' : 'Join Coffee Club'}
+              </h4>
+              <p className="text-[11px] text-stone-400 leading-relaxed">
+                {isKhmer 
+                  ? 'ចុះឈ្មោះដើម្បីទទួលបាន 50 ពិន្ទុភ្លាមៗ ព្រមទាំងការជូនដំណឹងអំពីប្រូម៉ូសិន និងគ្រាប់កាហ្វេពិសេសថ្មីៗ។' 
+                  : 'Subscribe for 50 bonus reward points, exclusive secret menu tastings, and member flash drops.'}
+              </p>
+
+              {isSubscribedNewsletter ? (
+                <div className="p-3.5 rounded-2xl bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 text-xs flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>{isKhmer ? 'អរគុណ! អ្នកបានចូលជាសមាជិក VIP រួចរាល់។' : 'Successfully subscribed! 50 bonus points claimed.'}</span>
+                </div>
+              ) : (
+                <form onSubmit={handleNewsletterSubmit} className="space-y-2">
+                  <div className="relative">
+                    <input
+                      type="email"
+                      value={newsletterEmail}
+                      onChange={(e) => setNewsletterEmail(e.target.value)}
+                      placeholder="your.email@gmail.com"
+                      required
+                      className="w-full py-2.5 pl-3.5 pr-10 rounded-xl bg-stone-900 border border-stone-800 text-white placeholder-stone-500 text-xs focus:outline-none focus:border-amber-500 transition"
+                    />
+                    <button
+                      type="submit"
+                      className="absolute right-1.5 top-1.5 p-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold transition cursor-pointer"
+                      title="Subscribe"
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <span className="text-[10px] text-stone-500 block">
+                    No spam ever. 1-click unsubscribe anytime.
+                  </span>
+                </form>
+              )}
+
+              {/* Supported Payment Badges */}
+              <div className="pt-2">
+                <span className="text-[10px] font-bold text-stone-500 uppercase tracking-wider block mb-1.5">
+                  Accepted Payments
+                </span>
+                <div className="flex items-center flex-wrap gap-1.5">
+                  <span className="px-2 py-0.5 rounded-md bg-rose-950/80 text-rose-300 border border-rose-800 font-mono text-[9px] font-black">
+                    Bakong KHQR
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md bg-blue-950/80 text-blue-300 border border-blue-800 font-mono text-[9px] font-bold">
+                    ABA PAY
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md bg-emerald-950/80 text-emerald-300 border border-emerald-800 font-mono text-[9px] font-bold">
+                    WING
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md bg-stone-900 text-stone-300 border border-stone-800 font-mono text-[9px] font-bold">
+                    VISA / MC
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md bg-amber-950/80 text-amber-300 border border-amber-800 font-mono text-[9px] font-bold">
+                    Cash (COD)
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Copyright & Back to Top Strip */}
+          <div className="pt-6 border-t border-stone-850 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-stone-500">
+            <p className="text-center sm:text-left">
+              © {new Date().getFullYear()} {storeName} ({storeNameKm}). All Rights Reserved. Phnom Penh, Cambodia.
+            </p>
+
+            <div className="flex items-center gap-4">
+              <span>Privacy Policy</span>
+              <span>•</span>
+              <span>Terms of Service</span>
+              <span>•</span>
               <button
                 type="button"
-                onClick={onSwitchToPos}
-                className="text-amber-400 hover:text-amber-300 transition flex items-center gap-1.5 cursor-pointer font-bold"
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                className="flex items-center gap-1 text-stone-400 hover:text-amber-400 transition cursor-pointer font-bold"
               >
-                <Lock className="w-3.5 h-3.5" />
-                <span>Staff Portal & POS</span>
+                <span>{isKhmer ? 'ត្រឡប់ទៅលើ' : 'Back to Top'}</span>
+                <ArrowUp className="w-3.5 h-3.5" />
               </button>
-            )}
+            </div>
           </div>
-
-          <p className="text-[11px] text-stone-500 text-center md:text-right">
-            © {new Date().getFullYear()} {storeName}. All Rights Reserved.
-          </p>
         </div>
-      </footer>
+      </section>
 
       {/* ─────────────────────────────────────────────────────────────
           9. MODALS & SLIDE-OUT DRAWERS
