@@ -303,30 +303,6 @@ export const CustomerAuthModal = ({
               </div>
             </div>
 
-            {/* Quick Demo Test Chips */}
-            <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
-              <span className="text-[10px] text-stone-500">Quick tests:</span>
-              {['lensophara@gmail.com', 'admin@cafe.com', 'sophara.coffee@gmail.com'].map((demoMail) => (
-                <button
-                  key={demoMail}
-                  type="button"
-                  onClick={() => {
-                    setGmailInput(demoMail);
-                    if (demoMail === 'lensophara@gmail.com') {
-                      setGmailName('Len Sophara');
-                    } else if (demoMail === 'admin@cafe.com') {
-                      setGmailName('Admin Manager');
-                    } else if (demoMail === 'sophara.coffee@gmail.com') {
-                      setGmailName('Sophara Coffee');
-                    }
-                  }}
-                  className="text-[10px] font-mono px-2 py-0.5 rounded-lg bg-stone-900 hover:bg-stone-850 border border-stone-800 text-blue-400 hover:border-blue-500/60 transition cursor-pointer"
-                >
-                  {demoMail}
-                </button>
-              ))}
-            </div>
-
             <button
               type="submit"
               disabled={isLoading}
@@ -365,10 +341,10 @@ export const CustomerAuthModal = ({
             </div>
           </div>
 
-          {/* Security & Client ID Pill */}
+          {/* Clean Security Badge */}
           <div className="flex items-center justify-center gap-1.5 text-[10px] text-stone-500 pb-1 pt-1">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-            <span className="truncate">Google OAuth 2.0: {GOOGLE_CLIENT_ID.slice(0, 24)}...</span>
+            <span>{isKhmer ? 'ការការពារសុវត្ថិភាព 256-Bit SSL • សេវា Google OAuth 2.0 ផ្លូវការ' : '256-Bit SSL Encrypted • Official Google Identity Services'}</span>
           </div>
         </div>
       </div>
