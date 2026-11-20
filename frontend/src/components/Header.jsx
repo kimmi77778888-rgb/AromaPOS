@@ -18,7 +18,6 @@ import {
   Coffee,
   Lock,
   Menu,
-  Bike,
   SlidersHorizontal
 } from 'lucide-react';
 import { soundService } from '../services/soundService';
@@ -76,12 +75,6 @@ export const Header = ({ onOpenAddProduct }) => {
           icon: ChefHat,
           title: isKhmer ? 'អេក្រង់ផ្ទះបាយ (KDS)' : 'Kitchen Display (KDS)',
           subtitle: isKhmer ? 'ជួររៀបចំភេសជ្ជៈសម្រាប់ Barista' : 'Drink preparation queue'
-        };
-      case 'delivery':
-        return {
-          icon: Bike,
-          title: isKhmer ? 'ផែនទីដឹកជញ្ជូន (Delivery)' : 'Delivery Fleet',
-          subtitle: isKhmer ? 'តាមដានអ្នកដឹកជញ្ជូនជាក់ស្តែង' : 'Live courier dispatch & tracking'
         };
       case 'reports':
         return {

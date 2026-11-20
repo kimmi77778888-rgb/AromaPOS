@@ -558,20 +558,6 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
               <span>{isKhmer ? '📄 មើល & ទាញយកវិក្កយបត្រ' : '📄 View & Download Invoice'}</span>
             </button>
 
-            {(latestPlacedOrder.orderType === 'DELIVERY' || latestPlacedOrder.fulfillmentType === 'DELIVERY') && (
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveDeliveryOrderForMap(latestPlacedOrder);
-                  setIsLiveDeliveryMapOpen(true);
-                }}
-                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-stone-900 hover:bg-stone-850 border border-stone-800 text-stone-200 hover:text-white text-xs font-bold transition cursor-pointer"
-              >
-                <Bike className="w-3.5 h-3.5 text-amber-400" />
-                <span>{isKhmer ? 'ផែនទីដឹកជញ្ជូន' : 'Track Rider'}</span>
-              </button>
-            )}
-
             <button
               type="button"
               onClick={() => setLatestPlacedOrder(null)}

@@ -695,29 +695,17 @@ export const EcommerceCheckoutModal = ({
 
             {/* Primary Action Buttons */}
             <div className="space-y-2.5 pt-1">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div className="pt-1">
                 {/* Download Official Tax Invoice */}
                 <button
                   type="button"
                   onClick={handleDownloadInvoice}
-                  className="w-full py-3 px-4 rounded-2xl bg-stone-900 hover:bg-stone-850 border border-stone-750 hover:border-amber-500/50 text-stone-100 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer shadow-md"
+                  className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-black text-xs sm:text-sm flex items-center justify-center gap-2 transition cursor-pointer shadow-lg shadow-amber-950/40 active:scale-95"
                   title="Download or Print Official Tax Invoice"
                 >
-                  <FileText className="w-4 h-4 text-amber-400" />
-                  <span>{isKhmer ? 'ទាញយកវិក្កយបត្រ (Invoice)' : 'Download Tax Invoice'}</span>
+                  <FileText className="w-4 h-4 text-stone-950 stroke-[2.5]" />
+                  <span>{isKhmer ? 'ទាញយកវិក្កយបត្រផ្លូវការ (Download Tax Invoice)' : 'Download Official Tax Invoice'}</span>
                 </button>
-
-                {/* Live Delivery Map */}
-                {confirmedOrder.orderType === 'DELIVERY' && onOpenLiveDeliveryMap && (
-                  <button
-                    type="button"
-                    onClick={handleOpenLiveMap}
-                    className="w-full py-3 px-4 rounded-2xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs flex items-center justify-center gap-2 transition cursor-pointer shadow-lg shadow-amber-950/40"
-                  >
-                    <Bike className="w-4 h-4" />
-                    <span>{isKhmer ? 'ផែនទីដឹកជញ្ជូនផ្ទាល់ (Live Map)' : 'Track Rider on Live Map'}</span>
-                  </button>
-                )}
               </div>
 
               <div className="flex items-center justify-between gap-2 pt-1 text-xs">

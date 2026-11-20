@@ -24,7 +24,6 @@ import { StoreSettingsModal } from './components/common/StoreSettingsModal';
 import { MobileBottomNav } from './components/common/MobileBottomNav';
 import { EmergencyAlarmModal } from './components/common/EmergencyAlarmModal';
 import { PublicEcommerceHome } from './components/ecommerce/PublicEcommerceHome';
-import { AdminDeliveryTracker } from './components/delivery/AdminDeliveryTracker';
 import { SlideshowFooterManagement } from './components/ecommerce/SlideshowFooterManagement';
 
 export const AppContent = ({ forcePos = false }) => {
@@ -126,7 +125,6 @@ export const AppContent = ({ forcePos = false }) => {
             <InventoryManagement onOpenAddModal={() => setIsAddProductModalOpen(true)} />
           )}
           {activeTab === 'orders' && <OrderHistory />}
-          {activeTab === 'delivery' && <AdminDeliveryTracker />}
           {activeTab === 'kds' && <KitchenDisplaySystem />}
           {activeTab === 'reports' && <ManagementReports />}
           {activeTab === 'staff' && <StaffManagement />}

@@ -18,7 +18,6 @@ import {
   PanelLeftClose, 
   PanelLeftOpen,
   Globe,
-  Bike,
   SlidersHorizontal,
   X
 } from 'lucide-react';
@@ -87,14 +86,6 @@ export const Sidebar = () => {
   const userRole = (user?.role || 'ADMIN').toUpperCase();
   const permissions = ROLE_PERMISSIONS[userRole] || ROLE_PERMISSIONS.CASHIER;
 
-  // Active deliveries count
-  const activeDeliveriesCount = orders.filter((o) => 
-    (o.orderType === 'DELIVERY' || o.fulfillmentType === 'DELIVERY') &&
-    o.status !== 'COMPLETED' &&
-    o.status !== 'CANCELLED' &&
-    o.status !== 'REFUNDED'
-  ).length;
-
   // Curated Navigation Sections
   const navSections = [
     {
@@ -132,14 +123,6 @@ export const Sidebar = () => {
           icon: ChefHat,
           badge: orders.filter((o) => o.status === 'PENDING' || o.status === 'IN_PREPARATION').length || null,
           badgeColor: 'bg-emerald-600 text-white animate-pulse'
-        },
-        {
-          id: 'delivery',
-          label: 'Live Delivery Map',
-          labelKm: 'ផែនទីដឹកជញ្ជូន (GPS)',
-          icon: Bike,
-          badge: activeDeliveriesCount > 0 ? activeDeliveriesCount : null,
-          badgeColor: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
         },
         {
           id: 'inventory',

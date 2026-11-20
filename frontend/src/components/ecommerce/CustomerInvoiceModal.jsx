@@ -296,26 +296,20 @@ export const CustomerInvoiceModal = ({
 
         {/* Bottom Footer Actions */}
         <div className="p-4 bg-stone-950 border-t border-stone-850 flex items-center justify-between gap-3 shrink-0">
-          {isDelivery && onOpenLiveMap ? (
-            <button
-              type="button"
-              onClick={() => {
-                onClose();
-                onOpenLiveMap(order);
-              }}
-              className="py-2.5 px-4 rounded-xl bg-stone-900 hover:bg-stone-850 border border-stone-800 text-amber-400 font-bold text-xs flex items-center gap-2 transition cursor-pointer"
-            >
-              <Bike className="w-4 h-4" />
-              <span>{isKhmer ? 'ផែនទីដឹកជញ្ជូន (Live Map)' : 'Track Courier on Map'}</span>
-            </button>
-          ) : (
-            <div className="text-[11px] text-stone-400 flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              <span>{isKhmer ? 'វិក្កយបត្រផ្លូវការមានសុពលភាព' : 'Valid Official Receipt'}</span>
-            </div>
-          )}
+          <div className="text-[11px] text-stone-400 flex items-center gap-1.5">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+            <span>{isKhmer ? 'វិក្កយបត្រផ្លូវការមានសុពលភាព' : 'Valid Official Receipt'}</span>
+          </div>
 
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handlePrint}
+              className="py-2.5 px-4 rounded-xl bg-stone-900 hover:bg-stone-850 border border-stone-800 text-stone-200 hover:text-white font-bold text-xs flex items-center gap-1.5 transition cursor-pointer"
+            >
+              <Printer className="w-4 h-4 text-amber-400" />
+              <span>{isKhmer ? 'បោះពុម្ព' : 'Print'}</span>
+            </button>
             <button
               type="button"
               onClick={handleDownload}

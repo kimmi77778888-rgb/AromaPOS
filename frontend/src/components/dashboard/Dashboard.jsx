@@ -21,7 +21,8 @@ import {
   TrendingUp,
   Package,
   Clock,
-  Sparkles
+  Sparkles,
+  Boxes
 } from 'lucide-react';
 import { UserAvatar } from '../common/UserAvatar';
 import { soundService } from '../../services/soundService';
@@ -405,32 +406,38 @@ export const Dashboard = () => {
           </div>
         </div>
 
-        {/* Metric 4: Operational Status & Fleet */}
+        {/* Metric 4: Inventory & Stock Status */}
         <div 
-          onClick={() => setActiveTab(metrics.activeDeliveriesCount > 0 ? 'delivery' : 'inventory')}
+          onClick={() => setActiveTab('inventory')}
           className="p-5 rounded-3xl bg-stone-900/60 border border-stone-800/80 hover:border-amber-500/40 shadow-md transition cursor-pointer group"
         >
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-bold uppercase tracking-wider text-stone-400">
-              {isKhmer ? 'ស្ថានភាពប្រតិបត្តិការ' : 'Operations & Fleet'}
+              {isKhmer ? 'ស្តុកទំនិញ & គ្រឿងផ្សំ' : 'Inventory & Stock'}
             </span>
             <div className="w-9 h-9 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 group-hover:scale-105 transition">
-              <Bike className="w-4 h-4 stroke-[2.5]" />
+              <Boxes className="w-4 h-4 stroke-[2.5]" />
             </div>
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-2xl sm:text-3xl font-black font-mono tracking-tight text-white">
-                {metrics.activeDeliveriesCount}
+                {lowStockIngredients.length + lowStockProducts.length}
               </h2>
-              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-                {isKhmer ? 'កំពុងដឹក' : 'Active Deliveries'}
+              <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${
+                lowStockIngredients.length + lowStockProducts.length > 0
+                  ? 'bg-rose-500/15 text-rose-300 border-rose-500/30'
+                  : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+              }`}>
+                {lowStockIngredients.length + lowStockProducts.length > 0 
+                  ? (isKhmer ? 'ស្តុកជិតអស់' : 'Stock Alerts') 
+                  : (isKhmer ? 'ស្តុកគ្រប់គ្រាន់' : 'Healthy Stock')}
               </span>
             </div>
             <div className="flex items-center justify-between mt-2 pt-2 border-t border-stone-850 text-xs text-stone-400">
-              <span>{isKhmer ? 'ស្តុកជិតអស់:' : 'Low Stock:'}</span>
-              <span className={`font-bold font-mono ${lowStockIngredients.length + lowStockProducts.length > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
-                {lowStockIngredients.length + lowStockProducts.length} items
+              <span>{isKhmer ? 'គ្រឿងផ្សំជិតអស់:' : 'Low Ingredients:'}</span>
+              <span className={`font-bold font-mono ${lowStockIngredients.length > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
+                {lowStockIngredients.length} items
               </span>
             </div>
           </div>
@@ -723,26 +730,26 @@ export const Dashboard = () => {
               })}
             </div>
 
-            {/* Active Deliveries Quick Card */}
+            {/* Real-time Order History Quick Card */}
             <div 
-              onClick={() => setActiveTab('delivery')}
-              className="p-3.5 rounded-2xl bg-emerald-950/20 border border-emerald-600/30 hover:border-emerald-500/60 transition cursor-pointer flex items-center justify-between gap-3"
+              onClick={() => setActiveTab('orders')}
+              className="p-3.5 rounded-2xl bg-amber-950/20 border border-amber-600/30 hover:border-amber-500/60 transition cursor-pointer flex items-center justify-between gap-3"
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
-                  <Bike className="w-5 h-5" />
+                <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
+                  <Receipt className="w-5 h-5" />
                 </div>
                 <div>
                   <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
-                    <span>{isKhmer ? 'ផែនទីដឹកជញ្ជូនផ្ទាល់' : 'Live Delivery Fleet'}</span>
+                    <span>{isKhmer ? 'ប្រវត្តិការកុម្ម៉ង់ & វិក្កយបត្រ' : 'Real Orders & Invoices'}</span>
                     <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
                   </h4>
                   <p className="text-[11px] text-stone-400">
-                    {metrics.activeDeliveriesCount} {isKhmer ? 'ការដឹកជញ្ជូនសកម្មក្នុងរាជធានីភ្នំពេញ' : 'Active orders in transit or preparation'}
+                    {orders.length} {isKhmer ? 'ការកុម្ម៉ង់សរុបក្នុងប្រព័ន្ធ' : 'Total orders recorded in live system'}
                   </p>
                 </div>
               </div>
-              <ArrowUpRight className="w-4 h-4 text-emerald-400 shrink-0" />
+              <ArrowUpRight className="w-4 h-4 text-amber-400 shrink-0" />
             </div>
           </div>
 
