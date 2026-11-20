@@ -107,7 +107,9 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
     customerUser, 
     storeInfo, 
     categories = [],
-    showToast
+    showToast,
+    footerSlides: appFooterSlides = [],
+    footerConfig: appFooterConfig = {}
   } = useApp();
 
   const currencyRate = storeInfo?.currencyRate || 4100;
@@ -312,71 +314,103 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [isSubscribedNewsletter, setIsSubscribedNewsletter] = useState(false);
 
-  const footerSlides = useMemo(() => [
-    {
-      id: 'slide-roastery',
-      image: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1600&q=80',
-      tag: isKhmer ? 'រោងម៉ាស៊ីនលីងកាហ្វេ BKK1' : 'CRAFT ROASTERY • BKK1 PHNOM PENH',
-      title: isKhmer ? 'កាហ្វេសុទ្ធ 100% ពីចម្ការលំដាប់ខ្ពស់' : 'Farm-to-Cup Micro Batch Roasting',
-      description: isKhmer 
-        ? 'លីងថ្មីៗជារៀងរាល់ថ្ងៃក្នុងបរិមាណតិច ដើម្បីធានាក្លិនឈ្ងុយ និងរសជាតិកាហ្វេពិតៗ' 
-        : 'Slow-roasted daily in 5kg artisan batches to unlock exquisite chocolate, floral, and nutty notes.',
-      badge: isKhmer ? 'លីងស្រស់ៗរាល់ថ្ងៃ' : 'Fresh Daily Roast',
-      actionText: isKhmer ? 'ស្វែងរកមុខទំនិញ' : 'Explore Online Menu',
-      actionHref: '#menu'
-    },
-    {
-      id: 'slide-barista',
-      image: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=1600&q=80',
-      tag: isKhmer ? 'សិល្បៈឆុងកាហ្វេដោយដៃ' : 'SPECIALTY BARISTA BAR',
-      title: isKhmer ? 'ការឆុងកាហ្វេដោយម៉ត់ចត់ & ហ្វូមទឹកដោះគោទន់រលោង' : 'Velvety Microfoam & Pour-Over Precision',
-      description: isKhmer 
-        ? 'ឆុងយ៉ាងផ្ចិតផ្ចង់ដោយ Barista ជំនាញ ផ្តល់ជូននូវរសជាតិកាហ្វេដ៏ល្អឥតខ្ចោះគ្រប់កែវ' 
-        : 'Handcrafted flat whites, cold brews, and single-origin pour-overs pulled to perfection.',
-      badge: isKhmer ? 'ឆុងដោយ Barista ជំនាញ' : 'Artisan Crafted',
-      actionText: isKhmer ? 'កុម្ម៉ង់កាហ្វេឥឡូវនេះ' : 'Order Signature Drinks',
-      actionHref: '#menu'
-    },
-    {
-      id: 'slide-bakery',
-      image: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=1600&q=80',
-      tag: isKhmer ? 'នំប៉័ងដុតក្តៅៗរាល់ព្រឹក' : 'FRESH BAKED DAILY • 6:30 AM',
-      title: isKhmer ? 'នំ Croissant ប័រធម្មជាតិ និងនំសូកូឡាបារាំង' : 'Golden Normandy Butter Croissants',
-      description: isKhmer 
-        ? 'ដុតថ្មីៗស្រួយក្រៅទន់ក្នុង ល្អបំផុតសម្រាប់ការញ៉ាំជាមួយកាហ្វេពេលព្រឹក' 
-        : 'Flaky artisan French pastries and gourmet baked treats crafted every morning.',
-      badge: isKhmer ? 'ដុតក្តៅៗរាល់ព្រឹក' : 'Baked Fresh at 6:30 AM',
-      actionText: isKhmer ? 'មើលនំប៉័ងទាំងអស់' : 'Explore Bakery Treats',
-      actionHref: '#menu'
-    },
-    {
-      id: 'slide-delivery',
-      image: 'https://images.unsplash.com/photo-1526367790999-0150786686a2?auto=format&fit=crop&w=1600&q=80',
-      tag: isKhmer ? 'សេវាដឹកជញ្ជូនរហ័សទូទាំងភ្នំពេញ' : 'EXPRESS DELIVERY • 20-30 MINS',
-      title: isKhmer ? 'ដឹកជញ្ជូនរក្សាកម្តៅដល់គេហដ្ឋាន & ការិយាល័យ' : 'Temperature-Controlled City Delivery',
-      description: isKhmer 
-        ? 'ធានាកាហ្វេនៅតែក្តៅ ឬត្រជាក់ស្រស់ស្រាយ ជាមួយប្រព័ន្ធតាមដានផ្លូវជាក់ស្តែង' 
-        : 'Delivered in insulated thermoses with live GPS route telemetry to your doorstep.',
-      badge: isKhmer ? 'ដឹក ២០-៣០ នាទី' : '20-30 Mins Express',
-      actionText: isKhmer ? 'តាមដានការកុម្ម៉ង់' : 'Track Active Orders',
-      onAction: () => setIsTrackerOpen(true)
-    },
-    {
-      id: 'slide-loyalty',
-      image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1600&q=80',
-      tag: isKhmer ? 'កម្មវិធីសមាជិក AROMA CLUB VIP' : 'VIP REWARDS & BAKONG KHQR',
-      title: isKhmer ? 'សន្សំពិន្ទុប្តូរយកភេសជ្ជៈ និងរង្វាន់ជាច្រើន' : 'Instant Points & 1-Click Bakong KHQR',
-      description: isKhmer 
-        ? 'ទទួលបានពិន្ទុរៀងរាល់ការចំណាយ និងទូទាត់ប្រាក់ភ្លាមៗតាម QR កូដបាគង' 
-        : 'Earn reward points with every sip, unlock member perks, and enjoy instant bank checkouts.',
-      badge: isKhmer ? 'សន្សំពិន្ទុ & ត្រាកាហ្វេ' : 'Earn 1 Pt per $1',
-      actionText: isKhmer ? 'ចូលជាសមាជិក VIP' : 'Join Aroma Club',
-      onAction: () => {
-        setAuthModalPrompt(isKhmer ? 'ចូលគណនីជាមួយ Gmail ដើម្បីទទួលបាន ១០០ ពិន្ទុ & ត្រាកាហ្វេ!' : 'Sign in with your Gmail to earn 100 welcome points & rewards!');
-        setIsAuthModalOpen(true);
+  const footerSlides = useMemo(() => {
+    const list = (appFooterSlides && appFooterSlides.length > 0) ? appFooterSlides : [
+      {
+        id: 'slide-roastery',
+        image: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1600&q=80',
+        tag: 'CRAFT ROASTERY • BKK1 PHNOM PENH',
+        tagKm: 'រោងម៉ាស៊ីនលីងកាហ្វេ BKK1',
+        title: 'Farm-to-Cup Micro Batch Roasting',
+        titleKm: 'កាហ្វេសុទ្ធ 100% ពីចម្ការលំដាប់ខ្ពស់',
+        description: 'Slow-roasted daily in 5kg artisan batches to unlock exquisite chocolate, floral, and nutty notes.',
+        descriptionKm: 'លីងថ្មីៗជារៀងរាល់ថ្ងៃក្នុងបរិមាណតិច ដើម្បីធានាក្លិនឈ្ងុយ និងរសជាតិកាហ្វេពិតៗ',
+        badge: 'Fresh Daily Roast',
+        badgeKm: 'លីងស្រស់ៗរាល់ថ្ងៃ',
+        actionText: 'Explore Online Menu',
+        actionTextKm: 'ស្វែងរកមុខទំនិញ',
+        actionHref: '#menu'
+      },
+      {
+        id: 'slide-barista',
+        image: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=1600&q=80',
+        tag: 'SPECIALTY BARISTA BAR',
+        tagKm: 'សិល្បៈឆុងកាហ្វេដោយដៃ',
+        title: 'Velvety Microfoam & Pour-Over Precision',
+        titleKm: 'ការឆុងកាហ្វេដោយម៉ត់ចត់ & ហ្វូមទឹកដោះគោទន់រលោង',
+        description: 'Handcrafted flat whites, cold brews, and single-origin pour-overs pulled to perfection.',
+        descriptionKm: 'ឆុងយ៉ាងផ្ចិតផ្ចង់ដោយ Barista ជំនាញ ផ្តល់ជូននូវរសជាតិកាហ្វេដ៏ល្អឥតខ្ចោះគ្រប់កែវ',
+        badge: 'Artisan Crafted',
+        badgeKm: 'ឆុងដោយ Barista ជំនាញ',
+        actionText: 'Order Signature Drinks',
+        actionTextKm: 'កុម្ម៉ង់កាហ្វេឥឡូវនេះ',
+        actionHref: '#menu'
+      },
+      {
+        id: 'slide-bakery',
+        image: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=1600&q=80',
+        tag: 'FRESH BAKED DAILY • 6:30 AM',
+        tagKm: 'នំប៉័ងដុតក្តៅៗរាល់ព្រឹក',
+        title: 'Golden Normandy Butter Croissants',
+        titleKm: 'នំ Croissant ប័រធម្មជាតិ និងនំសូកូឡាបារាំង',
+        description: 'Flaky artisan French pastries and gourmet baked treats crafted every morning.',
+        descriptionKm: 'ដុតថ្មីៗស្រួយក្រៅទន់ក្នុង ល្អបំផុតសម្រាប់ការញ៉ាំជាមួយកាហ្វេពេលព្រឹក',
+        badge: 'Baked Fresh at 6:30 AM',
+        badgeKm: 'ដុតក្តៅៗរាល់ព្រឹក',
+        actionText: 'Explore Bakery Treats',
+        actionTextKm: 'មើលនំប៉័ងទាំងអស់',
+        actionHref: '#menu'
+      },
+      {
+        id: 'slide-delivery',
+        image: 'https://images.unsplash.com/photo-1526367790999-0150786686a2?auto=format&fit=crop&w=1600&q=80',
+        tag: 'EXPRESS DELIVERY • 20-30 MINS',
+        tagKm: 'សេវាដឹកជញ្ជូនរហ័សទូទាំងភ្នំពេញ',
+        title: 'Temperature-Controlled City Delivery',
+        titleKm: 'ដឹកជញ្ជូនរក្សាកម្តៅដល់គេហដ្ឋាន & ការិយាល័យ',
+        description: 'Delivered in insulated thermoses with live GPS route telemetry to your doorstep.',
+        descriptionKm: 'ធានាកាហ្វេនៅតែក្តៅ ឬត្រជាក់ស្រស់ស្រាយ ជាមួយប្រព័ន្ធតាមដានផ្លូវជាក់ស្តែង',
+        badge: '20-30 Mins Express',
+        badgeKm: 'ដឹក ២០-៣០ នាទី',
+        actionText: 'Track Active Orders',
+        actionTextKm: 'តាមដានការកុម្ម៉ង់',
+        actionType: 'TRACKER'
+      },
+      {
+        id: 'slide-loyalty',
+        image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1600&q=80',
+        tag: 'VIP REWARDS & BAKONG KHQR',
+        tagKm: 'កម្មវិធីសមាជិក AROMA CLUB VIP',
+        title: 'Instant Points & 1-Click Bakong KHQR',
+        titleKm: 'សន្សំពិន្ទុប្តូរយកភេសជ្ជៈ និងរង្វាន់ជាច្រើន',
+        description: 'Earn reward points with every sip, unlock member perks, and enjoy instant bank checkouts.',
+        descriptionKm: 'ទទួលបានពិន្ទុរៀងរាល់ការចំណាយ និងទូទាត់ប្រាក់ភ្លាមៗតាម QR កូដបាគង',
+        badge: 'Earn 1 Pt per $1',
+        badgeKm: 'សន្សំពិន្ទុ & ត្រាកាហ្វេ',
+        actionText: 'Join Aroma Club',
+        actionTextKm: 'ចូលជាសមាជិក VIP',
+        actionType: 'AUTH'
       }
-    }
-  ], [isKhmer]);
+    ];
+
+    return list.map((s) => ({
+      ...s,
+      tag: isKhmer ? (s.tagKm || s.tag) : (s.tag || 'CRAFT ROASTERY • BKK1 PHNOM PENH'),
+      title: isKhmer ? (s.titleKm || s.title) : (s.title || 'Artisan Coffee Roasting'),
+      description: isKhmer ? (s.descriptionKm || s.description) : (s.description || ''),
+      badge: isKhmer ? (s.badgeKm || s.badge) : (s.badge || 'Featured'),
+      actionText: isKhmer ? (s.actionTextKm || s.actionText) : (s.actionText || 'Explore Menu'),
+      actionHref: s.actionType === 'MENU' ? '#menu' : (s.actionHref || (s.actionType === 'CUSTOM' ? s.customHref : null)),
+      onAction: s.actionType === 'TRACKER'
+        ? () => setIsTrackerOpen(true)
+        : (s.actionType === 'AUTH'
+            ? () => {
+                setAuthModalPrompt(isKhmer ? 'ចូលគណនីជាមួយ Gmail ដើម្បីទទួលបាន ១០០ ពិន្ទុ & ត្រាកាហ្វេ!' : 'Sign in with your Gmail to earn 100 welcome points & rewards!');
+                setIsAuthModalOpen(true);
+              }
+            : (s.onAction || undefined))
+    }));
+  }, [appFooterSlides, isKhmer]);
 
   // Slideshow Timer: Auto advance every 4.5 seconds
   useEffect(() => {
@@ -1316,35 +1350,25 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
           {/* 8B. DYNAMIC INFINITE MARQUEE TICKER TAPE */}
           <div className="overflow-hidden rounded-2xl bg-stone-900/60 border border-stone-850 py-3 relative select-none">
             <div className="flex items-center gap-8 whitespace-nowrap animate-marquee font-mono text-xs text-stone-300 font-bold">
-              <span className="flex items-center gap-2 text-amber-400">
-                <span>☕</span>
-                <span>Fresh Micro-Batch Roasted Daily in BKK1</span>
-              </span>
-              <span className="text-stone-600">•</span>
-              <span className="flex items-center gap-2 text-emerald-400">
-                <span>🛵</span>
-                <span>20-30m Express Phnom Penh Delivery</span>
-              </span>
-              <span className="text-stone-600">•</span>
-              <span className="flex items-center gap-2 text-sky-400">
-                <span>⚡</span>
-                <span>Instant NBC Bakong KHQR Checkout</span>
-              </span>
-              <span className="text-stone-600">•</span>
-              <span className="flex items-center gap-2 text-amber-300">
-                <span>🥐</span>
-                <span>French Normandy Butter Pastries Baked 6:30 AM</span>
-              </span>
-              <span className="text-stone-600">•</span>
-              <span className="flex items-center gap-2 text-purple-400">
-                <span>⭐</span>
-                <span>Earn 1 VIP Point per $1 with Aroma Club</span>
-              </span>
-              <span className="text-stone-600">•</span>
-              <span className="flex items-center gap-2 text-emerald-300">
-                <span>🌾</span>
-                <span>100% Single Origin Arabica Beans</span>
-              </span>
+              {(appFooterConfig?.tickerItems && appFooterConfig.tickerItems.length > 0
+                ? appFooterConfig.tickerItems
+                : [
+                    { id: '1', icon: '☕', text: 'Fresh Micro-Batch Roasted Daily in BKK1', textKm: 'កាហ្វេលីងថ្មីៗប្រចាំថ្ងៃនៅបឹងកេងកង ១', color: 'text-amber-400' },
+                    { id: '2', icon: '🛵', text: '20-30m Express Phnom Penh Delivery', textKm: 'ដឹកជញ្ជូនរហ័ស ២០-៣០ នាទីក្នុងភ្នំពេញ', color: 'text-emerald-400' },
+                    { id: '3', icon: '⚡', text: 'Instant NBC Bakong KHQR Checkout', textKm: 'ទូទាត់ប្រាក់ភ្លាមៗតាមបាគង KHQR', color: 'text-sky-400' },
+                    { id: '4', icon: '🥐', text: 'French Normandy Butter Pastries Baked 6:30 AM', textKm: 'នំ Croissant ប័រធម្មជាតិដុតក្តៅៗ ៦:៣០ ព្រឹក', color: 'text-amber-300' },
+                    { id: '5', icon: '⭐', text: 'Earn 1 VIP Point per $1 with Aroma Club', textKm: 'សន្សំ ១ ពិន្ទុរាល់ចំណាយ ១ ដុល្លារ', color: 'text-purple-400' },
+                    { id: '6', icon: '🌾', text: '100% Single Origin Arabica Beans', textKm: 'គ្រាប់កាហ្វេអារ៉ាប៊ីកាគុណភាពខ្ពស់ 100%', color: 'text-emerald-300' }
+                  ]
+              ).map((item, idx) => (
+                <React.Fragment key={item.id || idx}>
+                  <span className={`flex items-center gap-2 ${item.color || 'text-amber-400'}`}>
+                    <span>{item.icon || '☕'}</span>
+                    <span>{isKhmer ? (item.textKm || item.text) : item.text}</span>
+                  </span>
+                  <span className="text-stone-600">•</span>
+                </React.Fragment>
+              ))}
             </div>
           </div>
 
@@ -1363,21 +1387,27 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
               </div>
               <p className="text-stone-400 leading-relaxed text-[11px]">
                 {isKhmer 
-                  ? 'រោងម៉ាស៊ីនកាហ្វេសិល្បៈ និងហាងកាហ្វេពិសេសនៅរាជធានីភ្នំពេញ ផ្តល់ជូននូវរសជាតិកាហ្វេពិតៗ ឆុងស្រស់ៗ និងនំប៉័ងដុតរាល់ព្រឹក។' 
-                  : 'Specialty coffee roastery and artisan bakery in Phnom Penh, crafting direct farm-to-cup coffee and authentic French pastries.'}
+                  ? (appFooterConfig?.aboutKm || 'រោងម៉ាស៊ីនកាហ្វេសិល្បៈ និងហាងកាហ្វេពិសេសនៅរាជធានីភ្នំពេញ ផ្តល់ជូននូវរសជាតិកាហ្វេពិតៗ ឆុងស្រស់ៗ និងនំប៉័ងដុតរាល់ព្រឹក។')
+                  : (appFooterConfig?.aboutEn || 'Specialty coffee roastery and artisan bakery in Phnom Penh, crafting direct farm-to-cup coffee and authentic French pastries.')}
               </p>
               <div className="space-y-2 pt-1 text-stone-300">
                 <div className="flex items-start gap-2">
                   <MapPin className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                  <span className="text-[11px]">{storeAddress}</span>
+                  <span className="text-[11px]">{appFooterConfig?.contactAddress || storeAddress}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Phone className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <a href={`tel:${storePhone}`} className="text-[11px] hover:text-white transition font-mono">{storePhone}</a>
+                  <a href={`tel:${appFooterConfig?.contactPhone || storePhone}`} className="text-[11px] hover:text-white transition font-mono">
+                    {appFooterConfig?.contactPhone || storePhone}
+                  </a>
                 </div>
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4 text-sky-400 shrink-0" />
-                  <span className="text-[11px] font-mono text-emerald-400 font-bold">Open Daily: 6:30 AM - 9:00 PM</span>
+                  <span className="text-[11px] font-mono text-emerald-400 font-bold">
+                    {isKhmer 
+                      ? (appFooterConfig?.openingHoursKm || appFooterConfig?.openingHours || 'បើកជារៀងរាល់ថ្ងៃ: ៦:៣០ ព្រឹក - ៩:០០ យប់') 
+                      : (appFooterConfig?.openingHours || 'Open Daily: 6:30 AM - 9:00 PM')}
+                  </span>
                 </div>
               </div>
             </div>
@@ -1441,7 +1471,9 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
             <div className="space-y-3">
               <h4 className="font-black text-sm text-white uppercase tracking-wider text-stone-200 border-b border-stone-850 pb-2 flex items-center justify-between">
                 <span>{isKhmer ? 'វិចិត្រសាលកាហ្វេ' : 'Roastery Moments'}</span>
-                <span className="text-[10px] text-amber-400 lowercase font-mono">@aromacoffeepnh</span>
+                <span className="text-[10px] text-amber-400 lowercase font-mono">
+                  {appFooterConfig?.socialHandle || '@aromacoffeepnh'}
+                </span>
               </h4>
               <div className="grid grid-cols-3 gap-2">
                 {[

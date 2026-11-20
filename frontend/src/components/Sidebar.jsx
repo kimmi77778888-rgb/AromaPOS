@@ -19,6 +19,7 @@ import {
   PanelLeftOpen,
   Globe,
   Bike,
+  SlidersHorizontal,
   X
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
@@ -160,6 +161,13 @@ export const Sidebar = () => {
           label: 'Store Dashboard',
           labelKm: 'ផ្ទាំងគ្រប់គ្រងអាជីវកម្ម',
           icon: LayoutDashboard,
+          badge: null
+        },
+        {
+          id: 'slideshow',
+          label: 'Slideshow & Footer',
+          labelKm: 'គ្រប់គ្រង Slideshow & Footer',
+          icon: SlidersHorizontal,
           badge: null
         },
         {

@@ -18,7 +18,8 @@ import {
   Coffee,
   Lock,
   Menu,
-  Bike
+  Bike,
+  SlidersHorizontal
 } from 'lucide-react';
 import { soundService } from '../services/soundService';
 
@@ -93,6 +94,12 @@ export const Header = ({ onOpenAddProduct }) => {
           icon: Users,
           title: isKhmer ? 'បុគ្គលិក & សិទ្ធិប្រើប្រាស់' : 'Staff & Permissions',
           subtitle: isKhmer ? 'គណនីបុគ្គលិក & កូដ PIN' : 'Shift roster & PIN codes'
+        };
+      case 'slideshow':
+        return {
+          icon: SlidersHorizontal,
+          title: isKhmer ? 'គ្រប់គ្រង Slideshow & Footer' : 'Slideshow & Footer Manager',
+          subtitle: isKhmer ? 'កែប្រែផ្ទាំងរូបភាពស្លាយ អក្សររត់ & ព័ត៌មានខាងក្រោម' : 'Homepage showcase banners, marquee ticker & footer details'
         };
       default:
         return { 

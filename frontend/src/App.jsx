@@ -25,6 +25,7 @@ import { MobileBottomNav } from './components/common/MobileBottomNav';
 import { EmergencyAlarmModal } from './components/common/EmergencyAlarmModal';
 import { PublicEcommerceHome } from './components/ecommerce/PublicEcommerceHome';
 import { AdminDeliveryTracker } from './components/delivery/AdminDeliveryTracker';
+import { SlideshowFooterManagement } from './components/ecommerce/SlideshowFooterManagement';
 
 export const AppContent = ({ forcePos = false }) => {
   const { 
@@ -120,6 +121,7 @@ export const AppContent = ({ forcePos = false }) => {
         <main className="flex-1 flex overflow-hidden relative pb-14 md:pb-0">
           {activeTab === 'pos' && <PosTerminal />}
           {activeTab === 'dashboard' && <Dashboard />}
+          {activeTab === 'slideshow' && <SlideshowFooterManagement />}
           {activeTab === 'inventory' && (
             <InventoryManagement onOpenAddModal={() => setIsAddProductModalOpen(true)} />
           )}

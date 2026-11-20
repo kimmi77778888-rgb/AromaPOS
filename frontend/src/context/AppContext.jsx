@@ -7,6 +7,111 @@ import { DEMO_USERS, DEMO_CUSTOMERS, ROLE_PERMISSIONS } from '../services/coffee
 import { storage } from '../utils/storage';
 import { soundService } from '../services/soundService';
 
+export const DEFAULT_ECOMMERCE_SLIDES = [
+  {
+    id: 'slide-roastery',
+    image: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1600&q=80',
+    tag: 'CRAFT ROASTERY • BKK1 PHNOM PENH',
+    tagKm: 'រោងម៉ាស៊ីនលីងកាហ្វេ BKK1',
+    title: 'Farm-to-Cup Micro Batch Roasting',
+    titleKm: 'កាហ្វេសុទ្ធ 100% ពីចម្ការលំដាប់ខ្ពស់',
+    description: 'Slow-roasted daily in 5kg artisan batches to unlock exquisite chocolate, floral, and nutty notes.',
+    descriptionKm: 'លីងថ្មីៗជារៀងរាល់ថ្ងៃក្នុងបរិមាណតិច ដើម្បីធានាក្លិនឈ្ងុយ និងរសជាតិកាហ្វេពិតៗ',
+    badge: 'Fresh Daily Roast',
+    badgeKm: 'លីងស្រស់ៗរាល់ថ្ងៃ',
+    actionText: 'Explore Online Menu',
+    actionTextKm: 'ស្វែងរកមុខទំនិញ',
+    actionHref: '#menu'
+  },
+  {
+    id: 'slide-barista',
+    image: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=1600&q=80',
+    tag: 'SPECIALTY BARISTA BAR',
+    tagKm: 'សិល្បៈឆុងកាហ្វេដោយដៃ',
+    title: 'Velvety Microfoam & Pour-Over Precision',
+    titleKm: 'ការឆុងកាហ្វេដោយម៉ត់ចត់ & ហ្វូមទឹកដោះគោទន់រលោង',
+    description: 'Handcrafted flat whites, cold brews, and single-origin pour-overs pulled to perfection.',
+    descriptionKm: 'ឆុងយ៉ាងផ្ចិតផ្ចង់ដោយ Barista ជំនាញ ផ្តល់ជូននូវរសជាតិកាហ្វេដ៏ល្អឥតខ្ចោះគ្រប់កែវ',
+    badge: 'Artisan Crafted',
+    badgeKm: 'ឆុងដោយ Barista ជំនាញ',
+    actionText: 'Order Signature Drinks',
+    actionTextKm: 'កុម្ម៉ង់កាហ្វេឥឡូវនេះ',
+    actionHref: '#menu'
+  },
+  {
+    id: 'slide-bakery',
+    image: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=1600&q=80',
+    tag: 'FRESH BAKED DAILY • 6:30 AM',
+    tagKm: 'នំប៉័ងដុតក្តៅៗរាល់ព្រឹក',
+    title: 'Golden Normandy Butter Croissants',
+    titleKm: 'នំ Croissant ប័រធម្មជាតិ និងនំសូកូឡាបារាំង',
+    description: 'Flaky artisan French pastries and gourmet baked treats crafted every morning.',
+    descriptionKm: 'ដុតថ្មីៗស្រួយក្រៅទន់ក្នុង ល្អបំផុតសម្រាប់ការញ៉ាំជាមួយកាហ្វេពេលព្រឹក',
+    badge: 'Baked Fresh at 6:30 AM',
+    badgeKm: 'ដុតក្តៅៗរាល់ព្រឹក',
+    actionText: 'Explore Bakery Treats',
+    actionTextKm: 'មើលនំប៉័ងទាំងអស់',
+    actionHref: '#menu'
+  },
+  {
+    id: 'slide-delivery',
+    image: 'https://images.unsplash.com/photo-1526367790999-0150786686a2?auto=format&fit=crop&w=1600&q=80',
+    tag: 'EXPRESS DELIVERY • 20-30 MINS',
+    tagKm: 'សេវាដឹកជញ្ជូនរហ័សទូទាំងភ្នំពេញ',
+    title: 'Temperature-Controlled City Delivery',
+    titleKm: 'ដឹកជញ្ជូនរក្សាកម្តៅដល់គេហដ្ឋាន & ការិយាល័យ',
+    description: 'Delivered in insulated thermoses with live GPS route telemetry to your doorstep.',
+    descriptionKm: 'ធានាកាហ្វេនៅតែក្តៅ ឬត្រជាក់ស្រស់ស្រាយ ជាមួយប្រព័ន្ធតាមដានផ្លូវជាក់ស្តែង',
+    badge: '20-30 Mins Express',
+    badgeKm: 'ដឹក ២០-៣០ នាទី',
+    actionText: 'Track Active Orders',
+    actionTextKm: 'តាមដានការកុម្ម៉ង់',
+    actionType: 'TRACKER'
+  },
+  {
+    id: 'slide-loyalty',
+    image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1600&q=80',
+    tag: 'VIP REWARDS & BAKONG KHQR',
+    tagKm: 'កម្មវិធីសមាជិក AROMA CLUB VIP',
+    title: 'Instant Points & 1-Click Bakong KHQR',
+    titleKm: 'សន្សំពិន្ទុប្តូរយកភេសជ្ជៈ និងរង្វាន់ជាច្រើន',
+    description: 'Earn reward points with every sip, unlock member perks, and enjoy instant bank checkouts.',
+    descriptionKm: 'ទទួលបានពិន្ទុរៀងរាល់ការចំណាយ និងទូទាត់ប្រាក់ភ្លាមៗតាម QR កូដបាគង',
+    badge: 'Earn 1 Pt per $1',
+    badgeKm: 'សន្សំពិន្ទុ & ត្រាកាហ្វេ',
+    actionText: 'Join Aroma Club',
+    actionTextKm: 'ចូលជាសមាជិក VIP',
+    actionType: 'AUTH'
+  }
+];
+
+export const DEFAULT_FOOTER_CONFIG = {
+  aboutEn: 'Specialty coffee roastery and artisan bakery in Phnom Penh, crafting direct farm-to-cup coffee and authentic French pastries.',
+  aboutKm: 'រោងម៉ាស៊ីនកាហ្វេសិល្បៈ និងហាងកាហ្វេពិសេសនៅរាជធានីភ្នំពេញ ផ្តល់ជូននូវរសជាតិកាហ្វេពិតៗ ឆុងស្រស់ៗ និងនំប៉័ងដុតរាល់ព្រឹក។',
+  openingHours: 'Open Daily: 6:30 AM - 9:00 PM',
+  openingHoursKm: 'បើកជារៀងរាល់ថ្ងៃ: ៦:៣០ ព្រឹក - ៩:០០ យប់',
+  socialHandle: '@aromacoffeepnh',
+  contactPhone: '+855 23 999 881',
+  contactAddress: 'Street 57, Sangkat Boeng Keng Kang 1, Phnom Penh',
+  contactAddressKm: 'ផ្លូវ ៥៧ សង្កាត់បឹងកេងកង ១ រាជធានីភ្នំពេញ',
+  tickerItems: [
+    { id: 'tick-1', icon: '☕', text: 'Fresh Micro-Batch Roasted Daily in BKK1', textKm: 'កាហ្វេលីងថ្មីៗប្រចាំថ្ងៃនៅបឹងកេងកង ១', color: 'text-amber-400' },
+    { id: 'tick-2', icon: '🛵', text: '20-30m Express Phnom Penh Delivery', textKm: 'ដឹកជញ្ជូនរហ័ស ២០-៣០ នាទីក្នុងភ្នំពេញ', color: 'text-emerald-400' },
+    { id: 'tick-3', icon: '⚡', text: 'Instant NBC Bakong KHQR Checkout', textKm: 'ទូទាត់ប្រាក់ភ្លាមៗតាមបាគង KHQR', color: 'text-sky-400' },
+    { id: 'tick-4', icon: '🥐', text: 'French Normandy Butter Pastries Baked 6:30 AM', textKm: 'នំ Croissant ប័រធម្មជាតិដុតក្តៅៗ ៦:៣០ ព្រឹក', color: 'text-amber-300' },
+    { id: 'tick-5', icon: '⭐', text: 'Earn 1 VIP Point per $1 with Aroma Club', textKm: 'សន្សំ ១ ពិន្ទុរាល់ចំណាយ ១ ដុល្លារ', color: 'text-purple-400' },
+    { id: 'tick-6', icon: '🌾', text: '100% Single Origin Arabica Beans', textKm: 'គ្រាប់កាហ្វេអារ៉ាប៊ីកាគុណភាពខ្ពស់ 100%', color: 'text-emerald-300' }
+  ],
+  galleryPhotos: [
+    { id: 1, url: 'https://images.unsplash.com/photo-1518832553480-cd0e625ed3e6?auto=format&fit=crop&w=300&q=80', label: 'Roasting' },
+    { id: 2, url: 'https://images.unsplash.com/photo-1534778101976-62847782c213?auto=format&fit=crop&w=300&q=80', label: 'Latte Art' },
+    { id: 3, url: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=300&q=80', label: 'Pastry' },
+    { id: 4, url: 'https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?auto=format&fit=crop&w=300&q=80', label: 'Cold Drip' },
+    { id: 5, url: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=300&q=80', label: 'Pour Over' },
+    { id: 6, url: 'https://images.unsplash.com/photo-1442512595331-e89e73853f31?auto=format&fit=crop&w=300&q=80', label: 'Cafe Ambience' }
+  ]
+};
+
 const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
@@ -72,15 +177,19 @@ export const AppProvider = ({ children }) => {
     const allowedTabsSet = new Set(base.allowedTabs || []);
 
     if (userRole === 'ADMIN') {
-      ['pos', 'dashboard', 'inventory', 'orders', 'reports', 'kds', 'staff'].forEach((t) => allowedTabsSet.add(t));
+      ['pos', 'dashboard', 'inventory', 'orders', 'reports', 'kds', 'staff', 'slideshow'].forEach((t) => allowedTabsSet.add(t));
     } else {
       if (userPermList.includes('canAccessPos')) allowedTabsSet.add('pos');
       if (userPermList.includes('canAccessKds')) allowedTabsSet.add('kds');
-      if (userPermList.includes('canAccessDashboard')) allowedTabsSet.add('dashboard');
+      if (userPermList.includes('canAccessDashboard')) {
+        allowedTabsSet.add('dashboard');
+        allowedTabsSet.add('slideshow');
+      }
       if (userPermList.includes('canAccessInventory')) allowedTabsSet.add('inventory');
       if (userPermList.includes('canAccessReports')) allowedTabsSet.add('reports');
       if (userPermList.includes('canAccessOrders')) allowedTabsSet.add('orders');
       if (userPermList.includes('canManageStaff')) allowedTabsSet.add('staff');
+      if (userPermList.includes('canManageSlideshow')) allowedTabsSet.add('slideshow');
     }
 
     return {
@@ -182,6 +291,90 @@ export const AppProvider = ({ children }) => {
       } catch (e) {}
       return next;
     });
+  }, []);
+
+  // Dynamic Slideshow & Footer Customization State
+  const [footerSlides, setFooterSlides] = useState(() => {
+    try {
+      const saved = storage.getItem('aromapos_footer_slides');
+      return saved ? JSON.parse(saved) : DEFAULT_ECOMMERCE_SLIDES;
+    } catch (e) {
+      return DEFAULT_ECOMMERCE_SLIDES;
+    }
+  });
+
+  const [footerConfig, setFooterConfig] = useState(() => {
+    try {
+      const saved = storage.getItem('aromapos_footer_config');
+      return saved ? JSON.parse(saved) : DEFAULT_FOOTER_CONFIG;
+    } catch (e) {
+      return DEFAULT_FOOTER_CONFIG;
+    }
+  });
+
+  const addFooterSlide = useCallback((newSlide) => {
+    setFooterSlides((prev) => {
+      const slide = {
+        ...newSlide,
+        id: newSlide.id || `slide-${Date.now()}`
+      };
+      const updated = [slide, ...prev];
+      try {
+        storage.setItem('aromapos_footer_slides', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+  }, []);
+
+  const updateFooterSlide = useCallback((slideId, updates) => {
+    setFooterSlides((prev) => {
+      const updated = prev.map((s) => (s.id === slideId ? { ...s, ...updates } : s));
+      try {
+        storage.setItem('aromapos_footer_slides', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+  }, []);
+
+  const deleteFooterSlide = useCallback((slideId) => {
+    setFooterSlides((prev) => {
+      const updated = prev.filter((s) => s.id !== slideId);
+      try {
+        storage.setItem('aromapos_footer_slides', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+  }, []);
+
+  const reorderFooterSlides = useCallback((newSlides) => {
+    setFooterSlides(newSlides);
+    try {
+      storage.setItem('aromapos_footer_slides', JSON.stringify(newSlides));
+    } catch (e) {}
+  }, []);
+
+  const resetFooterSlides = useCallback(() => {
+    setFooterSlides(DEFAULT_ECOMMERCE_SLIDES);
+    try {
+      storage.setItem('aromapos_footer_slides', JSON.stringify(DEFAULT_ECOMMERCE_SLIDES));
+    } catch (e) {}
+  }, []);
+
+  const updateFooterConfig = useCallback((updates) => {
+    setFooterConfig((prev) => {
+      const updated = { ...prev, ...updates };
+      try {
+        storage.setItem('aromapos_footer_config', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+  }, []);
+
+  const resetFooterConfig = useCallback(() => {
+    setFooterConfig(DEFAULT_FOOTER_CONFIG);
+    try {
+      storage.setItem('aromapos_footer_config', JSON.stringify(DEFAULT_FOOTER_CONFIG));
+    } catch (e) {}
   }, []);
 
   // Show Only POS Mode (Full POS Screen)
@@ -2034,6 +2227,15 @@ export const AppProvider = ({ children }) => {
         updateStoreInfo,
         isStoreSettingsOpen,
         setIsStoreSettingsOpen,
+        footerSlides,
+        footerConfig,
+        addFooterSlide,
+        updateFooterSlide,
+        deleteFooterSlide,
+        reorderFooterSlides,
+        resetFooterSlides,
+        updateFooterConfig,
+        resetFooterConfig,
         user,
         userRole,
         permissions,
