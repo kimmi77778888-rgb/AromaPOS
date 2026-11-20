@@ -804,7 +804,7 @@ export const CustomerAccountModal = ({
                       type="email"
                       value={profileEmail}
                       onChange={(e) => setProfileEmail(e.target.value)}
-                      placeholder="e.g. lensophara@gmail.com"
+                      placeholder="e.g. customer@gmail.com"
                       className="w-full bg-stone-900 border border-stone-800 rounded-xl px-3 py-2 text-xs text-stone-100 placeholder:text-stone-600 focus:outline-none focus:border-amber-500 font-mono"
                     />
                   </div>

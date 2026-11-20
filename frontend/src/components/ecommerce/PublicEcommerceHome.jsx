@@ -36,7 +36,9 @@ import {
   Send,
   Mail,
   Heart,
-  ArrowUp
+  ArrowUp,
+  FileText,
+  Download
 } from 'lucide-react';
 import { LanguageSwitcher } from '../common/LanguageSwitcher';
 import { EcommerceCustomizationModal } from './EcommerceCustomizationModal';
@@ -46,6 +48,7 @@ import { CustomerOrderTracker } from './CustomerOrderTracker';
 import { CustomerAuthModal, GoogleLogoSvg } from './CustomerAuthModal';
 import { CustomerAccountModal } from './CustomerAccountModal';
 import { LiveDeliveryMapModal } from './LiveDeliveryMapModal';
+import { CustomerInvoiceModal } from './CustomerInvoiceModal';
 import { getLiveDeviceLocation } from '../../services/routingService';
 
 export const TUBE_STORE_BRANCHES = [
@@ -233,6 +236,7 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [isTrackerOpen, setIsTrackerOpen] = useState(false);
   const [latestPlacedOrder, setLatestPlacedOrder] = useState(null);
+  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
 
   // Customer Authentication & Account Modals State
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -281,6 +285,7 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
       console.error('Error placing online order:', e);
     }
     setLatestPlacedOrder(newOrder);
+    setIsInvoiceModalOpen(true);
     setCartItems([]);
     setPendingCheckoutOrderData(null);
     setIsCartOpen(false);
@@ -527,6 +532,57 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
           </div>
         </div>
       </header>
+
+      {/* ─────────────────────────────────────────────────────────────
+          2.5. PERSISTENT INVOICE & ORDER BANNER (AFTER PAYMENT)
+      ────────────────────────────────────────────────────────────── */}
+      {latestPlacedOrder && (
+        <div className="sticky top-18 sm:top-20 z-35 bg-gradient-to-r from-emerald-950/95 via-stone-900/95 to-emerald-950/95 border-b border-emerald-500/40 px-4 sm:px-8 py-2.5 backdrop-blur-xl flex items-center justify-between text-xs animate-fade-in shadow-xl select-none">
+          <div className="flex items-center gap-2.5 text-emerald-300 font-bold truncate">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span className="truncate">
+              {isKhmer 
+                ? `ការកុម្ម៉ង់ #${latestPlacedOrder.orderNumber || latestPlacedOrder.id} ទទួលបានជោគជ័យ! ($${Number(latestPlacedOrder.total || latestPlacedOrder.grandTotal || 0).toFixed(2)})` 
+                : `Order #${latestPlacedOrder.orderNumber || latestPlacedOrder.id} placed successfully! ($${Number(latestPlacedOrder.total || latestPlacedOrder.grandTotal || 0).toFixed(2)})`}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => setIsInvoiceModalOpen(true)}
+              className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-black text-xs flex items-center gap-1.5 transition cursor-pointer shadow-md active:scale-95"
+            >
+              <FileText className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span>{isKhmer ? '📄 មើល & ទាញយកវិក្កយបត្រ' : '📄 View & Download Invoice'}</span>
+            </button>
+
+            {(latestPlacedOrder.orderType === 'DELIVERY' || latestPlacedOrder.fulfillmentType === 'DELIVERY') && (
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveDeliveryOrderForMap(latestPlacedOrder);
+                  setIsLiveDeliveryMapOpen(true);
+                }}
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-stone-900 hover:bg-stone-850 border border-stone-800 text-stone-200 hover:text-white text-xs font-bold transition cursor-pointer"
+              >
+                <Bike className="w-3.5 h-3.5 text-amber-400" />
+                <span>{isKhmer ? 'ផែនទីដឹកជញ្ជូន' : 'Track Rider'}</span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() => setLatestPlacedOrder(null)}
+              className="text-stone-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition cursor-pointer"
+              title={isKhmer ? 'បិទ' : 'Dismiss'}
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Mobile Drawer Menu (Clean & Modern Glass Dropdown) */}
       {isMobileNavOpen && (
@@ -1564,6 +1620,10 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
           setIsLiveDeliveryMapOpen(true);
         }}
         onOpenAccountModal={() => setIsAccountModalOpen(true)}
+        onOpenInvoiceModal={(order) => {
+          setLatestPlacedOrder(order);
+          setIsInvoiceModalOpen(true);
+        }}
       />
 
       {/* 4. Live Order Status Tracker */}
@@ -1642,6 +1702,20 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
           setActiveDeliveryOrderForMap(null);
         }}
         order={activeDeliveryOrderForMap || latestPlacedOrder}
+      />
+
+      {/* 7.5. Customer Official Tax Invoice Modal (Downloadable & Printable Receipt) */}
+      <CustomerInvoiceModal
+        isOpen={isInvoiceModalOpen}
+        order={latestPlacedOrder}
+        onClose={() => setIsInvoiceModalOpen(false)}
+        onOpenLiveMap={(order) => {
+          setActiveDeliveryOrderForMap(order);
+          setIsLiveDeliveryMapOpen(true);
+        }}
+        onOpenTracker={(order) => {
+          setIsTrackerOpen(true);
+        }}
       />
 
       {/* ─────────────────────────────────────────────────────────────

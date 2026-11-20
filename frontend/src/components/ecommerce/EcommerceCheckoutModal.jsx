@@ -38,7 +38,8 @@ export const EcommerceCheckoutModal = ({
   orderData,
   onOrderPlaced,
   onOpenLiveDeliveryMap,
-  onOpenAccountModal
+  onOpenAccountModal,
+  onOpenInvoiceModal
 }) => {
   const { isKhmer } = useLanguage();
   const { storeInfo } = useApp();
@@ -211,6 +212,10 @@ export const EcommerceCheckoutModal = ({
   const handleDownloadInvoice = () => {
     if (confirmedOrder) {
       downloadInvoice(confirmedOrder);
+      if (onOpenInvoiceModal) {
+        onClose();
+        onOpenInvoiceModal(confirmedOrder);
+      }
     }
   };
 
@@ -731,10 +736,16 @@ export const EcommerceCheckoutModal = ({
 
                 <button
                   type="button"
-                  onClick={onClose}
-                  className="px-4 py-2 rounded-xl bg-stone-900 hover:bg-stone-850 border border-stone-800 text-stone-300 font-bold text-xs ml-auto cursor-pointer"
+                  onClick={() => {
+                    onClose();
+                    if (onOpenInvoiceModal && confirmedOrder) {
+                      onOpenInvoiceModal(confirmedOrder);
+                    }
+                  }}
+                  className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs ml-auto cursor-pointer flex items-center gap-1.5 transition shadow-sm"
                 >
-                  {isKhmer ? 'កុម្ម៉ង់បន្ថែម (Done)' : 'Close'}
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>{isKhmer ? 'វិក្កយបត្រ (Done & Invoice)' : 'Done & View Invoice'}</span>
                 </button>
               </div>
             </div>
