@@ -44,7 +44,7 @@ export const AdminDeliveryTracker = () => {
   const polylinesRef = useRef({});
 
   const [selectedOrderId, setSelectedOrderId] = useState('ord-6');
-  const [isSimulating, setIsSimulating] = useState(true);
+  const [isSimulating, setIsSimulating] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('ALL');
 

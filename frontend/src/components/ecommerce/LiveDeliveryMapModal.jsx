@@ -61,20 +61,23 @@ export const LiveDeliveryMapModal = ({
 
   // Determine stage description
   const getDeliveryStage = () => {
-    if (isDelivered || order?.status === 'COMPLETED') {
+    if (isDelivered || order?.status === 'COMPLETED' || order?.status === 'DELIVERED') {
       return {
+        step: 3,
         text: isKhmer ? 'បានមកដល់គោលដៅ (Arrived)' : 'Arrived at Destination',
         badgeClass: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
       };
     }
-    if (order?.status === 'READY' || order?.status === 'OUT_FOR_DELIVERY') {
+    if (order?.status === 'OUT_FOR_DELIVERY') {
       return {
-        text: isKhmer ? 'កំពុងធ្វើដំណើរលើផ្លូវ (En Route)' : 'In Transit / En Route',
+        step: 2,
+        text: isKhmer ? 'អ្នកដឹកកំពុងធ្វើដំណើរ (On the Way)' : 'Courier En Route',
         badgeClass: 'bg-amber-500/20 text-amber-300 border-amber-500/40'
       };
     }
     return {
-      text: isKhmer ? 'នៅហាងរៀបចំកាហ្វេ (At Roastery HQ)' : 'Preparing at Store',
+      step: 1,
+      text: isKhmer ? 'ហាងកំពុងឆុង & រៀបចំ (Brewing & Preparing)' : 'Brewing & Packing at Roastery',
       badgeClass: 'bg-sky-500/20 text-sky-300 border-sky-500/40'
     };
   };
@@ -107,21 +110,23 @@ export const LiveDeliveryMapModal = ({
       setRouteDistanceKm(routeData.distanceKm);
       setRouteRoadName(routeData.summary || 'Phnom Penh Arterial Route');
 
-      // Set steady, realistic rider location based strictly on actual order status
+      // Realistic rider location based strictly on real order status:
       if (isDelivered || order?.status === 'COMPLETED' || order?.status === 'DELIVERED') {
+        // At Customer Destination
         setActiveStepIndex(coords.length - 1);
         setSpeed(0);
         setEtaMinutes(0);
-      } else if (order?.status === 'READY' || order?.status === 'OUT_FOR_DELIVERY') {
-        const midPoint = Math.min(Math.floor(coords.length * 0.45), coords.length - 1);
+      } else if (order?.status === 'OUT_FOR_DELIVERY') {
+        // En route
+        const midPoint = Math.min(Math.floor(coords.length * 0.5), coords.length - 1);
         setActiveStepIndex(midPoint);
-        setSpeed(28);
-        setEtaMinutes(routeData.durationMins);
+        setSpeed(24);
+        setEtaMinutes(Math.max(3, Math.round(routeData.durationMins * 0.6)));
       } else {
-        // At store preparing
+        // At store preparing: Rider is AT ROASTERY HQ, not moving on the road!
         setActiveStepIndex(0);
         setSpeed(0);
-        setEtaMinutes(routeData.durationMins + 5);
+        setEtaMinutes(routeData.durationMins + 10);
       }
     }
   }, [recipientAddress, recipientDistrict, isDelivered, order]);
