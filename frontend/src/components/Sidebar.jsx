@@ -405,7 +405,7 @@ export const Sidebar = () => {
                 </div>
               </div>
 
-              {/* Station Tools: Sound & Lock */}
+              {/* Station Tools: Sound, Lock, Logout */}
               <div className="flex items-center gap-1 shrink-0">
                 <button
                   type="button"
@@ -426,6 +426,14 @@ export const Sidebar = () => {
                   title="Lock Station PIN"
                 >
                   <Lock className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="p-1.5 rounded-xl bg-stone-850 hover:bg-stone-800 border border-stone-800 text-stone-400 hover:text-rose-400 transition cursor-pointer"
+                  title={isKhmer ? 'ចាកចេញ' : 'Sign Out'}
+                >
+                  <LogOut className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
@@ -453,6 +461,14 @@ export const Sidebar = () => {
                 title="Lock Terminal"
               >
                 <Lock className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={logout}
+                className="p-2 rounded-xl bg-stone-900 border border-stone-800 text-stone-400 hover:text-rose-400 transition cursor-pointer"
+                title={isKhmer ? 'ចាកចេញ' : 'Sign Out'}
+              >
+                <LogOut className="w-3.5 h-3.5" />
               </button>
             </div>
           )}
