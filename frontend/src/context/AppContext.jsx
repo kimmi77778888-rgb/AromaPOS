@@ -7,83 +7,7 @@ import { DEMO_USERS, DEMO_CUSTOMERS, ROLE_PERMISSIONS } from '../services/coffee
 import { storage } from '../utils/storage';
 import { soundService } from '../services/soundService';
 
-export const DEFAULT_ECOMMERCE_SLIDES = [
-  {
-    id: 'slide-roastery',
-    image: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1600&q=80',
-    tag: 'CRAFT ROASTERY • BKK1 PHNOM PENH',
-    tagKm: 'រោងម៉ាស៊ីនលីងកាហ្វេ BKK1',
-    title: 'Farm-to-Cup Micro Batch Roasting',
-    titleKm: 'កាហ្វេសុទ្ធ 100% ពីចម្ការលំដាប់ខ្ពស់',
-    description: 'Slow-roasted daily in 5kg artisan batches to unlock exquisite chocolate, floral, and nutty notes.',
-    descriptionKm: 'លីងថ្មីៗជារៀងរាល់ថ្ងៃក្នុងបរិមាណតិច ដើម្បីធានាក្លិនឈ្ងុយ និងរសជាតិកាហ្វេពិតៗ',
-    badge: 'Fresh Daily Roast',
-    badgeKm: 'លីងស្រស់ៗរាល់ថ្ងៃ',
-    actionText: 'Explore Online Menu',
-    actionTextKm: 'ស្វែងរកមុខទំនិញ',
-    actionHref: '#menu'
-  },
-  {
-    id: 'slide-barista',
-    image: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=1600&q=80',
-    tag: 'SPECIALTY BARISTA BAR',
-    tagKm: 'សិល្បៈឆុងកាហ្វេដោយដៃ',
-    title: 'Velvety Microfoam & Pour-Over Precision',
-    titleKm: 'ការឆុងកាហ្វេដោយម៉ត់ចត់ & ហ្វូមទឹកដោះគោទន់រលោង',
-    description: 'Handcrafted flat whites, cold brews, and single-origin pour-overs pulled to perfection.',
-    descriptionKm: 'ឆុងយ៉ាងផ្ចិតផ្ចង់ដោយ Barista ជំនាញ ផ្តល់ជូននូវរសជាតិកាហ្វេដ៏ល្អឥតខ្ចោះគ្រប់កែវ',
-    badge: 'Artisan Crafted',
-    badgeKm: 'ឆុងដោយ Barista ជំនាញ',
-    actionText: 'Order Signature Drinks',
-    actionTextKm: 'កុម្ម៉ង់កាហ្វេឥឡូវនេះ',
-    actionHref: '#menu'
-  },
-  {
-    id: 'slide-bakery',
-    image: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=1600&q=80',
-    tag: 'FRESH BAKED DAILY • 6:30 AM',
-    tagKm: 'នំប៉័ងដុតក្តៅៗរាល់ព្រឹក',
-    title: 'Golden Normandy Butter Croissants',
-    titleKm: 'នំ Croissant ប័រធម្មជាតិ និងនំសូកូឡាបារាំង',
-    description: 'Flaky artisan French pastries and gourmet baked treats crafted every morning.',
-    descriptionKm: 'ដុតថ្មីៗស្រួយក្រៅទន់ក្នុង ល្អបំផុតសម្រាប់ការញ៉ាំជាមួយកាហ្វេពេលព្រឹក',
-    badge: 'Baked Fresh at 6:30 AM',
-    badgeKm: 'ដុតក្តៅៗរាល់ព្រឹក',
-    actionText: 'Explore Bakery Treats',
-    actionTextKm: 'មើលនំប៉័ងទាំងអស់',
-    actionHref: '#menu'
-  },
-  {
-    id: 'slide-delivery',
-    image: 'https://images.unsplash.com/photo-1526367790999-0150786686a2?auto=format&fit=crop&w=1600&q=80',
-    tag: 'EXPRESS DELIVERY • 20-30 MINS',
-    tagKm: 'សេវាដឹកជញ្ជូនរហ័សទូទាំងភ្នំពេញ',
-    title: 'Temperature-Controlled City Delivery',
-    titleKm: 'ដឹកជញ្ជូនរក្សាកម្តៅដល់គេហដ្ឋាន & ការិយាល័យ',
-    description: 'Delivered in insulated thermoses with live GPS route telemetry to your doorstep.',
-    descriptionKm: 'ធានាកាហ្វេនៅតែក្តៅ ឬត្រជាក់ស្រស់ស្រាយ ជាមួយប្រព័ន្ធតាមដានផ្លូវជាក់ស្តែង',
-    badge: '20-30 Mins Express',
-    badgeKm: 'ដឹក ២០-៣០ នាទី',
-    actionText: 'Track Active Orders',
-    actionTextKm: 'តាមដានការកុម្ម៉ង់',
-    actionType: 'TRACKER'
-  },
-  {
-    id: 'slide-loyalty',
-    image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1600&q=80',
-    tag: 'VIP REWARDS & BAKONG KHQR',
-    tagKm: 'កម្មវិធីសមាជិក AROMA CLUB VIP',
-    title: 'Instant Points & 1-Click Bakong KHQR',
-    titleKm: 'សន្សំពិន្ទុប្តូរយកភេសជ្ជៈ និងរង្វាន់ជាច្រើន',
-    description: 'Earn reward points with every sip, unlock member perks, and enjoy instant bank checkouts.',
-    descriptionKm: 'ទទួលបានពិន្ទុរៀងរាល់ការចំណាយ និងទូទាត់ប្រាក់ភ្លាមៗតាម QR កូដបាគង',
-    badge: 'Earn 1 Pt per $1',
-    badgeKm: 'សន្សំពិន្ទុ & ត្រាកាហ្វេ',
-    actionText: 'Join Aroma Club',
-    actionTextKm: 'ចូលជាសមាជិក VIP',
-    actionType: 'AUTH'
-  }
-];
+export const DEFAULT_ECOMMERCE_SLIDES = [];
 
 export const DEFAULT_FOOTER_CONFIG = {
   aboutEn: 'Specialty coffee roastery and artisan bakery in Phnom Penh, crafting direct farm-to-cup coffee and authentic French pastries.',
@@ -297,10 +221,18 @@ export const AppProvider = ({ children }) => {
   const [footerSlides, setFooterSlides] = useState(() => {
     try {
       const saved = storage.getItem('aromapos_footer_slides');
-      return saved ? JSON.parse(saved) : DEFAULT_ECOMMERCE_SLIDES;
-    } catch (e) {
-      return DEFAULT_ECOMMERCE_SLIDES;
-    }
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          // Purge any legacy static demo slides
+          const filtered = parsed.filter(
+            (s) => !['slide-roastery', 'slide-barista', 'slide-bakery', 'slide-delivery', 'slide-loyalty'].includes(s?.id)
+          );
+          return filtered;
+        }
+      }
+    } catch (e) {}
+    return [];
   });
 
   const [footerConfig, setFooterConfig] = useState(() => {
@@ -354,9 +286,9 @@ export const AppProvider = ({ children }) => {
   }, []);
 
   const resetFooterSlides = useCallback(() => {
-    setFooterSlides(DEFAULT_ECOMMERCE_SLIDES);
+    setFooterSlides([]);
     try {
-      storage.setItem('aromapos_footer_slides', JSON.stringify(DEFAULT_ECOMMERCE_SLIDES));
+      storage.setItem('aromapos_footer_slides', JSON.stringify([]));
     } catch (e) {}
   }, []);
 

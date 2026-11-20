@@ -315,117 +315,44 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
   const [isSubscribedNewsletter, setIsSubscribedNewsletter] = useState(false);
 
   const footerSlides = useMemo(() => {
-    const list = (appFooterSlides && appFooterSlides.length > 0) ? appFooterSlides : [
-      {
-        id: 'slide-roastery',
-        image: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1600&q=80',
-        tag: 'CRAFT ROASTERY • BKK1 PHNOM PENH',
-        tagKm: 'រោងម៉ាស៊ីនលីងកាហ្វេ BKK1',
-        title: 'Farm-to-Cup Micro Batch Roasting',
-        titleKm: 'កាហ្វេសុទ្ធ 100% ពីចម្ការលំដាប់ខ្ពស់',
-        description: 'Slow-roasted daily in 5kg artisan batches to unlock exquisite chocolate, floral, and nutty notes.',
-        descriptionKm: 'លីងថ្មីៗជារៀងរាល់ថ្ងៃក្នុងបរិមាណតិច ដើម្បីធានាក្លិនឈ្ងុយ និងរសជាតិកាហ្វេពិតៗ',
-        badge: 'Fresh Daily Roast',
-        badgeKm: 'លីងស្រស់ៗរាល់ថ្ងៃ',
-        actionText: 'Explore Online Menu',
-        actionTextKm: 'ស្វែងរកមុខទំនិញ',
-        actionHref: '#menu'
-      },
-      {
-        id: 'slide-barista',
-        image: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=1600&q=80',
-        tag: 'SPECIALTY BARISTA BAR',
-        tagKm: 'សិល្បៈឆុងកាហ្វេដោយដៃ',
-        title: 'Velvety Microfoam & Pour-Over Precision',
-        titleKm: 'ការឆុងកាហ្វេដោយម៉ត់ចត់ & ហ្វូមទឹកដោះគោទន់រលោង',
-        description: 'Handcrafted flat whites, cold brews, and single-origin pour-overs pulled to perfection.',
-        descriptionKm: 'ឆុងយ៉ាងផ្ចិតផ្ចង់ដោយ Barista ជំនាញ ផ្តល់ជូននូវរសជាតិកាហ្វេដ៏ល្អឥតខ្ចោះគ្រប់កែវ',
-        badge: 'Artisan Crafted',
-        badgeKm: 'ឆុងដោយ Barista ជំនាញ',
-        actionText: 'Order Signature Drinks',
-        actionTextKm: 'កុម្ម៉ង់កាហ្វេឥឡូវនេះ',
-        actionHref: '#menu'
-      },
-      {
-        id: 'slide-bakery',
-        image: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=1600&q=80',
-        tag: 'FRESH BAKED DAILY • 6:30 AM',
-        tagKm: 'នំប៉័ងដុតក្តៅៗរាល់ព្រឹក',
-        title: 'Golden Normandy Butter Croissants',
-        titleKm: 'នំ Croissant ប័រធម្មជាតិ និងនំសូកូឡាបារាំង',
-        description: 'Flaky artisan French pastries and gourmet baked treats crafted every morning.',
-        descriptionKm: 'ដុតថ្មីៗស្រួយក្រៅទន់ក្នុង ល្អបំផុតសម្រាប់ការញ៉ាំជាមួយកាហ្វេពេលព្រឹក',
-        badge: 'Baked Fresh at 6:30 AM',
-        badgeKm: 'ដុតក្តៅៗរាល់ព្រឹក',
-        actionText: 'Explore Bakery Treats',
-        actionTextKm: 'មើលនំប៉័ងទាំងអស់',
-        actionHref: '#menu'
-      },
-      {
-        id: 'slide-delivery',
-        image: 'https://images.unsplash.com/photo-1526367790999-0150786686a2?auto=format&fit=crop&w=1600&q=80',
-        tag: 'EXPRESS DELIVERY • 20-30 MINS',
-        tagKm: 'សេវាដឹកជញ្ជូនរហ័សទូទាំងភ្នំពេញ',
-        title: 'Temperature-Controlled City Delivery',
-        titleKm: 'ដឹកជញ្ជូនរក្សាកម្តៅដល់គេហដ្ឋាន & ការិយាល័យ',
-        description: 'Delivered in insulated thermoses with live GPS route telemetry to your doorstep.',
-        descriptionKm: 'ធានាកាហ្វេនៅតែក្តៅ ឬត្រជាក់ស្រស់ស្រាយ ជាមួយប្រព័ន្ធតាមដានផ្លូវជាក់ស្តែង',
-        badge: '20-30 Mins Express',
-        badgeKm: 'ដឹក ២០-៣០ នាទី',
-        actionText: 'Track Active Orders',
-        actionTextKm: 'តាមដានការកុម្ម៉ង់',
-        actionType: 'TRACKER'
-      },
-      {
-        id: 'slide-loyalty',
-        image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1600&q=80',
-        tag: 'VIP REWARDS & BAKONG KHQR',
-        tagKm: 'កម្មវិធីសមាជិក AROMA CLUB VIP',
-        title: 'Instant Points & 1-Click Bakong KHQR',
-        titleKm: 'សន្សំពិន្ទុប្តូរយកភេសជ្ជៈ និងរង្វាន់ជាច្រើន',
-        description: 'Earn reward points with every sip, unlock member perks, and enjoy instant bank checkouts.',
-        descriptionKm: 'ទទួលបានពិន្ទុរៀងរាល់ការចំណាយ និងទូទាត់ប្រាក់ភ្លាមៗតាម QR កូដបាគង',
-        badge: 'Earn 1 Pt per $1',
-        badgeKm: 'សន្សំពិន្ទុ & ត្រាកាហ្វេ',
-        actionText: 'Join Aroma Club',
-        actionTextKm: 'ចូលជាសមាជិក VIP',
-        actionType: 'AUTH'
-      }
-    ];
-
-    return list.map((s) => ({
-      ...s,
-      tag: isKhmer ? (s.tagKm || s.tag) : (s.tag || 'CRAFT ROASTERY • BKK1 PHNOM PENH'),
-      title: isKhmer ? (s.titleKm || s.title) : (s.title || 'Artisan Coffee Roasting'),
-      description: isKhmer ? (s.descriptionKm || s.description) : (s.description || ''),
-      badge: isKhmer ? (s.badgeKm || s.badge) : (s.badge || 'Featured'),
-      actionText: isKhmer ? (s.actionTextKm || s.actionText) : (s.actionText || 'Explore Menu'),
-      actionHref: s.actionType === 'MENU' ? '#menu' : (s.actionHref || (s.actionType === 'CUSTOM' ? s.customHref : null)),
-      onAction: s.actionType === 'TRACKER'
-        ? () => setIsTrackerOpen(true)
-        : (s.actionType === 'AUTH'
-            ? () => {
-                setAuthModalPrompt(isKhmer ? 'ចូលគណនីជាមួយ Gmail ដើម្បីទទួលបាន ១០០ ពិន្ទុ & ត្រាកាហ្វេ!' : 'Sign in with your Gmail to earn 100 welcome points & rewards!');
-                setIsAuthModalOpen(true);
-              }
-            : (s.onAction || undefined))
-    }));
+    if (!Array.isArray(appFooterSlides)) return [];
+    return appFooterSlides
+      .filter((s) => s && !['slide-roastery', 'slide-barista', 'slide-bakery', 'slide-delivery', 'slide-loyalty'].includes(s.id))
+      .map((s) => ({
+        ...s,
+        tag: isKhmer ? (s.tagKm || s.tag) : (s.tag || 'SPECIALTY COFFEE'),
+        title: isKhmer ? (s.titleKm || s.title) : (s.title || 'Specialty Coffee Showcase'),
+        description: isKhmer ? (s.descriptionKm || s.description) : (s.description || ''),
+        badge: isKhmer ? (s.badgeKm || s.badge) : (s.badge || 'Featured'),
+        actionText: isKhmer ? (s.actionTextKm || s.actionText) : (s.actionText || 'Explore Menu'),
+        actionHref: s.actionType === 'MENU' ? '#menu' : (s.actionHref || (s.actionType === 'CUSTOM' ? s.customHref : null)),
+        onAction: s.actionType === 'TRACKER'
+          ? () => setIsTrackerOpen(true)
+          : (s.actionType === 'AUTH'
+              ? () => {
+                  setAuthModalPrompt(isKhmer ? 'ចូលគណនីជាមួយ Gmail ដើម្បីទទួលបាន ១០០ ពិន្ទុ & ត្រាកាហ្វេ!' : 'Sign in with your Gmail to earn 100 welcome points & rewards!');
+                  setIsAuthModalOpen(true);
+                }
+              : (s.onAction || undefined))
+      }));
   }, [appFooterSlides, isKhmer]);
 
-  // Slideshow Timer: Auto advance every 4.5 seconds
+  // Slideshow Timer: Auto advance every 4.5 seconds only when dynamic slides exist
   useEffect(() => {
-    if (isFooterSlideHovered) return;
+    if (isFooterSlideHovered || !footerSlides || footerSlides.length <= 1) return;
     const interval = setInterval(() => {
       setFooterSlideIndex((prev) => (prev + 1) % footerSlides.length);
     }, 4500);
     return () => clearInterval(interval);
-  }, [isFooterSlideHovered, footerSlides.length]);
+  }, [isFooterSlideHovered, footerSlides]);
 
   const handleNextFooterSlide = () => {
+    if (!footerSlides || footerSlides.length === 0) return;
     setFooterSlideIndex((prev) => (prev + 1) % footerSlides.length);
   };
 
   const handlePrevFooterSlide = () => {
+    if (!footerSlides || footerSlides.length === 0) return;
     setFooterSlideIndex((prev) => (prev - 1 + footerSlides.length) % footerSlides.length);
   };
 
@@ -1197,155 +1124,157 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
       <section className="pt-16 pb-6 px-4 sm:px-8 bg-stone-950 border-t border-stone-850">
         <div className="max-w-7xl mx-auto space-y-12">
           
-          {/* 8A. DYNAMIC ROASTERY & MOMENTS SLIDESHOW */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="text-[10px] font-bold tracking-widest uppercase text-amber-400 font-mono flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>{isKhmer ? 'វិចិត្រសាល & សកម្មភាពផ្ទាល់' : 'Artisan Highlights & Story'}</span>
-                </span>
-                <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight mt-0.5">
-                  {isKhmer ? 'បទពិសោធន៍កាហ្វេសិល្បៈរបស់ Aroma' : 'The Aroma Coffee Roastery Experience'}
-                </h3>
+          {/* 8A. DYNAMIC ROASTERY & MOMENTS SLIDESHOW (Only rendered when dynamic slides exist) */}
+          {footerSlides && footerSlides.length > 0 && footerSlides[footerSlideIndex] && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-bold tracking-widest uppercase text-amber-400 font-mono flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>{isKhmer ? 'វិចិត្រសាល & សកម្មភាពផ្ទាល់' : 'Artisan Highlights & Story'}</span>
+                  </span>
+                  <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight mt-0.5">
+                    {isKhmer ? 'បទពិសោធន៍កាហ្វេសិល្បៈរបស់ Aroma' : 'The Aroma Coffee Roastery Experience'}
+                  </h3>
+                </div>
+
+                {/* Slide Counter & Playback Indicator */}
+                <div className="hidden sm:flex items-center gap-3">
+                  <span className="text-xs font-mono font-bold text-amber-400 bg-amber-500/10 px-3 py-1 rounded-xl border border-amber-500/20">
+                    0{footerSlideIndex + 1} / 0{footerSlides.length}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={handlePrevFooterSlide}
+                      className="p-2 rounded-xl bg-stone-900 hover:bg-amber-500 hover:text-stone-950 border border-stone-800 text-stone-300 transition cursor-pointer shadow-sm"
+                      title="Previous Slide"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleNextFooterSlide}
+                      className="p-2 rounded-xl bg-stone-900 hover:bg-amber-500 hover:text-stone-950 border border-stone-800 text-stone-300 transition cursor-pointer shadow-sm"
+                      title="Next Slide"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
               </div>
 
-              {/* Slide Counter & Playback Indicator */}
-              <div className="hidden sm:flex items-center gap-3">
-                <span className="text-xs font-mono font-bold text-amber-400 bg-amber-500/10 px-3 py-1 rounded-xl border border-amber-500/20">
-                  0{footerSlideIndex + 1} / 0{footerSlides.length}
-                </span>
-                <div className="flex items-center gap-1">
+              {/* Main Interactive Slide Display */}
+              <div 
+                className="relative w-full h-[360px] sm:h-[420px] md:h-[480px] rounded-3xl overflow-hidden border border-stone-800/90 shadow-2xl group select-none"
+                onMouseEnter={() => setIsFooterSlideHovered(true)}
+                onMouseLeave={() => setIsFooterSlideHovered(false)}
+              >
+                {/* Slides Background Images */}
+                {footerSlides.map((slide, idx) => (
+                  <div
+                    key={slide.id || idx}
+                    className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+                      idx === footerSlideIndex ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
+                    }`}
+                  >
+                    <img
+                      src={slide.image}
+                      alt={slide.title}
+                      className="w-full h-full object-cover transform scale-100 group-hover:scale-105 transition-transform duration-1000"
+                    />
+                    {/* Luxury Cinematic Gradient Overlays */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/60 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-stone-950 via-stone-950/75 to-transparent" />
+                  </div>
+                ))}
+
+                {/* Floating Slide Content Overlay */}
+                <div className="absolute inset-0 z-20 p-6 sm:p-10 md:p-12 flex flex-col justify-between">
+                  {/* Top Badge */}
+                  <div className="flex items-center justify-between">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 backdrop-blur-md shadow-lg">
+                      <Coffee className="w-3.5 h-3.5" />
+                      <span>{footerSlides[footerSlideIndex]?.badge}</span>
+                    </span>
+
+                    <span className="sm:hidden text-xs font-mono font-bold text-amber-300 bg-stone-950/80 px-2.5 py-1 rounded-xl border border-stone-800">
+                      0{footerSlideIndex + 1} / 0{footerSlides.length}
+                    </span>
+                  </div>
+
+                  {/* Bottom Story Content */}
+                  <div className="max-w-2xl space-y-3 animate-fade-in">
+                    <span className="text-xs font-mono font-black text-amber-400 uppercase tracking-widest">
+                      {footerSlides[footerSlideIndex]?.tag}
+                    </span>
+                    <h4 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight leading-tight">
+                      {footerSlides[footerSlideIndex]?.title}
+                    </h4>
+                    <p className="text-xs sm:text-sm md:text-base text-stone-300 font-medium leading-relaxed max-w-xl">
+                      {footerSlides[footerSlideIndex]?.description}
+                    </p>
+
+                    <div className="pt-2">
+                      {footerSlides[footerSlideIndex]?.actionHref ? (
+                        <a
+                          href={footerSlides[footerSlideIndex].actionHref}
+                          className="inline-flex items-center gap-2 px-5 py-2.5 sm:px-6 sm:py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-black text-xs sm:text-sm transition cursor-pointer shadow-lg shadow-amber-950/50 active:scale-95"
+                        >
+                          <span>{footerSlides[footerSlideIndex]?.actionText}</span>
+                          <ArrowRight className="w-4 h-4 stroke-[2.5]" />
+                        </a>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={footerSlides[footerSlideIndex]?.onAction}
+                          className="inline-flex items-center gap-2 px-5 py-2.5 sm:px-6 sm:py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-black text-xs sm:text-sm transition cursor-pointer shadow-lg shadow-amber-950/50 active:scale-95"
+                        >
+                          <span>{footerSlides[footerSlideIndex]?.actionText}</span>
+                          <ArrowRight className="w-4 h-4 stroke-[2.5]" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Floating Left & Right Arrow Buttons on Large Screen */}
                   <button
                     type="button"
                     onClick={handlePrevFooterSlide}
-                    className="p-2 rounded-xl bg-stone-900 hover:bg-amber-500 hover:text-stone-950 border border-stone-800 text-stone-300 transition cursor-pointer shadow-sm"
-                    title="Previous Slide"
+                    className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-2xl bg-stone-950/70 hover:bg-amber-500 text-stone-200 hover:text-stone-950 border border-stone-700/80 backdrop-blur-md flex items-center justify-center transition cursor-pointer opacity-0 group-hover:opacity-100 shadow-xl"
+                    title="Previous"
                   >
-                    <ChevronLeft className="w-4 h-4" />
+                    <ChevronLeft className="w-5 h-5" />
                   </button>
                   <button
                     type="button"
                     onClick={handleNextFooterSlide}
-                    className="p-2 rounded-xl bg-stone-900 hover:bg-amber-500 hover:text-stone-950 border border-stone-800 text-stone-300 transition cursor-pointer shadow-sm"
-                    title="Next Slide"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-2xl bg-stone-950/70 hover:bg-amber-500 text-stone-200 hover:text-stone-950 border border-stone-700/80 backdrop-blur-md flex items-center justify-center transition cursor-pointer opacity-0 group-hover:opacity-100 shadow-xl"
+                    title="Next"
                   >
-                    <ChevronRight className="w-4 h-4" />
+                    <ChevronRight className="w-5 h-5" />
                   </button>
-                </div>
-              </div>
-            </div>
 
-            {/* Main Interactive Slide Display */}
-            <div 
-              className="relative w-full h-[360px] sm:h-[420px] md:h-[480px] rounded-3xl overflow-hidden border border-stone-800/90 shadow-2xl group select-none"
-              onMouseEnter={() => setIsFooterSlideHovered(true)}
-              onMouseLeave={() => setIsFooterSlideHovered(false)}
-            >
-              {/* Slides Background Images */}
-              {footerSlides.map((slide, idx) => (
-                <div
-                  key={slide.id}
-                  className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-                    idx === footerSlideIndex ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
-                  }`}
-                >
-                  <img
-                    src={slide.image}
-                    alt={slide.title}
-                    className="w-full h-full object-cover transform scale-100 group-hover:scale-105 transition-transform duration-1000"
-                  />
-                  {/* Luxury Cinematic Gradient Overlays */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/60 to-transparent" />
-                  <div className="absolute inset-0 bg-gradient-to-r from-stone-950 via-stone-950/75 to-transparent" />
-                </div>
-              ))}
-
-              {/* Floating Slide Content Overlay */}
-              <div className="absolute inset-0 z-20 p-6 sm:p-10 md:p-12 flex flex-col justify-between">
-                {/* Top Badge */}
-                <div className="flex items-center justify-between">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 backdrop-blur-md shadow-lg">
-                    <Coffee className="w-3.5 h-3.5" />
-                    <span>{footerSlides[footerSlideIndex].badge}</span>
-                  </span>
-
-                  <span className="sm:hidden text-xs font-mono font-bold text-amber-300 bg-stone-950/80 px-2.5 py-1 rounded-xl border border-stone-800">
-                    0{footerSlideIndex + 1} / 0{footerSlides.length}
-                  </span>
-                </div>
-
-                {/* Bottom Story Content */}
-                <div className="max-w-2xl space-y-3 animate-fade-in">
-                  <span className="text-xs font-mono font-black text-amber-400 uppercase tracking-widest">
-                    {footerSlides[footerSlideIndex].tag}
-                  </span>
-                  <h4 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight leading-tight">
-                    {footerSlides[footerSlideIndex].title}
-                  </h4>
-                  <p className="text-xs sm:text-sm md:text-base text-stone-300 font-medium leading-relaxed max-w-xl">
-                    {footerSlides[footerSlideIndex].description}
-                  </p>
-
-                  <div className="pt-2">
-                    {footerSlides[footerSlideIndex].actionHref ? (
-                      <a
-                        href={footerSlides[footerSlideIndex].actionHref}
-                        className="inline-flex items-center gap-2 px-5 py-2.5 sm:px-6 sm:py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-black text-xs sm:text-sm transition cursor-pointer shadow-lg shadow-amber-950/50 active:scale-95"
-                      >
-                        <span>{footerSlides[footerSlideIndex].actionText}</span>
-                        <ArrowRight className="w-4 h-4 stroke-[2.5]" />
-                      </a>
-                    ) : (
+                  {/* Pagination Dots at Bottom Center */}
+                  <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 z-30">
+                    {footerSlides.map((_, dotIdx) => (
                       <button
+                        key={dotIdx}
                         type="button"
-                        onClick={footerSlides[footerSlideIndex].onAction}
-                        className="inline-flex items-center gap-2 px-5 py-2.5 sm:px-6 sm:py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-black text-xs sm:text-sm transition cursor-pointer shadow-lg shadow-amber-950/50 active:scale-95"
-                      >
-                        <span>{footerSlides[footerSlideIndex].actionText}</span>
-                        <ArrowRight className="w-4 h-4 stroke-[2.5]" />
-                      </button>
-                    )}
+                        onClick={() => setFooterSlideIndex(dotIdx)}
+                        className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                          dotIdx === footerSlideIndex 
+                            ? 'w-8 bg-amber-500 shadow-md shadow-amber-500/50' 
+                            : 'w-2 bg-stone-600 hover:bg-stone-400'
+                        }`}
+                        title={`Slide ${dotIdx + 1}`}
+                      />
+                    ))}
                   </div>
                 </div>
-
-                {/* Floating Left & Right Arrow Buttons on Large Screen */}
-                <button
-                  type="button"
-                  onClick={handlePrevFooterSlide}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-2xl bg-stone-950/70 hover:bg-amber-500 text-stone-200 hover:text-stone-950 border border-stone-700/80 backdrop-blur-md flex items-center justify-center transition cursor-pointer opacity-0 group-hover:opacity-100 shadow-xl"
-                  title="Previous"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={handleNextFooterSlide}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-2xl bg-stone-950/70 hover:bg-amber-500 text-stone-200 hover:text-stone-950 border border-stone-700/80 backdrop-blur-md flex items-center justify-center transition cursor-pointer opacity-0 group-hover:opacity-100 shadow-xl"
-                  title="Next"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
-
-                {/* Pagination Dots at Bottom Center */}
-                <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 z-30">
-                  {footerSlides.map((_, dotIdx) => (
-                    <button
-                      key={dotIdx}
-                      type="button"
-                      onClick={() => setFooterSlideIndex(dotIdx)}
-                      className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
-                        dotIdx === footerSlideIndex 
-                          ? 'w-8 bg-amber-500 shadow-md shadow-amber-500/50' 
-                          : 'w-2 bg-stone-600 hover:bg-stone-400'
-                      }`}
-                      title={`Slide ${dotIdx + 1}`}
-                    />
-                  ))}
-                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* 8B. DYNAMIC INFINITE MARQUEE TICKER TAPE */}
           <div className="overflow-hidden rounded-2xl bg-stone-900/60 border border-stone-850 py-3 relative select-none">

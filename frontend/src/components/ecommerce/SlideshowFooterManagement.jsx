@@ -204,10 +204,6 @@ export const SlideshowFooterManagement = () => {
 
   // Handle Slide Delete
   const handleDeleteSlide = (id) => {
-    if (footerSlides.length <= 1) {
-      showToast?.('You must have at least one slide in the showcase', 'error');
-      return;
-    }
     if (window.confirm(isKhmer ? 'តើអ្នកប្រាកដជាចង់លុបស្លាយនេះមែនទេ?' : 'Are you sure you want to delete this slide?')) {
       deleteFooterSlide(id);
       showToast?.(isKhmer ? 'បានលុបស្លាយរួចរាល់' : 'Slide deleted', 'info');
@@ -349,20 +345,22 @@ export const SlideshowFooterManagement = () => {
               </div>
 
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (window.confirm(isKhmer ? 'តើអ្នកចង់កំណត់ស្លាយទៅលំនាំដើមវិញទេ?' : 'Reset all slides to default Roastery showcase?')) {
-                      resetFooterSlides();
-                      showToast?.(isKhmer ? 'បានកំណត់ស្លាយទៅលំនាំដើមវិញ' : 'Reset to default slides', 'info');
-                    }
-                  }}
-                  className="px-3 py-1.5 rounded-xl bg-stone-850 hover:bg-stone-800 text-stone-400 hover:text-stone-200 border border-stone-750 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
-                  title="Reset Slides to Factory Default"
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                  <span>{isKhmer ? 'កំណត់លំនាំដើម' : 'Reset Defaults'}</span>
-                </button>
+                {footerSlides.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (window.confirm(isKhmer ? 'តើអ្នកចង់លុបស្លាយទាំងអស់ចេញមែនទេ?' : 'Clear all slides?')) {
+                        resetFooterSlides();
+                        showToast?.(isKhmer ? 'បានលុបស្លាយទាំងអស់រួចរាល់' : 'All slides cleared', 'info');
+                      }
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-stone-850 hover:bg-stone-800 text-stone-400 hover:text-stone-200 border border-stone-750 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
+                    title="Clear All Slides"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-rose-400" />
+                    <span>{isKhmer ? 'លុបស្លាយទាំងអស់' : 'Clear All Slides'}</span>
+                  </button>
+                )}
 
                 <button
                   type="button"
@@ -715,8 +713,25 @@ export const SlideshowFooterManagement = () => {
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 gap-3.5">
-                {footerSlides.map((slide, index) => (
+              {footerSlides.length === 0 ? (
+                <div className="p-8 sm:p-12 rounded-3xl bg-stone-900 border border-stone-850 text-center space-y-3">
+                  <div className="w-12 h-12 rounded-2xl bg-stone-850 text-amber-400 flex items-center justify-center mx-auto border border-stone-800">
+                    <Sparkles className="w-6 h-6" />
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="font-bold text-sm text-white">
+                      {isKhmer ? 'មិនមានស្លាយកំពុងដំណើរការទេ (No Active Slides)' : 'No Active Showcase Slides'}
+                    </h4>
+                    <p className="text-xs text-stone-400 max-w-md mx-auto">
+                      {isKhmer 
+                        ? 'ស្លាយ Static ត្រូវបានលុបចេញហើយ។ ចុចប៊ូតុង "+ បន្ថែមស្លាយថ្មី" ខាងលើដើម្បីបង្កើតស្លាយ Dynamic ផ្ទាល់ខ្លួនរបស់អ្នក។' 
+                        : 'Static slides have been completely removed. Click "+ Add New Slide" above whenever you want to showcase dynamic promotions.'}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-3.5">
+                  {footerSlides.map((slide, index) => (
                   <div
                     key={slide.id || index}
                     className="p-4 rounded-2xl bg-stone-900 border border-stone-850 hover:border-stone-750 transition flex flex-col md:flex-row md:items-center justify-between gap-4 group shadow-md"
@@ -796,9 +811,10 @@ export const SlideshowFooterManagement = () => {
                   </div>
                 ))}
               </div>
-            </div>
+            )}
           </div>
-        )}
+        </div>
+      )}
 
         {/* ─────────────────────────────────────────────────────────────
             TAB 2: FOOTER & MARQUEE TICKER MANAGEMENT
