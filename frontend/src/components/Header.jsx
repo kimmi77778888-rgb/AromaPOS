@@ -5,7 +5,6 @@ import { LanguageSwitcher } from './common/LanguageSwitcher';
 import { ThemeSwitcher } from './common/ThemeSwitcher';
 import { 
   Clock, 
-  PlusCircle, 
   Tv, 
   Monitor,
   Layers, 
@@ -18,38 +17,22 @@ import {
   Users,
   Coffee,
   Lock,
-  Unlock,
-  Store,
-  FileSpreadsheet,
   Menu,
-  X,
-  RefreshCw,
-  Radio,
-  Globe
+  Bike
 } from 'lucide-react';
-import { StoreLogo } from './common/StoreLogo';
 import { soundService } from '../services/soundService';
 
 export const Header = ({ onOpenAddProduct }) => {
   const { 
     activeTab, 
-    user, 
     isMobileMenuOpen,
     setIsMobileMenuOpen,
     openCustomerDisplayWindow,
     setIsCustomerPreviewOpen,
     isPosFocusMode,
     setIsPosFocusMode,
-    setIsProfileModalOpen,
     activeShift,
-    openShiftModal,
-    storeInfo,
-    setIsStoreSettingsOpen,
-    isLiveMode,
-    setIsLiveMode,
-    liveSyncStatus,
-    refreshDataSilently,
-    changeAppMode
+    openShiftModal
   } = useApp();
 
   const { isKhmer } = useLanguage();
@@ -72,8 +55,8 @@ export const Header = ({ onOpenAddProduct }) => {
       case 'dashboard':
         return {
           icon: LayoutDashboard,
-          title: isKhmer ? 'ផ្ទាំងគ្រប់គ្រងទូទៅ' : 'Store Dashboard',
-          subtitle: isKhmer ? 'ចំណូលសរុបប្រចាំថ្ងៃ & និន្នាការលក់' : 'Real-time sales & performance'
+          title: isKhmer ? 'ផ្ទាំងគ្រប់គ្រងអាជីវកម្ម' : 'Store Dashboard',
+          subtitle: isKhmer ? 'ចំណូលសរុប & ស្ថិតិលក់ជាក់ស្តែង' : 'Real-time sales & performance metrics'
         };
       case 'inventory':
         return {
@@ -93,6 +76,12 @@ export const Header = ({ onOpenAddProduct }) => {
           title: isKhmer ? 'អេក្រង់ផ្ទះបាយ (KDS)' : 'Kitchen Display (KDS)',
           subtitle: isKhmer ? 'ជួររៀបចំភេសជ្ជៈសម្រាប់ Barista' : 'Drink preparation queue'
         };
+      case 'delivery':
+        return {
+          icon: Bike,
+          title: isKhmer ? 'ផែនទីដឹកជញ្ជូន (Delivery)' : 'Delivery Fleet',
+          subtitle: isKhmer ? 'តាមដានអ្នកដឹកជញ្ជូនជាក់ស្តែង' : 'Live courier dispatch & tracking'
+        };
       case 'reports':
         return {
           icon: BarChart3,
@@ -108,7 +97,7 @@ export const Header = ({ onOpenAddProduct }) => {
       default:
         return { 
           icon: Coffee,
-          title: isKhmer ? 'ប្រព័ន្ធគ្រប់គ្រង' : 'Coffee Suite', 
+          title: isKhmer ? 'ប្រព័ន្ធគ្រប់គ្រង' : 'Aroma Suite', 
           subtitle: 'Artisan Cafe Management' 
         };
     }
@@ -117,9 +106,9 @@ export const Header = ({ onOpenAddProduct }) => {
   const { icon: TabIcon, title, subtitle } = getTabInfo();
 
   return (
-    <header className="h-16 bg-stone-950/85 backdrop-blur-xl border-b border-stone-800/80 px-3.5 sm:px-6 flex items-center justify-between sticky top-0 z-20 select-none">
-      {/* Left: Mobile/iPad Drawer Toggle + Tab Title & Icon Badge */}
-      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+    <header className="h-16 bg-stone-950/95 backdrop-blur-xl border-b border-stone-850 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-20 select-none">
+      {/* Left: Mobile Drawer Toggle + Clear Tab Title & Subtitle */}
+      <div className="flex items-center gap-3 min-w-0 pr-4">
         <button
           type="button"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -130,177 +119,96 @@ export const Header = ({ onOpenAddProduct }) => {
           <Menu className="w-5 h-5" />
         </button>
 
-        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-stone-900 border border-stone-800 flex items-center justify-center text-amber-500 shadow-inner shrink-0">
-          <TabIcon className="w-4 h-4" />
+        <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shadow-sm shrink-0">
+          <TabIcon className="w-4 h-4 stroke-[2.2]" />
         </div>
-        <div className="flex items-center gap-2 truncate">
-          <h1 className="text-sm sm:text-base md:text-lg font-bold text-stone-100 tracking-tight truncate">
+
+        <div className="min-w-0">
+          <h1 className="text-sm sm:text-base font-black text-white tracking-tight truncate leading-tight">
             {title}
           </h1>
-          <span className="hidden md:inline-block w-1 h-1 rounded-full bg-stone-600 shrink-0" />
-          <p className="text-xs text-stone-400 font-medium hidden md:inline-block truncate">
+          <p className="text-xs text-stone-400 font-medium truncate hidden sm:block">
             {subtitle}
           </p>
         </div>
       </div>
 
-      {/* Right: Clean, Curated Controls */}
-      <div className="flex items-center gap-2.5 sm:gap-3">
+      {/* Right: Clean, Uncluttered, Standard POS Toolbar */}
+      <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
         {/* Full POS Focus Mode Toggle (Only on POS tab) */}
         {activeTab === 'pos' && (
           <button
             type="button"
             onClick={() => setIsPosFocusMode(!isPosFocusMode)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-stone-900 hover:bg-stone-850 text-stone-300 hover:text-amber-400 border border-stone-800 transition cursor-pointer"
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-stone-900 hover:bg-stone-850 text-stone-300 hover:text-amber-400 border border-stone-800 transition cursor-pointer"
             title="Toggle Full POS Screen Mode"
           >
             <Layers className="w-3.5 h-3.5 text-amber-500" />
-            <span className="hidden md:inline">{isKhmer ? 'អេក្រង់ POS ពេញ' : 'Focus POS'}</span>
+            <span>{isKhmer ? 'អេក្រង់ពេញ' : 'Focus'}</span>
           </button>
         )}
 
-        {/* View E-Commerce Public Storefront Button */}
-        {changeAppMode && (
-          <button
-            type="button"
-            onClick={() => changeAppMode('ecommerce')}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 hover:text-amber-200 border border-amber-500/35 transition cursor-pointer shadow-sm"
-            title={isKhmer ? 'មើលហាងអនឡាញ (E-Commerce Storefront)' : 'View Public E-Commerce Storefront'}
-          >
-            <Globe className="w-3.5 h-3.5 text-amber-400" />
-            <span className="hidden sm:inline">{isKhmer ? 'ហាងអនឡាញ' : 'Online Store'}</span>
-          </button>
-        )}
-
-        {/* Real-time Live Mode Toggle & Refresh Pill */}
-        <div className="flex items-center">
-          <button
-            type="button"
-            onClick={() => {
-              soundService.playBeepSound();
-              setIsLiveMode(!isLiveMode);
-            }}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-l-xl text-xs font-bold transition border cursor-pointer ${
-              isLiveMode
-                ? 'bg-emerald-950/70 border-emerald-700/70 text-emerald-300 hover:bg-emerald-900/80 shadow-sm'
-                : 'bg-stone-900 border-stone-800 text-stone-400 hover:text-stone-200'
-            }`}
-            title={isLiveMode ? (isKhmer ? 'របៀបផ្ទាល់កំពុងដំណើរការ (ចុចដើម្បីផ្អាក)' : 'Live Mode Active: Real-time sync (Click to pause)') : (isKhmer ? 'របៀបផ្ទាល់ត្រូវបានផ្អាក (ចុចដើម្បីបើក)' : 'Live Mode Paused (Click to activate)')}
-          >
-            <span className="relative flex h-2 w-2">
-              {isLiveMode && (
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              )}
-              <span className={`relative inline-flex rounded-full h-2 w-2 ${isLiveMode ? 'bg-emerald-400' : 'bg-stone-500'}`}></span>
-            </span>
-            <span className="hidden sm:inline font-mono uppercase tracking-wider text-[11px]">
-              {isLiveMode ? (isKhmer ? 'ផ្ទាល់' : 'LIVE') : (isKhmer ? 'ផ្អាក' : 'PAUSED')}
-            </span>
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              soundService.playBeepSound();
-              refreshDataSilently(false);
-            }}
-            className={`px-2 py-1.5 rounded-r-xl border-y border-r transition text-xs cursor-pointer ${
-              isLiveMode
-                ? 'bg-emerald-950/60 border-emerald-700/70 text-emerald-400 hover:text-emerald-200 hover:bg-emerald-900/60'
-                : 'bg-stone-900 border-stone-800 text-stone-400 hover:text-stone-200'
-            }`}
-            title={isKhmer ? 'ទាញទិន្នន័យថ្មីភ្លាមៗ (Sync Now)' : 'Sync Now (Force Refresh)'}
-          >
-            <RefreshCw className={`w-3 h-3 ${liveSyncStatus === 'syncing' ? 'animate-spin text-emerald-300' : ''}`} />
-          </button>
-        </div>
-
-        {/* Global Register Drawer / Shift Status Pill */}
+        {/* Register Shift Status Pill */}
         <button
           type="button"
           onClick={() => openShiftModal(activeShift ? 'ACTIVE' : 'OPEN')}
           className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition border cursor-pointer ${
             activeShift
-              ? 'bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 border-emerald-700/60 shadow-sm'
-              : 'bg-rose-950/60 hover:bg-rose-900/60 text-rose-300 border-rose-700/60 animate-pulse'
+              ? 'bg-emerald-950/40 hover:bg-emerald-900/40 text-emerald-300 border-emerald-600/40 shadow-sm'
+              : 'bg-amber-950/40 hover:bg-amber-900/40 text-amber-300 border-amber-600/40'
           }`}
-          title={activeShift ? 'Manage Active Register Shift & Cash Drawer' : 'Click to Open Register Shift & Float'}
+          title={activeShift ? 'Active Register Shift' : 'Click to Open Shift'}
         >
           {activeShift ? (
             <>
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-              <span className="hidden sm:inline font-mono">{activeShift.staffName}</span>
+              <span className="hidden md:inline font-sans">{activeShift.staffName || 'Active'}</span>
               <span className="hidden md:inline text-stone-500">•</span>
-              <span className="font-mono text-emerald-400 font-extrabold">
+              <span className="font-mono text-emerald-400 font-black">
                 ${(activeShift.expectedCash || (activeShift.startingFloat + (activeShift.cashSales || 0))).toFixed(2)}
               </span>
             </>
           ) : (
             <>
-              <Lock className="w-3.5 h-3.5 text-rose-400" />
-              <span>{isKhmer ? 'ហាងបានបិទ (បើកហាង)' : 'Store Closed (Open Store)'}</span>
+              <Lock className="w-3 h-3 text-amber-400" />
+              <span className="font-sans">{isKhmer ? 'បើកវេន' : 'Open Shift'}</span>
             </>
           )}
         </button>
 
-        {/* Dynamic Store Coffee Logo & Profile Button */}
-        <button
-          type="button"
-          onClick={() => setIsStoreSettingsOpen(true)}
-          className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-stone-900 hover:bg-stone-850 text-stone-300 hover:text-amber-400 border border-stone-800 transition text-xs font-semibold cursor-pointer group"
-          title="Click to customize Store Coffee Logo & Profile"
-        >
-          <StoreLogo size="xs" />
-          <span className="hidden xl:inline font-bold text-stone-200 group-hover:text-amber-300">
-            {storeInfo?.name || 'Aroma Coffee'}
-          </span>
-        </button>
-
-        {/* Customer Facing Dual Screen Pop-out & In-tab Preview */}
+        {/* Customer Screen Trigger */}
         <div className="flex items-center">
           <button
             type="button"
             onClick={openCustomerDisplayWindow}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-l-xl bg-stone-900 hover:bg-stone-850 text-stone-300 hover:text-amber-400 border border-stone-800 transition text-xs font-semibold cursor-pointer"
-            title="Open Customer Facing Display on second monitor"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-l-xl bg-stone-900 hover:bg-stone-850 text-stone-300 hover:text-amber-400 border border-stone-800 transition text-xs font-semibold cursor-pointer"
+            title="Open Customer Facing Display window"
           >
-            <Tv className="w-3.5 h-3.5 text-amber-500" />
-            <span className="hidden md:inline">{isKhmer ? 'អេក្រង់អតិថិជន' : 'Customer Screen'}</span>
+            <Tv className="w-3.5 h-3.5 text-amber-400" />
+            <span className="hidden md:inline">{isKhmer ? 'អេក្រង់អតិថិជន' : 'Customer Display'}</span>
           </button>
           <button
             type="button"
             onClick={() => setIsCustomerPreviewOpen(true)}
             className="px-2 py-1.5 rounded-r-xl bg-stone-900 hover:bg-stone-850 text-stone-400 hover:text-amber-400 border-y border-r border-stone-800 transition text-xs cursor-pointer"
-            title="Preview customer screen inside this window"
+            title="Preview customer screen"
           >
             <Monitor className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        {/* Contextual Action Button (Add Product on Inventory) */}
-        {activeTab === 'inventory' && onOpenAddProduct && (
-          <button
-            type="button"
-            onClick={onOpenAddProduct}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-stone-950 font-bold text-xs transition shadow-sm cursor-pointer"
-          >
-            <PlusCircle className="w-3.5 h-3.5" />
-            <span>{isKhmer ? 'បញ្ចូលទំនិញថ្មី' : 'New Product'}</span>
-          </button>
-        )}
-
-        {/* Live Monospace Clock */}
-        <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-stone-900/60 border border-stone-800/80 text-stone-300 text-xs font-mono">
-          <Clock className="w-3.5 h-3.5 text-amber-500" />
+        {/* Digital Monospace Clock */}
+        <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-stone-900/70 border border-stone-800 text-stone-300 text-xs font-mono">
+          <Clock className="w-3.5 h-3.5 text-amber-400" />
           <span>{currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
         </div>
 
-        {/* Clean Theme Switcher (Black / White) */}
+        {/* Theme Switcher */}
         <ThemeSwitcher size="sm" variant="pill" />
 
-        {/* Clean Language Switcher with Vector Flags */}
+        {/* Language Switcher */}
         <LanguageSwitcher size="sm" />
       </div>
     </header>
   );
 };
-
