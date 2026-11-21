@@ -41,6 +41,12 @@ const PHNOM_PENH_DISTRICTS = [
   'Kamboul'
 ];
 
+const cleanOrderNum = (num) => {
+  if (!num) return '';
+  const str = String(num).trim();
+  return str.startsWith('#') ? str : `#${str}`;
+};
+
 export const CustomerAccountModal = ({
   isOpen,
   onClose,
@@ -530,7 +536,7 @@ export const CustomerAccountModal = ({
                         <div className="flex items-center justify-between gap-2 flex-wrap">
                           <div className="flex items-center gap-2">
                             <span className="font-mono font-black text-amber-400 text-sm">
-                              #{order.orderNumber || order.id}
+                              {cleanOrderNum(order.orderNumber || order.id)}
                             </span>
                             <span className="text-[11px] text-stone-500 font-mono">
                               • {dateFormatted}
@@ -675,7 +681,7 @@ export const CustomerAccountModal = ({
                       </span>
                     </div>
                     <span className="font-mono text-xs font-black text-amber-400 bg-amber-950/80 px-2 py-0.5 rounded border border-amber-800">
-                      #{activeDeliveryOrder.orderNumber}
+                      {cleanOrderNum(activeDeliveryOrder.orderNumber || activeDeliveryOrder.id)}
                     </span>
                   </div>
 

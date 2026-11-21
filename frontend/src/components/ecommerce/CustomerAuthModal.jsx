@@ -842,10 +842,22 @@ export const CustomerAuthModal = ({
             </div>
           </div>
 
-          {/* Security Notice */}
-          <div className="flex items-center justify-center gap-1.5 text-[10px] text-stone-400 pb-1">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-            <span>256-Bit SSL Encrypted • Real Identity & OAuth 2.0 Protection</span>
+          {/* Security Notice & Terms / Privacy Links for Google Verification */}
+          <div className="flex flex-col items-center justify-center gap-1 text-[10px] text-stone-400 pb-1 text-center">
+            <div className="flex items-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+              <span>256-Bit SSL Encrypted • Real Identity & OAuth 2.0 Protection</span>
+            </div>
+            <p className="text-[10px] text-stone-500 dark:text-stone-400">
+              By continuing, you agree to our{' '}
+              <a href="/terms" target="_blank" rel="noreferrer" className="underline hover:text-amber-500 font-bold">
+                Terms of Service
+              </a>
+              {' '}and{' '}
+              <a href="/privacy" target="_blank" rel="noreferrer" className="underline hover:text-amber-500 font-bold">
+                Privacy Policy
+              </a>.
+            </p>
           </div>
         </div>
       </div>

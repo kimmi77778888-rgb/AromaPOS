@@ -1069,7 +1069,7 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
               return (
                 <div
                   key={product.id}
-                  className={`rounded-2xl sm:rounded-3xl bg-white dark:bg-stone-900/90 border border-stone-200/90 dark:border-stone-850 overflow-hidden flex flex-col group hover:border-amber-300 dark:hover:border-stone-700 transition duration-300 shadow-xs hover:shadow-md ${
+                  className={`rounded-3xl bg-white dark:bg-stone-900/85 border border-stone-200/90 dark:border-stone-850 overflow-hidden flex flex-col group hover:border-amber-500/50 dark:hover:border-amber-500/40 hover:-translate-y-1.5 transition-all duration-300 shadow-sm hover:shadow-xl dark:hover:shadow-amber-950/20 backdrop-blur-xs ${
                     isOutOfStock ? 'opacity-70 grayscale-20' : ''
                   }`}
                 >
@@ -1138,9 +1138,9 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
                         <button
                           type="button"
                           onClick={() => setSelectedProductForModal(product)}
-                          className="py-1.5 sm:py-2 px-2.5 sm:px-3.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-stone-950 font-black text-[11px] sm:text-xs flex items-center gap-1 sm:gap-1.5 transition cursor-pointer shadow-sm active:scale-95"
+                          className="py-2 px-3.5 sm:px-4 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-black text-[11px] sm:text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-md shadow-amber-950/20 active:scale-95 group-hover:scale-105"
                         >
-                          <ShoppingBag className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
+                          <ShoppingBag className="w-3.5 h-3.5" />
                           <span>{isKhmer ? 'កុម្ម៉ង់' : 'Order'}</span>
                         </button>
                       )}
@@ -1636,9 +1636,13 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
             </p>
 
             <div className="flex items-center gap-4">
-              <span>Privacy Policy</span>
+              <a href="/privacy" className="hover:text-amber-400 underline underline-offset-2 transition cursor-pointer">
+                {isKhmer ? 'គោលការណ៍ឯកជនភាព' : 'Privacy Policy'}
+              </a>
               <span>•</span>
-              <span>Terms of Service</span>
+              <a href="/terms" className="hover:text-amber-400 underline underline-offset-2 transition cursor-pointer">
+                {isKhmer ? 'លក្ខខណ្ឌប្រើប្រាស់' : 'Terms of Service'}
+              </a>
               <span>•</span>
               <button
                 type="button"

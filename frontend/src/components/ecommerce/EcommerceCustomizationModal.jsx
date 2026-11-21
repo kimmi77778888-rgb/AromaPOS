@@ -15,8 +15,9 @@ import {
 } from 'lucide-react';
 
 const SIZES = [
-  { id: 'regular', name: 'Regular (12oz)', nameKm: 'ធម្មតា (12oz)', priceAdd: 0 },
-  { id: 'large', name: 'Large (16oz)', nameKm: 'ធំ (16oz)', priceAdd: 0.50 }
+  { id: 'S', code: 'S', name: 'Small (8oz)', nameKm: 'តូច (S)', priceAdd: -0.50 },
+  { id: 'M', code: 'M', name: 'Medium (12oz)', nameKm: 'កណ្តាល (M)', priceAdd: 0 },
+  { id: 'L', code: 'L', name: 'Large (16oz)', nameKm: 'ធំ (L)', priceAdd: 0.60 }
 ];
 
 const ICE_LEVELS = [
@@ -49,7 +50,7 @@ const ADDONS = [
 export const EcommerceCustomizationModal = ({ product, isOpen, onClose, onAddToCart }) => {
   const { isKhmer } = useLanguage();
 
-  const [size, setSize] = useState('regular');
+  const [size, setSize] = useState('M');
   const [ice, setIce] = useState('100');
   const [sweetness, setSweetness] = useState('100');
   const [milk, setMilk] = useState('dairy');
@@ -60,7 +61,7 @@ export const EcommerceCustomizationModal = ({ product, isOpen, onClose, onAddToC
   // Reset when product changes
   useEffect(() => {
     if (product) {
-      setSize('regular');
+      setSize('M');
       setIce(product.category?.includes('Hot') ? '0' : '100');
       setSweetness('100');
       setMilk('dairy');
@@ -151,17 +152,26 @@ export const EcommerceCustomizationModal = ({ product, isOpen, onClose, onAddToC
             <X className="w-5 h-5" />
           </button>
 
-          {/* Product Badge & Title */}
-          <div className="absolute bottom-3 left-6 right-6">
-            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/40 inline-block mb-1.5 backdrop-blur-sm">
-              {isKhmer ? (product.categoryKm || product.category) : product.category}
-            </span>
-            <h3 className="text-xl sm:text-2xl font-black text-white leading-tight">
-              {isKhmer ? (product.nameKm || product.name) : product.name}
-            </h3>
-            {isKhmer && product.nameKm && product.nameKm !== product.name && (
-              <p className="text-xs text-stone-400 font-medium">{product.name}</p>
-            )}
+          {/* Product Badge, Title, Subtitle & Rating */}
+          <div className="absolute bottom-3 left-6 right-6 flex items-end justify-between">
+            <div>
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/40 inline-block mb-1.5 backdrop-blur-sm">
+                {isKhmer ? (product.categoryKm || product.category) : product.category}
+              </span>
+              <h3 className="text-xl sm:text-2xl font-black text-white leading-tight">
+                {isKhmer ? (product.nameKm || product.name) : product.name}
+              </h3>
+              <p className="text-xs text-stone-300 font-medium">
+                {product.subtitle || (isKhmer && product.nameKm && product.nameKm !== product.name ? product.name : 'with Chocolate')}
+              </p>
+            </div>
+
+            {/* Rating Pill */}
+            <div className="px-2.5 py-1 rounded-xl bg-black/60 backdrop-blur-md border border-stone-700/60 text-xs font-bold text-amber-300 flex items-center gap-1.5 shadow">
+              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+              <span>{product.rating || '4.5'}</span>
+              <span className="text-[10px] text-stone-400 font-normal">({(product.reviews || 2330).toLocaleString()})</span>
+            </div>
           </div>
         </div>
 
@@ -176,16 +186,16 @@ export const EcommerceCustomizationModal = ({ product, isOpen, onClose, onAddToC
 
           {isDrink && (
             <>
-              {/* 1. Size Selection */}
+              {/* 1. Size Selection: [ S ] [ M ] [ L ] */}
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-extrabold uppercase tracking-wider text-stone-300 flex items-center gap-1.5">
-                    <Coffee className="w-3.5 h-3.5 text-amber-400" />
-                    <span>{isKhmer ? 'ជ្រើសរើសទំហំ (Size)' : 'Select Cup Size'}</span>
+                    <Coffee className="w-3.5 h-3.5 text-[#C67C4E]" />
+                    <span>{isKhmer ? 'ជ្រើសរើសទំហំ (Size)' : 'Size'}</span>
                   </label>
-                  <span className="text-[11px] text-amber-400 font-bold">{isKhmer ? 'ចាំបាច់' : 'Required'}</span>
+                  <span className="text-[11px] text-[#C67C4E] font-bold">{isKhmer ? 'ចាំបាច់' : 'Required'}</span>
                 </div>
-                <div className="grid grid-cols-2 gap-2.5">
+                <div className="grid grid-cols-3 gap-3">
                   {SIZES.map((s) => {
                     const isSelected = size === s.id;
                     return (
@@ -193,23 +203,16 @@ export const EcommerceCustomizationModal = ({ product, isOpen, onClose, onAddToC
                         key={s.id}
                         type="button"
                         onClick={() => setSize(s.id)}
-                        className={`p-3 rounded-2xl border text-left transition flex items-center justify-between cursor-pointer ${
+                        className={`py-3 px-2 rounded-2xl border text-center transition cursor-pointer font-bold ${
                           isSelected
-                            ? 'bg-amber-500/15 border-amber-500 text-amber-200 shadow-md shadow-amber-950/20'
+                            ? 'border-2 border-[#C67C4E] bg-[#C67C4E]/15 text-[#C67C4E] shadow-md shadow-amber-950/20'
                             : 'bg-stone-950/60 border-stone-800 text-stone-300 hover:border-stone-700'
                         }`}
                       >
-                        <div>
-                          <p className="font-bold text-xs sm:text-sm">{isKhmer ? s.nameKm : s.name}</p>
-                          <span className="text-[11px] text-stone-400">
-                            {s.priceAdd > 0 ? `+$${s.priceAdd.toFixed(2)}` : (isKhmer ? 'តម្លៃធម្មតា' : 'Standard')}
-                          </span>
-                        </div>
-                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
-                          isSelected ? 'border-amber-400 bg-amber-500 text-stone-950' : 'border-stone-700'
-                        }`}>
-                          {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
-                        </div>
+                        <span className="block text-sm font-black">{s.code}</span>
+                        <span className="text-[10px] opacity-75 font-normal block mt-0.5 truncate">
+                          {s.priceAdd > 0 ? `+$${s.priceAdd.toFixed(2)}` : s.priceAdd < 0 ? `-$${Math.abs(s.priceAdd).toFixed(2)}` : (isKhmer ? 'ធម្មតា' : 'Std')}
+                        </span>
                       </button>
                     );
                   })}
@@ -385,19 +388,19 @@ export const EcommerceCustomizationModal = ({ product, isOpen, onClose, onAddToC
             </button>
           </div>
 
-          {/* Add to Bag Action Button */}
+          {/* Buy Now / Add to Bag Action Button */}
           <button
             type="button"
             onClick={handleAdd}
-            className="flex-1 py-3 px-5 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-black text-sm flex items-center justify-between transition cursor-pointer shadow-lg shadow-amber-950/40"
+            className="flex-1 py-3.5 px-6 rounded-2xl bg-[#C67C4E] hover:bg-[#b06a3e] active:scale-[0.98] text-white font-black text-sm flex items-center justify-between transition cursor-pointer shadow-xl shadow-amber-950/30"
           >
             <div className="flex items-center gap-2">
               <ShoppingBag className="w-4 h-4" />
-              <span>{isKhmer ? 'ដាក់ចូលកន្ត្រក' : 'Add to Bag'}</span>
+              <span>{isKhmer ? 'ទិញឥឡូវនេះ (Buy Now)' : 'Buy Now'}</span>
             </div>
             <div className="text-right">
               <span className="font-mono text-base font-black">${totalPrice.toFixed(2)}</span>
-              <span className="text-[10px] text-stone-900/80 block font-normal">≈ {rielPrice} ៛</span>
+              <span className="text-[10px] text-white/80 block font-normal">≈ {rielPrice} ៛</span>
             </div>
           </button>
         </div>

@@ -31,7 +31,20 @@ export const saveStoredCategories = (categories) => {
 export const getStoredProducts = () => {
   try {
     const raw = storage.getItem(STORAGE_PRODUCTS_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        // Ensure new signature products (e.g. prod-espresso-coffee, prod-cappuccino-choco) are available
+        const existingIds = new Set(parsed.map((p) => p.id));
+        const missing = INITIAL_PRODUCTS.filter((ip) => !existingIds.has(ip.id));
+        if (missing.length > 0) {
+          const merged = [...missing, ...parsed];
+          storage.setItem(STORAGE_PRODUCTS_KEY, JSON.stringify(merged));
+          return merged;
+        }
+        return parsed;
+      }
+    }
   } catch (e) {
     console.warn('LocalStorage error', e);
   }

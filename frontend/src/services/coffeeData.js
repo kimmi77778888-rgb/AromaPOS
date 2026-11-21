@@ -17,6 +17,130 @@ export const INITIAL_INGREDIENTS = [
 
 export const INITIAL_PRODUCTS = [
   {
+    id: "prod-espresso-coffee",
+    name: "Espresso Coffee",
+    subtitle: "with Chocolate",
+    nameKm: "កាហ្វេ អេសប្រេសសូ (ជាមួយសូកូឡា)",
+    category: "Cappuccino",
+    categoryKm: "កាពូឈីណូ",
+    price: 4.53,
+    rating: 4.5,
+    reviews: 2330,
+    stock: 35,
+    imageUrl: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=600&q=80",
+    topDownImage: "https://images.unsplash.com/photo-1577968897966-3d4325b36b61?auto=format&fit=crop&w=800&q=80",
+    description: "A cappuccino is an approximately 150 ml (5 oz) beverage, with 25 ml of espresso coffee and 85ml of fresh milk the fo... Read More",
+    fullDescription: "A cappuccino is an approximately 150 ml (5 oz) beverage, with 25 ml of espresso coffee and 85ml of fresh milk and velvety foam. Handcrafted by artisan baristas with high-mountain Arabica beans and finished with delicate latte art.",
+    sku: "SKU-ESP-001",
+    recipe: [
+      { ingredientId: "ing-1", ingredientName: "House Espresso Blend Beans", quantity: 20, unit: "g" },
+      { ingredientId: "ing-3", ingredientName: "Organic Whole Milk", quantity: 120, unit: "ml" },
+      { ingredientId: "ing-11", ingredientName: "Compostable Hot Cups (12oz)", quantity: 1, unit: "cups" }
+    ]
+  },
+  {
+    id: "prod-cappuccino-choco",
+    name: "Cappuccino",
+    subtitle: "with Chocolate",
+    nameKm: "កាហ្វេ កាពូឈីណូ (ជាមួយសូកូឡា)",
+    category: "Cappuccino",
+    categoryKm: "កាពូឈីណូ",
+    price: 4.53,
+    rating: 4.8,
+    reviews: 1980,
+    stock: 40,
+    imageUrl: "https://images.unsplash.com/photo-1534778101976-62847782c213?auto=format&fit=crop&w=600&q=80",
+    topDownImage: "https://images.unsplash.com/photo-1534778101976-62847782c213?auto=format&fit=crop&w=800&q=80",
+    description: "A rich, balanced espresso layered with velvety steamed milk and crowned with delicate froth, dusted with Belgian dark chocolate powder.",
+    sku: "SKU-CAP-001",
+    recipe: [
+      { ingredientId: "ing-1", ingredientName: "House Espresso Blend Beans", quantity: 18, unit: "g" },
+      { ingredientId: "ing-3", ingredientName: "Organic Whole Milk", quantity: 150, unit: "ml" },
+      { ingredientId: "ing-11", ingredientName: "Compostable Hot Cups (12oz)", quantity: 1, unit: "cups" }
+    ]
+  },
+  {
+    id: "prod-cappuccino-oat",
+    name: "Cappuccino",
+    subtitle: "with Oat Milk",
+    nameKm: "កាហ្វេ កាពូឈីណូ (ទឹកដោះគោ Oat)",
+    category: "Cappuccino",
+    categoryKm: "កាពូឈីណូ",
+    price: 3.90,
+    rating: 4.9,
+    reviews: 2120,
+    stock: 25,
+    imageUrl: "https://images.unsplash.com/photo-1577968897966-3d4325b36b61?auto=format&fit=crop&w=600&q=80",
+    topDownImage: "https://images.unsplash.com/photo-1577968897966-3d4325b36b61?auto=format&fit=crop&w=800&q=80",
+    description: "Single-origin espresso blended with micro-foamed Oatly Barista oat milk for a naturally sweet, silky plant-based experience.",
+    sku: "SKU-CAP-002",
+    recipe: [
+      { ingredientId: "ing-1", ingredientName: "House Espresso Blend Beans", quantity: 18, unit: "g" },
+      { ingredientId: "ing-4", ingredientName: "Barista Edition Oat Milk", quantity: 150, unit: "ml" },
+      { ingredientId: "ing-11", ingredientName: "Compostable Hot Cups (12oz)", quantity: 1, unit: "cups" }
+    ]
+  },
+  {
+    id: "prod-macchiato-caramel",
+    name: "Machiato",
+    subtitle: "with Caramel",
+    nameKm: "កាហ្វេ ម៉ាគីយ៉ាតូ (ខារ៉ាមែល)",
+    category: "Machiato",
+    categoryKm: "ម៉ាគីយ៉ាតូ",
+    price: 4.10,
+    rating: 4.7,
+    reviews: 1450,
+    stock: 22,
+    imageUrl: "https://images.unsplash.com/photo-1541167760496-1628856ab772?auto=format&fit=crop&w=600&q=80",
+    topDownImage: "https://images.unsplash.com/photo-1541167760496-1628856ab772?auto=format&fit=crop&w=800&q=80",
+    description: "Freshly pulled espresso stained with a spoonful of silky milk foam and drizzled with handmade salted caramel.",
+    sku: "SKU-MAC-001",
+    recipe: [
+      { ingredientId: "ing-1", ingredientName: "House Espresso Blend Beans", quantity: 18, unit: "g" },
+      { ingredientId: "ing-3", ingredientName: "Organic Whole Milk", quantity: 60, unit: "ml" },
+      { ingredientId: "ing-9", ingredientName: "Salted Caramel Sauce", quantity: 20, unit: "ml" }
+    ]
+  },
+  {
+    id: "prod-latte-vanilla",
+    name: "Latte",
+    subtitle: "with Vanilla",
+    nameKm: "កាហ្វេ ឡាតេ (វ៉ានីឡា)",
+    category: "Latte",
+    categoryKm: "ឡាតេ",
+    price: 4.25,
+    rating: 4.6,
+    reviews: 1870,
+    stock: 30,
+    imageUrl: "https://images.unsplash.com/photo-1534778101976-62847782c213?auto=format&fit=crop&w=600&q=80",
+    topDownImage: "https://images.unsplash.com/photo-1534778101976-62847782c213?auto=format&fit=crop&w=800&q=80",
+    description: "Bold espresso meets creamy steamed milk and fragrant organic Madagascar vanilla syrup for everyday bliss.",
+    sku: "SKU-LAT-001",
+    recipe: [
+      { ingredientId: "ing-1", ingredientName: "House Espresso Blend Beans", quantity: 18, unit: "g" },
+      { ingredientId: "ing-3", ingredientName: "Organic Whole Milk", quantity: 180, unit: "ml" }
+    ]
+  },
+  {
+    id: "prod-americano-classic",
+    name: "Americano",
+    subtitle: "with Crema",
+    nameKm: "កាហ្វេ អាមេរិកាណូ (បុរាណ)",
+    category: "Americano",
+    categoryKm: "អាមេរិកាណូ",
+    price: 3.50,
+    rating: 4.5,
+    reviews: 1200,
+    stock: 35,
+    imageUrl: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=600&q=80",
+    topDownImage: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=800&q=80",
+    description: "Two shots of intense espresso topped with hot purified water, preserving an aromatic hazelnut crema.",
+    sku: "SKU-AME-001",
+    recipe: [
+      { ingredientId: "ing-1", ingredientName: "House Espresso Blend Beans", quantity: 20, unit: "g" }
+    ]
+  },
+  {
     id: "prod-thnol",
     name: "Iced Thnol Coffee (Tube Signature)",
     nameKm: "កាហ្វេថ្នល់ទឹកដោះគោ (Tube Signature)",
@@ -283,6 +407,10 @@ export const INITIAL_PRODUCTS = [
 
 export const CATEGORIES = [
   { id: "all", name: "All Items", nameKm: "ទាំងអស់", icon: "Coffee", color: "amber" },
+  { id: "Cappuccino", name: "Cappuccino", nameKm: "កាពូឈីណូ", icon: "Coffee", color: "amber" },
+  { id: "Machiato", name: "Machiato", nameKm: "ម៉ាគីយ៉ាតូ", icon: "Coffee", color: "amber" },
+  { id: "Latte", name: "Latte", nameKm: "ឡាតេ", icon: "Coffee", color: "amber" },
+  { id: "Americano", name: "Americano", nameKm: "អាមេរិកាណូ", icon: "Coffee", color: "amber" },
   { id: "Hot Coffee", name: "Hot Coffee", nameKm: "កាហ្វេក្តៅ", icon: "Flame", color: "orange" },
   { id: "Iced Coffee", name: "Iced Coffee", nameKm: "កាហ្វេទឹកកក", icon: "Snowflake", color: "sky" },
   { id: "Pastries", name: "Pastries", nameKm: "នំបុ័ង & នំខេក", icon: "Croissant", color: "amber" },
@@ -293,7 +421,7 @@ export const CATEGORIES = [
 export const INITIAL_ORDERS = [
   {
     id: "ord-1",
-    orderNumber: "#ORD-1036",
+    orderNumber: "ORD-1036",
     items: [
       { productId: "prod-1", productName: "Artisan Pour Over", unitPrice: 4.75, quantity: 2, subtotal: 9.50, notes: "Oat milk on side" },
       { productId: "prod-9", productName: "Flaky Almond Croissant", unitPrice: 4.50, quantity: 1, subtotal: 4.50, notes: "" }
@@ -313,7 +441,7 @@ export const INITIAL_ORDERS = [
   },
   {
     id: "ord-2",
-    orderNumber: "#ORD-1037",
+    orderNumber: "ORD-1037",
     items: [
       { productId: "prod-5", productName: "Nitro Cold Brew Reserve", unitPrice: 5.50, quantity: 2, subtotal: 11.00, notes: "Extra ice" }
     ],
@@ -332,7 +460,7 @@ export const INITIAL_ORDERS = [
   },
   {
     id: "ord-3",
-    orderNumber: "#ORD-1038",
+    orderNumber: "ORD-1038",
     items: [
       { productId: "prod-2", productName: "Velvety Flat White", unitPrice: 4.50, quantity: 2, subtotal: 9.00, notes: "Extra hot" }
     ],
@@ -351,7 +479,7 @@ export const INITIAL_ORDERS = [
   },
   {
     id: "ord-4",
-    orderNumber: "#ORD-1039",
+    orderNumber: "ORD-1039",
     items: [
       { productId: "prod-6", productName: "Iced Brown Sugar Oat Shaken", unitPrice: 5.75, quantity: 3, subtotal: 17.25, notes: "Light ice" }
     ],
@@ -370,7 +498,7 @@ export const INITIAL_ORDERS = [
   },
   {
     id: "ord-5",
-    orderNumber: "#ORD-1040",
+    orderNumber: "ORD-1040",
     items: [
       { productId: "prod-3", productName: "Spanish Caramel Latte", unitPrice: 5.25, quantity: 1, subtotal: 5.25, notes: "Extra drizzle" },
       { productId: "prod-9", productName: "Flaky Almond Croissant", unitPrice: 4.50, quantity: 1, subtotal: 4.50, notes: "" }
@@ -390,7 +518,7 @@ export const INITIAL_ORDERS = [
   },
   {
     id: "ord-6",
-    orderNumber: "#ORD-1041",
+    orderNumber: "ORD-1041",
     channel: "ONLINE_ECOMMERCE",
     items: [
       { productId: "prod-4", productName: "Iced Vanilla Oat Latte", unitPrice: 5.00, quantity: 2, subtotal: 10.00, notes: "Less sweet 50%" },
@@ -416,7 +544,7 @@ export const INITIAL_ORDERS = [
   },
   {
     id: "ord-7",
-    orderNumber: "#ORD-1042",
+    orderNumber: "ORD-1042",
     channel: "ONLINE_ECOMMERCE",
     items: [
       { productId: "prod-1", productName: "Artisan Pour Over", unitPrice: 4.75, quantity: 1, subtotal: 4.75, notes: "Single origin Ethiopia" },
