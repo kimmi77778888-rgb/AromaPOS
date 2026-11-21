@@ -472,13 +472,13 @@ export const AppProvider = ({ children }) => {
     }
   }, [isLiveMode]);
 
-  // Application Color Theme: 'black' (default rich espresso dark) vs 'white' (clean artisan cafe light)
+  // Application Color Theme: 'white' (clean artisan cafe light - default) vs 'black' (rich espresso dark)
   const [theme, setTheme] = useState(() => {
     try {
       const saved = storage.getItem('aromapos_theme');
-      return saved === 'white' ? 'white' : 'black';
+      return saved === 'black' ? 'black' : 'white';
     } catch {
-      return 'black';
+      return 'white';
     }
   });
 

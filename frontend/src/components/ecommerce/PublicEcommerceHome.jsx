@@ -41,6 +41,7 @@ import {
   Download
 } from 'lucide-react';
 import { LanguageSwitcher } from '../common/LanguageSwitcher';
+import { ThemeSwitcher } from '../common/ThemeSwitcher';
 import { EcommerceCustomizationModal } from './EcommerceCustomizationModal';
 import { EcommerceCartDrawer } from './EcommerceCartDrawer';
 import { EcommerceCheckoutModal } from './EcommerceCheckoutModal';
@@ -460,6 +461,9 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
 
           {/* Right Action Controls */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            {/* Theme Switcher (White / Black Layout Option) */}
+            <ThemeSwitcher size="sm" variant="pill" />
+
             {/* Language Switcher */}
             <div className="hidden sm:block">
               <LanguageSwitcher />
@@ -622,6 +626,11 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
             </div>
             <ChevronRight className="w-4 h-4 text-stone-500" />
           </button>
+
+          <div className="pt-3 border-t border-stone-800/80 flex items-center justify-between">
+            <span className="text-stone-400">{isKhmer ? 'រចនាបទ:' : 'Theme:'}</span>
+            <ThemeSwitcher size="sm" variant="pill" />
+          </div>
 
           <div className="pt-3 border-t border-stone-800/80 flex items-center justify-between">
             <span className="text-stone-400">{isKhmer ? 'ប្តូរភាសា:' : 'Language:'}</span>

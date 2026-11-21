@@ -275,25 +275,54 @@
    ========================================================================= */
 html.theme-white,
 html[data-theme="white"] {
-  --color-stone-950: #f8f6f2;
-  --color-stone-900: #ffffff;
-  --color-stone-850: #f1ede8;
-  --color-stone-800: #e5dfd7;
-  --color-stone-700: #d4ccc2;
-  --color-stone-600: #a69d93;
-  --color-stone-500: #8c8278;
-  --color-stone-400: #665e56;
-  --color-stone-300: #443e38;
-  --color-stone-200: #2b2622;
-  --color-stone-100: #171513;
-  --color-stone-50: #090807;
+  --color-stone-950: #ffffff;
+  --color-stone-900: #faf8f5;
+  --color-stone-850: #f3eee7;
+  --color-stone-800: #e6ded4;
+  --color-stone-700: #d5cbbe;
+  --color-stone-600: #8c8074;
+  --color-stone-500: #74675b;
+  --color-stone-400: #584c41;
+  --color-stone-300: #382f26;
+  --color-stone-200: #231b13;
+  --color-stone-100: #140f0a;
+  --color-stone-50: #0a0705;
   color-scheme: light;
 }
 
 html.theme-white body,
 html[data-theme="white"] body {
-  background-color: #f8f6f2 !important;
-  color: #171513 !important;
+  background-color: #ffffff !important;
+  color: #140f0a !important;
+}
+
+/* Ensure headings and titles with text-white adapt to dark espresso text in White Theme */
+html.theme-white .text-white {
+  color: #140f0a !important;
+}
+
+/* Retain crisp white text on colored action buttons, gradient badges, and notification chips */
+html.theme-white [class*="bg-amber-"] .text-white,
+html.theme-white [class*="bg-emerald-"] .text-white,
+html.theme-white [class*="bg-red-"] .text-white,
+html.theme-white button[class*="bg-amber-"] .text-white,
+html.theme-white button[class*="bg-emerald-"] .text-white,
+html.theme-white button[class*="from-amber-"],
+html.theme-white button[class*="from-amber-"] span,
+html.theme-white .bg-gradient-to-r .text-white,
+html.theme-white .bg-gradient-to-br .text-white,
+html.theme-white .btn-primary,
+html.theme-white .btn-primary * {
+  color: #ffffff !important;
+}
+
+/* Fix dark background gradients in Hero and sections for White theme */
+html.theme-white .bg-gradient-to-b.from-stone-950 {
+  background-image: linear-gradient(to bottom, #ffffff, #faf8f5, #ffffff) !important;
+}
+
+html.theme-white .bg-gradient-to-r.from-stone-950 {
+  background-image: linear-gradient(to right, #ffffff, #faf8f5, #ffffff) !important;
 }
 
 /* Ensure badges and buttons with colored backgrounds retain dark text in White Theme */
