@@ -1230,16 +1230,17 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  // E-Commerce Customer Auth & Account Methods (Real Email Only - Step 1: Register, Step 2: Login)
+  // E-Commerce Customer Auth & Account Methods (Strict Real Email Only - Step 1: Register, Step 2: Login)
   const registerCustomer = useCallback((accountData) => {
     const cleanEmail = accountData.email ? accountData.email.trim().toLowerCase() : '';
     const cleanPhone = accountData.phone ? accountData.phone.trim() : '';
 
+    if (!cleanEmail || !cleanEmail.includes('@') || !cleanEmail.includes('.')) {
+      throw new Error('អាសយដ្ឋាន Real Email មិនត្រឹមត្រូវ / Valid real email address is strictly required');
+    }
+
     // Check if user already exists
-    const existing = customers.find((c) => 
-      (cleanEmail && c.email && c.email.toLowerCase() === cleanEmail) ||
-      (cleanPhone && c.phone && c.phone.replace(/[^0-9]/g, '') === cleanPhone.replace(/[^0-9]/g, ''))
-    );
+    const existing = customers.find((c) => cleanEmail && c.email && c.email.toLowerCase() === cleanEmail);
 
     if (existing) {
       setCustomerUser(existing);
@@ -1276,23 +1277,13 @@ export const AppProvider = ({ children }) => {
     return newCust;
   }, [customers, showToast]);
 
-  const loginCustomer = useCallback((emailOrPhone, password = '', defaultName = '') => {
-    const raw = (emailOrPhone || '').trim().toLowerCase();
-    if (!raw) {
-      throw new Error('សូមបញ្ចូល Email ឬលេខទូរស័ព្ទ / Email or phone is required');
+  const loginCustomer = useCallback((emailAddress, password = '', defaultName = '') => {
+    const raw = (emailAddress || '').trim().toLowerCase();
+    if (!raw || !raw.includes('@')) {
+      throw new Error('សូមបញ្ចូលអាសយដ្ឋាន Real Email របស់អ្នក / Real email address is required');
     }
-    const cleanDigits = raw.replace(/[^0-9]/g, '');
 
-    const found = customers.find((c) => {
-      const cPhone = (c.phone || '').replace(/[^0-9]/g, '');
-      const matchPhone = cleanDigits && cPhone && (
-        cPhone.includes(cleanDigits) || 
-        cleanDigits.includes(cPhone) ||
-        (cleanDigits.length >= 8 && cPhone.slice(-8) === cleanDigits.slice(-8))
-      );
-      const matchEmail = c.email && c.email.toLowerCase() === raw;
-      return matchEmail || matchPhone;
-    });
+    const found = customers.find((c) => c.email && c.email.toLowerCase() === raw);
 
     if (found) {
       if (!password || (found.password && found.password !== password)) {

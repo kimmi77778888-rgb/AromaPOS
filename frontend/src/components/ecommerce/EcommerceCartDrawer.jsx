@@ -163,8 +163,8 @@ export const EcommerceCartDrawer = ({
   };
 
   const handleCheckoutClick = () => {
-    // 1. Mandatory Customer Account Verification before buying coffee
-    if (!customerUser) {
+    // 1. Mandatory Customer Account Verification (Real Email Only) before checkout
+    if (!customerUser || !customerUser.email || !customerUser.email.includes('@')) {
       if (onRequireAuth) {
         onRequireAuth();
         return;
@@ -190,6 +190,7 @@ export const EcommerceCartDrawer = ({
       deliveryMethod: orderType === 'DELIVERY' ? (isKhmer ? 'ដឹកជញ្ជូនស្តង់ដារ (២០-៣០ នាទី)' : 'Standard Delivery (20-30 mins)') : null,
       deliveryTimeEstimate: orderType === 'DELIVERY' ? '20-30 mins' : '10-15 mins',
       customerId: customerUser?.id,
+      customerEmail: customerUser?.email,
       customerName: customerName.trim(),
       customerPhone: customerPhone.trim(),
       carrier: carrier?.name || 'Cambodia Mobile',

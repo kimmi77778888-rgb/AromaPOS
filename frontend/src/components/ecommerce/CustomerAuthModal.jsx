@@ -117,18 +117,53 @@ export const CustomerAuthModal = ({
     } catch (e) {}
   };
 
-  // Helper to validate genuine email syntax
+  // Helper to validate genuine real email syntax and block fake accounts
   const validateRealEmail = (email) => {
     const clean = (email || '').trim().toLowerCase();
     const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
     
     if (!clean || !emailRegex.test(clean)) {
-      return { valid: false, error: isKhmer ? 'សូមបញ្ចូលអាសយដ្ឋាន Email ត្រឹមត្រូវ (ឧ. name@gmail.com)' : 'Please enter a valid real email format (e.g. name@gmail.com)' };
+      return { 
+        valid: false, 
+        error: isKhmer 
+          ? 'សូមបញ្ចូលអាសយដ្ឋាន Email ពិតប្រាកដ (ឧ. name@gmail.com)' 
+          : 'Please enter a valid real email address (e.g. yourname@gmail.com)' 
+      };
     }
 
-    const domain = clean.split('@')[1];
+    const parts = clean.split('@');
+    const username = parts[0];
+    const domain = parts[1];
+
+    if (!username || username.length < 2) {
+      return {
+        valid: false,
+        error: isKhmer ? 'ឈ្មោះ Email ខ្លីពេក។ សូមប្រើប្រាស់ Email ពិតប្រាកដរបស់អ្នក' : 'Email name is too short. Please use your real email address.'
+      };
+    }
+
+    const blockedUsernames = ['test', 'fake', 'asdf', 'admin', 'user', 'dummy', 'sample', '123456', 'nobody'];
+    if (blockedUsernames.includes(username)) {
+      return {
+        valid: false,
+        error: isKhmer ? 'មិនអនុញ្ញាត Email បន្លំទេ។ សូមបញ្ចូល Email ពិតប្រាកដ' : 'Placeholder or fake email addresses are not permitted.'
+      };
+    }
+
+    if (!domain || !domain.includes('.') || domain.length < 4) {
+      return {
+        valid: false,
+        error: isKhmer ? 'Domain របស់ Email មិនត្រឹមត្រូវទេ' : 'Invalid email domain format.'
+      };
+    }
+
     if (BLOCKED_DISPOSABLE_DOMAINS.includes(domain)) {
-      return { valid: false, error: isKhmer ? 'មិនអនុញ្ញាត Email បន្លំ ឬបណ្តោះអាសន្នទេ។ សូមប្រើ Email ពិតប្រាកដរបស់អ្នក (Gmail, Yahoo, Outlook)' : 'Disposable or fake emails are strictly blocked. Please use your real email (e.g. Gmail, Yahoo, Outlook).' };
+      return { 
+        valid: false, 
+        error: isKhmer 
+          ? 'មិនអនុញ្ញាត Email បន្លំ ឬបណ្តោះអាសន្នទេ។ សូមប្រើ Email ពិតប្រាកដរបស់អ្នក (Gmail, Yahoo, Outlook, iCloud)' 
+          : 'Disposable or fake emails are strictly blocked. Please use your real email (e.g. Gmail, Yahoo, Outlook, iCloud).' 
+      };
     }
 
     return { valid: true, clean };
@@ -332,14 +367,14 @@ export const CustomerAuthModal = ({
             <div>
               <div className="flex items-center gap-1.5">
                 <h3 className="font-black text-base sm:text-lg text-stone-900 dark:text-white tracking-tight leading-tight">
-                  {isKhmer ? 'គណនីអតិថិជន Aroma' : 'Aroma Coffee Club'}
+                  {isKhmer ? 'គណនីអតិថិជន Aroma' : 'Aroma Customer Account'}
                 </h3>
-                <span className="text-[10px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/30">
-                  Real Auth
+                <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/30">
+                  Real Email Only
                 </span>
               </div>
               <p className="text-[11px] text-stone-500 dark:text-stone-400 flex items-center gap-1 mt-0.5">
-                <span>Google & Verified Real Email Only</span>
+                <span>{isKhmer ? 'ចុះឈ្មោះ / ចូលដោយប្រើតែ Real Email ប៉ុណ្ណោះ' : 'Real Email & Verified Google Accounts Only'}</span>
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
               </p>
             </div>

@@ -270,9 +270,24 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
     setCartItems([]);
   };
 
-  // Checkout Pipeline
+  // Checkout Pipeline (Strict: Real Email User Only)
   const handleProceedToCheckout = (orderData) => {
-    setPendingCheckoutOrderData(orderData);
+    if (!customerUser || !customerUser.email || !customerUser.email.includes('@')) {
+      setAuthModalPrompt(
+        isKhmer 
+          ? 'សូមចុះឈ្មោះ ឬចូលគណនីជាមួយ Real Email ពិតប្រាកដមុនពេលទូទាត់ប្រាក់' 
+          : 'Please sign in or register with your real email to proceed to checkout'
+      );
+      setIsAuthModalOpen(true);
+      return;
+    }
+    setPendingCheckoutOrderData({
+      ...orderData,
+      customerEmail: customerUser.email,
+      customerId: customerUser.id,
+      customerName: customerUser.name || orderData.customerName,
+      customerPhone: customerUser.phone || orderData.customerPhone
+    });
     setIsCartOpen(false);
     setIsCheckoutModalOpen(true);
   };
