@@ -21,7 +21,8 @@ import {
   Camera, 
   Search, 
   Navigation,
-  LayoutDashboard 
+  LayoutDashboard,
+  Mail 
 } from 'lucide-react';
 import { GoogleLogoSvg, GmailLogoSvg } from './CustomerAuthModal';
 
@@ -271,97 +272,116 @@ export const CustomerAccountModal = ({
         />
 
         {/* Header Profile Banner (Clean & Modern) */}
-        <div className="p-5 sm:p-6 bg-gradient-to-r from-stone-950 via-stone-900 to-amber-950/30 border-b border-stone-800 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-3.5 sm:gap-4 min-w-0">
-            {/* Clickable Real Photo with Camera Overlay */}
-            <div 
-              className="relative group cursor-pointer shrink-0"
-              onClick={() => fileInputRef.current?.click()}
-              title={isKhmer ? 'ចុចទីនេះដើម្បីប្តូររូបថត (Upload Real Photo)' : 'Click to change photo'}
-            >
-              {customerUser.avatar && !customerUser.avatar.includes('images.unsplash.com') ? (
-                <img
-                  src={customerUser.avatar}
-                  alt={customerUser.name}
-                  className="w-13 h-13 sm:w-15 sm:h-15 rounded-2xl object-cover border-2 border-amber-500 shadow-lg group-hover:border-amber-400 transition"
-                />
-              ) : (
-                <div className="w-13 h-13 sm:w-15 sm:h-15 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-700 text-stone-950 font-black text-xl flex items-center justify-center border-2 border-amber-400 shadow-lg">
-                  {(customerUser.name || 'U').charAt(0).toUpperCase()}
+        {(() => {
+          const isGoogleUser = Boolean(
+            customerUser?.isGoogleAccount || 
+            (customerUser?.email && (
+              customerUser.email.toLowerCase().endsWith('@gmail.com') || 
+              customerUser.email.toLowerCase().endsWith('@googlemail.com')
+            ))
+          );
+          return (
+            <div className="p-5 sm:p-6 bg-gradient-to-r from-stone-950 via-stone-900 to-amber-950/30 border-b border-stone-800 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3.5 sm:gap-4 min-w-0">
+                {/* Clickable Real Photo with Camera Overlay */}
+                <div 
+                  className="relative group cursor-pointer shrink-0"
+                  onClick={() => fileInputRef.current?.click()}
+                  title={isKhmer ? 'ចុចទីនេះដើម្បីប្តូររូបថត (Upload Real Photo)' : 'Click to change photo'}
+                >
+                  {customerUser.avatar && !customerUser.avatar.includes('images.unsplash.com') ? (
+                    <img
+                      src={customerUser.avatar}
+                      alt={customerUser.name}
+                      className="w-13 h-13 sm:w-15 sm:h-15 rounded-2xl object-cover border-2 border-amber-500 shadow-lg group-hover:border-amber-400 transition"
+                    />
+                  ) : (
+                    <div className="w-13 h-13 sm:w-15 sm:h-15 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-700 text-stone-950 font-black text-xl flex items-center justify-center border-2 border-amber-400 shadow-lg">
+                      {(customerUser.name || 'U').charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div className="absolute -bottom-1 -right-1 w-5.5 h-5.5 rounded-full bg-stone-900 border border-amber-500 text-amber-400 flex items-center justify-center shadow hover:scale-110 transition cursor-pointer">
+                    <Camera className="w-3 h-3" />
+                  </div>
                 </div>
-              )}
-              <div className="absolute -bottom-1 -right-1 w-5.5 h-5.5 rounded-full bg-stone-900 border border-amber-500 text-amber-400 flex items-center justify-center shadow hover:scale-110 transition cursor-pointer">
-                <Camera className="w-3 h-3" />
+
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-black text-base sm:text-lg text-white truncate">
+                      {customerUser.name}
+                    </h3>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 shrink-0">
+                      {customerUser.tier || 'Verified Coffee Member'}
+                    </span>
+                    {customerUser.email && (
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border flex items-center gap-1 font-mono truncate max-w-[200px] ${
+                        isGoogleUser
+                          ? 'bg-blue-500/15 text-blue-300 border-blue-500/30'
+                          : 'bg-stone-850 text-stone-300 border-stone-750'
+                      }`}>
+                        {isGoogleUser ? (
+                          <GoogleLogoSvg className="w-3 h-3 shrink-0" />
+                        ) : (
+                          <Mail className="w-3 h-3 text-amber-400 shrink-0" />
+                        )}
+                        <span className="truncate">{customerUser.email}</span>
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-xs text-stone-400 font-mono flex items-center gap-2 mt-1 flex-wrap">
+                    {customerUser.phone && <span>📞 {customerUser.phone}</span>}
+                    {customerUser.district && <span>• 📍 {customerUser.district}</span>}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                {/* Direct Dashboard Access Button */}
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      if (googleLogin) {
+                        await googleLogin({
+                          email: customerUser.email,
+                          name: customerUser.name,
+                          picture: customerUser.avatar,
+                          sub: `cust-${customerUser.id}`
+                        });
+                      }
+                    } catch (e) {}
+                    if (changeAppMode) changeAppMode('pos');
+                    onClose();
+                  }}
+                  className="py-1.5 px-3 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-sm active:scale-95"
+                  title={isKhmer ? 'ចូលផ្ទាំងគ្រប់គ្រង Dashboard & POS' : 'Enter Live Dashboard & POS'}
+                >
+                  <LayoutDashboard className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="hidden sm:inline">{isKhmer ? 'Dashboard' : 'Dashboard'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (logoutCustomer) logoutCustomer();
+                    onClose();
+                  }}
+                  className="p-2 rounded-xl bg-stone-900 hover:bg-stone-850 border border-stone-800 text-stone-400 hover:text-rose-400 transition"
+                  title={isKhmer ? 'ចាកចេញពីគណនី' : 'Sign Out'}
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="w-8 h-8 rounded-full bg-stone-900 border border-stone-800 text-stone-400 hover:text-white flex items-center justify-center transition"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
             </div>
-
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="font-black text-base sm:text-lg text-white truncate">
-                  {customerUser.name}
-                </h3>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 shrink-0">
-                  {customerUser.tier || 'Verified Coffee Member'}
-                </span>
-                {customerUser.email && (
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-300 border border-blue-500/30 flex items-center gap-1 font-mono truncate max-w-[200px]">
-                    <GoogleLogoSvg className="w-3 h-3 shrink-0" />
-                    <span className="truncate">{customerUser.email}</span>
-                  </span>
-                )}
-              </div>
-              <div className="text-xs text-stone-400 font-mono flex items-center gap-2 mt-1 flex-wrap">
-                {customerUser.phone && <span>📞 {customerUser.phone}</span>}
-                {customerUser.district && <span>• 📍 {customerUser.district}</span>}
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            {/* Direct Dashboard Access Button */}
-            <button
-              type="button"
-              onClick={async () => {
-                try {
-                  if (googleLogin) {
-                    await googleLogin({
-                      email: customerUser.email,
-                      name: customerUser.name,
-                      picture: customerUser.avatar,
-                      sub: `cust-${customerUser.id}`
-                    });
-                  }
-                } catch (e) {}
-                if (changeAppMode) changeAppMode('pos');
-                onClose();
-              }}
-              className="py-1.5 px-3 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-sm active:scale-95"
-              title={isKhmer ? 'ចូលផ្ទាំងគ្រប់គ្រង Dashboard & POS' : 'Enter Live Dashboard & POS'}
-            >
-              <LayoutDashboard className="w-3.5 h-3.5 text-amber-400" />
-              <span className="hidden sm:inline">{isKhmer ? 'Dashboard' : 'Dashboard'}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                if (logoutCustomer) logoutCustomer();
-                onClose();
-              }}
-              className="p-2 rounded-xl bg-stone-900 hover:bg-stone-850 border border-stone-800 text-stone-400 hover:text-rose-400 transition"
-              title={isKhmer ? 'ចាកចេញពីគណនី' : 'Sign Out'}
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="w-8 h-8 rounded-full bg-stone-900 border border-stone-800 text-stone-400 hover:text-white flex items-center justify-center transition"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
+          );
+        })()}
 
         {/* Clean Segmented Navigation Tabs */}
         <div className="px-5 sm:px-6 pt-3 pb-2 border-b border-stone-800 flex items-center gap-4 text-xs font-bold text-stone-400 shrink-0 bg-stone-950/60">
@@ -825,35 +845,37 @@ export const CustomerAccountModal = ({
                       )}
                     </div>
 
-                    {/* Google Linked Account Info Banner */}
-                    <div className="p-2.5 rounded-xl bg-gradient-to-r from-blue-950/40 via-stone-900 to-amber-950/40 border border-blue-500/20 flex items-center justify-between gap-3 text-xs">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
-                          <GoogleLogoSvg className="w-4 h-4" />
+                    {/* Google Linked Account Info Banner (Only for actual Google/Gmail users) */}
+                    {(profileEmail.toLowerCase().endsWith('@gmail.com') || profileEmail.toLowerCase().endsWith('@googlemail.com')) && (
+                      <div className="p-2.5 rounded-xl bg-gradient-to-r from-blue-950/40 via-stone-900 to-amber-950/40 border border-blue-500/20 flex items-center justify-between gap-3 text-xs">
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
+                            <GoogleLogoSvg className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <p className="font-bold text-[11px] text-stone-200 leading-tight">
+                              {isKhmer ? 'គណនី Google / Gmail ភ្ជាប់រួច' : 'Google & Gmail Account Linked'}
+                            </p>
+                            <p className="text-[10px] text-stone-400 font-mono">
+                              {profileEmail} • 100 Aroma VIP Points
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-bold text-[11px] text-stone-200 leading-tight">
-                            {isKhmer ? 'គណនី Google / Gmail ភ្ជាប់រួច' : 'Google & Gmail Account Linked'}
-                          </p>
-                          <p className="text-[10px] text-stone-400 font-mono">
-                            {profileEmail || 'lensophara@gmail.com'} • 100 Aroma VIP Points
-                          </p>
-                        </div>
-                      </div>
 
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (showToast) {
-                            showToast(isKhmer ? '✓ បានធ្វើសមកាលកម្មជាមួយ Google' : '✓ Synced with Google Account', 'success');
-                          }
-                        }}
-                        className="px-2.5 py-1 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 font-bold text-[10px] transition cursor-pointer flex items-center gap-1 shrink-0"
-                      >
-                        <RotateCcw className="w-3 h-3" />
-                        <span>{isKhmer ? 'ធ្វើសមកាលកម្ម' : 'Sync Google'}</span>
-                      </button>
-                    </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (showToast) {
+                              showToast(isKhmer ? '✓ បានធ្វើសមកាលកម្មជាមួយ Google' : '✓ Synced with Google Account', 'success');
+                            }
+                          }}
+                          className="px-2.5 py-1 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 font-bold text-[10px] transition cursor-pointer flex items-center gap-1 shrink-0"
+                        >
+                          <RotateCcw className="w-3 h-3" />
+                          <span>{isKhmer ? 'ធ្វើសមកាលកម្ម' : 'Sync Google'}</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
 

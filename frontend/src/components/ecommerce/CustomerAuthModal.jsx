@@ -60,12 +60,63 @@ export const GmailLogoSvg = ({ className = "w-5 h-5", ...props }) => (
   </svg>
 );
 
+// Verified trusted consumer email domains (Gmail, Yahoo, Outlook, Hotmail, iCloud, etc.)
+export const REAL_CONSUMER_EMAIL_DOMAINS = [
+  'gmail.com',
+  'googlemail.com',
+  'yahoo.com',
+  'ymail.com',
+  'outlook.com',
+  'hotmail.com',
+  'live.com',
+  'msn.com',
+  'icloud.com',
+  'me.com',
+  'mac.com',
+  'proton.me',
+  'protonmail.com',
+  'mail.com',
+  'zoho.com',
+  'aol.com'
+];
+
+/**
+ * Checks whether an email address is from a legitimate recognized real email provider.
+ * Strictly blocks internal / dummy / fake domains like cafe.com, test.com, etc.
+ */
+export const isRealConsumerEmail = (email) => {
+  const clean = (email || '').trim().toLowerCase();
+  if (!clean || !clean.includes('@') || !clean.includes('.')) return false;
+  const parts = clean.split('@');
+  if (parts.length !== 2) return false;
+  const [username, domain] = parts;
+  if (!username || username.length < 2) return false;
+  if (!domain || !domain.includes('.')) return false;
+
+  // Block fake / internal / demo domains
+  if (
+    domain.includes('cafe.com') || 
+    domain.includes('aromacafe') || 
+    domain.includes('fake') || 
+    domain.includes('test') || 
+    domain.includes('example') ||
+    domain.includes('temp') ||
+    domain.includes('trash')
+  ) {
+    return false;
+  }
+
+  // Must match legitimate consumer email domain
+  return REAL_CONSUMER_EMAIL_DOMAINS.includes(domain);
+};
+
 // Known fake / temporary / burner email domains to block
 const BLOCKED_DISPOSABLE_DOMAINS = [
   'fake.com', 'test.com', 'example.com', 'tempmail.com', 'mailinator.com', 
   '10minutemail.com', 'throwawaymail.com', 'guerrillamail.com', 'yopmail.com', 
   'asdf.com', 'abc.com', '123.com', 'dummy.com', 'sample.com', 'fakeemail.com',
-  'trashmail.com', 'sharklasers.com', 'dispostable.com', 'getairmail.com'
+  'trashmail.com', 'sharklasers.com', 'dispostable.com', 'getairmail.com',
+  'cafe.com', 'aromapos.com'
 ];
 
 export const CustomerAuthModal = ({
@@ -157,12 +208,12 @@ export const CustomerAuthModal = ({
       };
     }
 
-    if (BLOCKED_DISPOSABLE_DOMAINS.includes(domain)) {
+    if (BLOCKED_DISPOSABLE_DOMAINS.includes(domain) || !isRealConsumerEmail(clean)) {
       return { 
         valid: false, 
         error: isKhmer 
-          ? 'មិនអនុញ្ញាត Email បន្លំ ឬបណ្តោះអាសន្នទេ។ សូមប្រើ Email ពិតប្រាកដរបស់អ្នក (Gmail, Yahoo, Outlook, iCloud)' 
-          : 'Disposable or fake emails are strictly blocked. Please use your real email (e.g. Gmail, Yahoo, Outlook, iCloud).' 
+          ? 'Email នេះមិនមែនជា Real Email ទេ។ គេហទំព័រអនុញ្ញាតតែ Real Email ពិតប្រាកដ (ដូចជា @gmail.com, @yahoo.com, @outlook.com, @icloud.com)' 
+          : 'Fake or unrecognized email. Only genuine real email providers (@gmail.com, @yahoo.com, @outlook.com, @icloud.com) are permitted.' 
       };
     }
 

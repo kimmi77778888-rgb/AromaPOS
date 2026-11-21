@@ -6,6 +6,7 @@ import { api, getStoredUser, saveStoredUser, getStoredCategories, saveStoredIngr
 import { DEMO_USERS, DEMO_CUSTOMERS, ROLE_PERMISSIONS } from '../services/coffeeData';
 import { storage } from '../utils/storage';
 import { soundService } from '../services/soundService';
+import { isRealConsumerEmail } from '../components/ecommerce/CustomerAuthModal';
 
 export const DEFAULT_ECOMMERCE_SLIDES = [];
 
@@ -320,20 +321,26 @@ export const AppProvider = ({ children }) => {
   const [customers, setCustomers] = useState(() => {
     try {
       const saved = storage.getItem('aromapos_customers');
-      return saved ? JSON.parse(saved) : DEMO_CUSTOMERS;
+      const list = saved ? JSON.parse(saved) : DEMO_CUSTOMERS;
+      return list.filter((c) => c.email && isRealConsumerEmail(c.email));
     } catch (e) {
-      return DEMO_CUSTOMERS;
+      return DEMO_CUSTOMERS.filter((c) => c.email && isRealConsumerEmail(c.email));
     }
   });
   const [linkedCustomer, setLinkedCustomer] = useState(null);
   const [appliedPoints, setAppliedPoints] = useState(0);
 
-  // Registered Online E-Commerce Customer Account Session
+  // Registered Online E-Commerce Customer Account Session (Strictly Real Email Only)
   const [customerUser, setCustomerUser] = useState(() => {
     try {
       const saved = storage.getItem('aromapos_customer_user');
       if (saved) {
         const parsed = JSON.parse(saved);
+        // Strictly purge fake emails like admin@cafe.com from active customer session
+        if (!parsed.email || !isRealConsumerEmail(parsed.email)) {
+          storage.removeItem('aromapos_customer_user');
+          return null;
+        }
         // Clear any legacy fake Unsplash stock avatars to allow real photo upload
         if (parsed.avatar && parsed.avatar.includes('images.unsplash.com')) {
           parsed.avatar = '';
@@ -1235,8 +1242,8 @@ export const AppProvider = ({ children }) => {
     const cleanEmail = accountData.email ? accountData.email.trim().toLowerCase() : '';
     const cleanPhone = accountData.phone ? accountData.phone.trim() : '';
 
-    if (!cleanEmail || !cleanEmail.includes('@') || !cleanEmail.includes('.')) {
-      throw new Error('អាសយដ្ឋាន Real Email មិនត្រឹមត្រូវ / Valid real email address is strictly required');
+    if (!cleanEmail || !isRealConsumerEmail(cleanEmail)) {
+      throw new Error('Email នេះមិនមែនជា Real Email ទេ។ គេហទំព័រអនុញ្ញាតតែ Real Email ពិតប្រាកដ (ដូចជា @gmail.com, @yahoo.com, @outlook.com, @icloud.com) / Only verified real email providers (@gmail.com, @yahoo.com, @outlook.com, @icloud.com) are permitted.');
     }
 
     // Check if user already exists
@@ -1279,8 +1286,8 @@ export const AppProvider = ({ children }) => {
 
   const loginCustomer = useCallback((emailAddress, password = '', defaultName = '') => {
     const raw = (emailAddress || '').trim().toLowerCase();
-    if (!raw || !raw.includes('@')) {
-      throw new Error('សូមបញ្ចូលអាសយដ្ឋាន Real Email របស់អ្នក / Real email address is required');
+    if (!raw || !isRealConsumerEmail(raw)) {
+      throw new Error('Email នេះមិនមែនជា Real Email ទេ។ គេហទំព័រអនុញ្ញាតតែ Real Email ពិតប្រាកដ (ដូចជា @gmail.com, @yahoo.com, @outlook.com, @icloud.com) / Only verified real email providers (@gmail.com, @yahoo.com, @outlook.com, @icloud.com) are permitted.');
     }
 
     const found = customers.find((c) => c.email && c.email.toLowerCase() === raw);
