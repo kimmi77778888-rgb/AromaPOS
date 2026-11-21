@@ -475,7 +475,7 @@ export const AppProvider = ({ children }) => {
   // Application Color Theme: 'white' (clean artisan cafe light - default) vs 'black' (rich espresso dark)
   const [theme, setTheme] = useState(() => {
     try {
-      const saved = storage.getItem('aromapos_theme');
+      const saved = storage.getItem('aromapos_theme_v2');
       return saved === 'black' ? 'black' : 'white';
     } catch {
       return 'white';
@@ -486,7 +486,7 @@ export const AppProvider = ({ children }) => {
     setTheme((prev) => {
       const next = prev === 'black' ? 'white' : 'black';
       try {
-        storage.setItem('aromapos_theme', next);
+        storage.setItem('aromapos_theme_v2', next);
       } catch {}
       return next;
     });
@@ -517,7 +517,7 @@ export const AppProvider = ({ children }) => {
     }
 
     try {
-      storage.setItem('aromapos_theme', theme);
+      storage.setItem('aromapos_theme_v2', theme);
     } catch {}
 
     // Cross-tab broadcast to Customer Display & other windows

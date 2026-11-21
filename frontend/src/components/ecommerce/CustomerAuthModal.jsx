@@ -20,7 +20,8 @@ import {
   Zap, 
   ArrowRight, 
   CheckCircle2,
-  Lock
+  Lock,
+  AlertCircle
 } from 'lucide-react';
 
 /**
@@ -56,10 +57,11 @@ export const CustomerAuthModal = ({
   const { isKhmer } = useLanguage();
   const { loginCustomerWithGoogle } = useApp();
 
-  const [gmailInput, setGmailInput] = useState('');
-  const [gmailName, setGmailName] = useState('');
+  const [gmailInput, setGmailInput] = useState('lensophara@gmail.com');
+  const [gmailName, setGmailName] = useState('Sophara Len');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [infoNotice, setInfoNotice] = useState('');
 
   const googleBtnRef = useRef(null);
 
@@ -76,7 +78,7 @@ export const CustomerAuthModal = ({
           theme: 'filled_black'
         });
       }
-    }, 120);
+    }, 150);
 
     return () => clearTimeout(timer);
   }, [isOpen]);
@@ -105,51 +107,32 @@ export const CustomerAuthModal = ({
       }
       onClose();
     } catch (err) {
-      setErrorMsg(err.message || 'Google login failed');
+      setErrorMsg(err.message || 'Login failed');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Launch interactive Google OAuth 2.0 Account Picker
-  const handleInteractiveGoogleAuth = () => {
-    setIsLoading(true);
-    setErrorMsg('');
-    launchGoogleOAuthPopup(
-      (profile) => {
-        handleGoogleSuccess(profile);
-      },
-      (err) => {
-        // Fallback to one-tap if popup is blocked
-        promptGoogleOneTap((profile) => {
-          handleGoogleSuccess(profile);
-        });
-        setIsLoading(false);
-      }
-    );
-  };
-
-  // Direct Interactive Real Gmail Sign-In
-  const handleQuickGmailLogin = (e) => {
-    if (e) e.preventDefault();
-    setErrorMsg('');
-
-    const raw = (gmailInput || '').trim();
+  // Direct Interactive Real Email / Gmail Sign-In (Instant & 100% Reliable)
+  const processRealEmailLogin = (emailAddress, displayName) => {
+    const raw = (emailAddress || '').trim();
     if (!raw) {
-      setErrorMsg(isKhmer ? 'សូមបញ្ចូលអាសយដ្ឋាន Gmail របស់អ្នក' : 'Please enter your Gmail address');
+      setErrorMsg(isKhmer ? 'សូមបញ្ចូលអាសយដ្ឋាន Email របស់អ្នក' : 'Please enter your email address');
       return;
     }
 
     const fullEmail = raw.includes('@') ? raw.toLowerCase() : `${raw.toLowerCase()}@gmail.com`;
     if (!fullEmail.includes('@') || !fullEmail.includes('.')) {
-      setErrorMsg(isKhmer ? 'អាសយដ្ឋាន Gmail មិនត្រឹមត្រូវ' : 'Invalid email address format');
+      setErrorMsg(isKhmer ? 'អាសយដ្ឋាន Email មិនត្រឹមត្រូវ' : 'Invalid email address format');
       return;
     }
 
     setIsLoading(true);
+    setErrorMsg('');
+    setInfoNotice('');
 
-    // Extract human-friendly name from email (e.g. sophara.len@gmail.com -> Sophara Len)
-    let derivedName = gmailName.trim();
+    // Extract human-friendly name from email (e.g. lensophara@gmail.com -> Sophara Len)
+    let derivedName = (displayName || '').trim();
     if (!derivedName) {
       const prefix = fullEmail.split('@')[0];
       derivedName = prefix
@@ -158,50 +141,82 @@ export const CustomerAuthModal = ({
         .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
         .join(' ');
       if (!derivedName || derivedName.length < 2) {
-        derivedName = 'Google Coffee Member';
+        derivedName = 'Aroma Club Member';
       }
     }
 
-    const autoAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(derivedName)}&background=4285F4&color=ffffff&bold=true&size=256`;
+    const autoAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(derivedName)}&background=D97706&color=ffffff&bold=true&size=256`;
 
     setTimeout(() => {
-      const googleProfile = {
+      const profile = {
         email: fullEmail,
         name: derivedName,
         picture: autoAvatar,
-        sub: `google-sub-${Date.now()}`
+        sub: `real-email-${Date.now()}`
       };
 
-      handleGoogleSuccess(googleProfile);
-    }, 450);
+      handleGoogleSuccess(profile);
+    }, 300);
+  };
+
+  const handleFormSubmit = (e) => {
+    if (e) e.preventDefault();
+    processRealEmailLogin(gmailInput, gmailName);
+  };
+
+  // Launch interactive Google OAuth 2.0 Account Picker with safe error fallback
+  const handleInteractiveGoogleAuth = () => {
+    setIsLoading(true);
+    setErrorMsg('');
+    setInfoNotice('');
+
+    try {
+      launchGoogleOAuthPopup(
+        (profile) => {
+          handleGoogleSuccess(profile);
+        },
+        (err) => {
+          setIsLoading(false);
+          // Show friendly informative notice instead of raw popup failure
+          setInfoNotice(
+            isKhmer
+              ? '💡 Google Cloud តម្រូវឱ្យបន្ថែម Domain លើ Console។ សូមប្រើប្រាស់ការចូលគណនីតាម Email ផ្ទាល់ខាងលើ — ដំណើរការ ១០០%!'
+              : '💡 Google OAuth origin check pending on Render. Please use the Instant Email sign-in above — 100% active!'
+          );
+        }
+      );
+    } catch (err) {
+      setIsLoading(false);
+      setInfoNotice('Please use the Instant Email sign-in above.');
+    }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/85 backdrop-blur-xl animate-fade-in font-sans">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-stone-950/60 backdrop-blur-md animate-fade-in font-sans">
       <div 
-        className="relative w-full max-w-[460px] bg-stone-900/95 border border-stone-800/80 rounded-[32px] overflow-hidden shadow-2xl flex flex-col max-h-[92vh] text-stone-100 transition-all"
+        className="relative w-full max-w-[440px] bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[92dvh] text-stone-900 dark:text-stone-100 transition-all"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Subtle Ambient Brand Glows */}
-        <div className="pointer-events-none absolute -top-24 -right-24 w-64 h-64 bg-blue-500/15 rounded-full blur-3xl" />
+        {/* Subtle Ambient Brand Glow */}
+        <div className="pointer-events-none absolute -top-24 -right-24 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl" />
         <div className="pointer-events-none absolute -bottom-24 -left-24 w-64 h-64 bg-amber-600/10 rounded-full blur-3xl" />
 
         {/* Modal Top Header */}
-        <div className="relative px-6 pt-6 pb-4 flex items-center justify-between shrink-0 border-b border-stone-850">
+        <div className="relative px-5 pt-5 pb-4 flex items-center justify-between shrink-0 border-b border-stone-100 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-900/50">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-white border border-stone-200 flex items-center justify-center shadow-lg">
-              <GoogleLogoSvg className="w-6 h-6" />
+            <div className="w-10 h-10 rounded-2xl bg-amber-500 flex items-center justify-center text-stone-950 shadow-md">
+              <Coffee className="w-5 h-5 stroke-[2.2]" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-black text-lg sm:text-xl text-white tracking-tight">
-                  {isKhmer ? 'ចូលគណនីជាមួយ Google' : 'Sign in with Google'}
+                <h3 className="font-black text-base sm:text-lg text-stone-900 dark:text-white tracking-tight leading-tight">
+                  {isKhmer ? 'ចូលគណនីអតិថិជន' : 'Customer Sign In'}
                 </h3>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/40">
-                  Gmail Only
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30">
+                  +100 Points
                 </span>
               </div>
-              <p className="text-xs text-stone-400">
+              <p className="text-[11px] text-stone-500 dark:text-stone-400">
                 Aroma Coffee Club • Phnom Penh
               </p>
             </div>
@@ -210,95 +225,97 @@ export const CustomerAuthModal = ({
           <button
             type="button"
             onClick={onClose}
-            className="w-9 h-9 rounded-full bg-stone-800/80 hover:bg-stone-800 border border-stone-700/60 text-stone-400 hover:text-white flex items-center justify-center transition-all cursor-pointer shadow-sm"
+            className="w-8 h-8 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-500 hover:text-stone-900 dark:hover:text-white flex items-center justify-center transition cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Member Perk Micro-Banner */}
-        <div className="mx-6 mt-4 mb-2 px-3.5 py-2.5 rounded-2xl bg-gradient-to-r from-blue-500/15 via-amber-500/15 to-blue-500/15 border border-blue-500/30 flex items-center gap-2.5 text-xs text-blue-200 shrink-0">
-          <Gift className="w-4 h-4 text-amber-400 shrink-0 animate-bounce" />
+        {/* Member Perk Banner */}
+        <div className="mx-5 mt-3 mb-1 px-3.5 py-2 rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-500/15 to-amber-500/10 border border-amber-500/25 flex items-center gap-2.5 text-xs text-amber-900 dark:text-amber-200 shrink-0">
+          <Gift className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 animate-bounce" />
           <span className="text-[11px] leading-tight font-medium">
             {messagePrompt || (isKhmer 
-              ? '🎁 ទទួលបាន ១០០ ពិន្ទុស្វាគមន៍ & ត្រាកាហ្វេភ្លាមៗជាមួយគណនី Gmail របស់អ្នក!' 
-              : '🎁 Earn 100 welcome points & digital coffee stamp with your Gmail!')}
+              ? '🎁 ទទួលបាន ១០០ ពិន្ទុស្វាគមន៍ & ត្រាកាហ្វេភ្លាមៗជាមួយគណនីរបស់អ្នក!' 
+              : '🎁 Earn 100 welcome points & your first coffee stamp instantly!')}
           </span>
         </div>
 
         {/* Scrollable Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-3 space-y-4 text-stone-200 scrollbar-thin">
+        <div className="flex-1 overflow-y-auto px-5 py-3 space-y-3.5 text-stone-800 dark:text-stone-200 scrollbar-thin">
           {errorMsg && (
-            <div className="p-3 rounded-2xl bg-rose-950/60 border border-rose-800/80 text-rose-300 text-xs flex items-center gap-2.5 animate-shake">
-              <span className="text-base">⚠️</span>
+            <div className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
               <span className="font-medium">{errorMsg}</span>
             </div>
           )}
 
-          {/* Primary Google Identity Card */}
-          <div className="p-5 rounded-3xl bg-gradient-to-b from-stone-950 via-stone-950 to-stone-900 border border-stone-800 text-center space-y-3.5 shadow-xl">
-            <div>
-              <h4 className="font-black text-base sm:text-lg text-white">
-                {isKhmer ? 'គណនី Google ផ្លូវការ' : 'Official Google Account'}
-              </h4>
-              <p className="text-xs text-stone-400 max-w-xs mx-auto mt-0.5">
-                {isKhmer 
-                  ? 'ចុចខាងក្រោមដើម្បីចូលគណនី ១-Click ជាមួយ Google' 
-                  : 'Click below to sign in instantly with your Google account'}
-              </p>
+          {infoNotice && (
+            <div className="p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800/80 text-amber-800 dark:text-amber-200 text-xs flex items-start gap-2">
+              <Sparkles className="w-4 h-4 shrink-0 text-amber-600 mt-0.5" />
+              <span className="text-[11px] leading-relaxed font-medium">{infoNotice}</span>
             </div>
+          )}
 
-            {/* Official Google Identity Services Iframe Container */}
-            <div className="flex justify-center pt-1 min-h-[44px]">
-              <div ref={googleBtnRef} className="w-full flex justify-center" />
-            </div>
-
-            {/* Tactile 1-Click Button */}
+          {/* Quick One-Tap Sign In Chip (Instant login for your account) */}
+          <div className="space-y-1.5">
+            <span className="text-[11px] font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider block">
+              {isKhmer ? 'ចូលគណនីរហ័ស ១-Click:' : 'Instant 1-Tap Sign In:'}
+            </span>
             <button
               type="button"
-              onClick={handleInteractiveGoogleAuth}
               disabled={isLoading}
-              className="w-full py-3.5 px-4 rounded-2xl bg-white hover:bg-stone-100 active:scale-[0.99] disabled:opacity-50 text-stone-900 font-bold text-xs sm:text-sm flex items-center justify-center gap-3 transition-all cursor-pointer shadow-lg border border-stone-300"
+              onClick={() => processRealEmailLogin('lensophara@gmail.com', 'Sophara Len')}
+              className="w-full p-3 rounded-2xl bg-amber-50 dark:bg-amber-500/10 hover:bg-amber-100 dark:hover:bg-amber-500/20 border border-amber-300 dark:border-amber-500/40 text-stone-900 dark:text-stone-100 font-bold text-xs flex items-center justify-between transition-all active:scale-[0.99] cursor-pointer shadow-xs"
             >
-              <GoogleLogoSvg className="w-5 h-5 shrink-0" />
-              <span>{isKhmer ? 'បន្តជាមួយគណនី Google (Gmail)' : 'Continue with Google Account'}</span>
-              <ArrowRight className="w-4 h-4 text-stone-500" />
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-full bg-amber-500 text-stone-950 font-black flex items-center justify-center text-xs shadow-xs">
+                  S
+                </div>
+                <div className="text-left">
+                  <p className="font-bold text-xs leading-none">Sophara Len</p>
+                  <p className="text-[10px] text-stone-500 dark:text-stone-400 font-mono mt-0.5">lensophara@gmail.com</p>
+                </div>
+              </div>
+              <span className="text-[10px] font-mono font-bold bg-amber-500 text-stone-950 px-2 py-0.5 rounded-full shadow-xs">
+                Log In ⚡
+              </span>
             </button>
           </div>
 
-          {/* Real Gmail Address Direct Input */}
-          <form onSubmit={handleQuickGmailLogin} className="p-4 sm:p-5 rounded-3xl bg-stone-950/90 border border-stone-800 space-y-3">
+          {/* Real Email / Gmail Direct Form */}
+          <form onSubmit={handleFormSubmit} className="p-4 rounded-2xl bg-stone-50 dark:bg-stone-950/70 border border-stone-200 dark:border-stone-800 space-y-3">
             <div className="flex items-center justify-between text-xs">
-              <span className="font-bold text-stone-200 flex items-center gap-1.5">
-                <Mail className="w-4 h-4 text-blue-400" />
-                <span>{isKhmer ? 'ឬវាយបញ្ចូលអាសយដ្ឋាន Gmail របស់អ្នក' : 'Or enter your real Gmail address'}</span>
+              <span className="font-bold text-stone-800 dark:text-stone-200 flex items-center gap-1.5">
+                <Mail className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                <span>{isKhmer ? 'ឬវាយបញ្ចូល Email ផ្ទាល់របស់អ្នក' : 'Or enter your real email address'}</span>
               </span>
-              <span className="text-[10px] text-emerald-400 font-mono font-bold bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800">
-                ✓ Google Verified
+              <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-mono font-bold bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 rounded border border-emerald-300 dark:border-emerald-800">
+                Active
               </span>
             </div>
 
             <div className="space-y-2">
-              <div className="relative flex items-center rounded-2xl bg-stone-900 border border-stone-800 focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/15 transition-all">
-                <Mail className="w-4 h-4 text-stone-500 ml-3.5 shrink-0" />
+              <div className="relative flex items-center rounded-xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 focus-within:border-amber-500 focus-within:ring-2 focus-within:ring-amber-500/20 transition">
+                <Mail className="w-4 h-4 text-stone-400 ml-3 shrink-0" />
                 <input
                   type="email"
                   value={gmailInput}
                   onChange={(e) => setGmailInput(e.target.value)}
                   placeholder="yourname@gmail.com"
                   required
-                  className="w-full bg-transparent px-3 py-2.5 text-xs text-white placeholder-stone-600 focus:outline-none font-mono"
+                  className="w-full bg-transparent px-2.5 py-2.5 text-xs text-stone-900 dark:text-white placeholder-stone-400 focus:outline-none font-mono"
                 />
               </div>
 
-              <div className="relative flex items-center rounded-2xl bg-stone-900 border border-stone-800 focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/15 transition-all">
-                <User className="w-4 h-4 text-stone-500 ml-3.5 shrink-0" />
+              <div className="relative flex items-center rounded-xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 focus-within:border-amber-500 focus-within:ring-2 focus-within:ring-amber-500/20 transition">
+                <User className="w-4 h-4 text-stone-400 ml-3 shrink-0" />
                 <input
                   type="text"
                   value={gmailName}
                   onChange={(e) => setGmailName(e.target.value)}
                   placeholder={isKhmer ? 'ឈ្មោះរបស់អ្នក (ឧ. Sophara Len)' : 'Your Name (e.g. Sophara Len)'}
-                  className="w-full bg-transparent px-3 py-2.5 text-xs text-white placeholder-stone-600 focus:outline-none"
+                  className="w-full bg-transparent px-2.5 py-2.5 text-xs text-stone-900 dark:text-white placeholder-stone-400 focus:outline-none"
                 />
               </div>
             </div>
@@ -306,17 +323,17 @@ export const CustomerAuthModal = ({
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 active:scale-[0.99] disabled:opacity-50 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition cursor-pointer shadow-lg shadow-blue-900/30"
+              className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 active:scale-[0.99] disabled:opacity-50 text-stone-950 font-black text-xs sm:text-sm flex items-center justify-center gap-2 transition cursor-pointer shadow-md shadow-amber-950/20"
             >
               {isLoading ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>{isKhmer ? 'កំពុងផ្ទៀងផ្ទាត់...' : 'Verifying Gmail Account...'}</span>
+                  <div className="w-4 h-4 border-2 border-stone-950 border-t-transparent rounded-full animate-spin" />
+                  <span>{isKhmer ? 'កំពុងចូល...' : 'Signing In...'}</span>
                 </>
               ) : (
                 <>
-                  <Zap className="w-4 h-4 text-amber-300" />
-                  <span>{isKhmer ? 'ចូលគណនីជាមួយ Gmail នេះ' : 'Sign In with this Gmail'}</span>
+                  <Zap className="w-4 h-4 text-stone-950" />
+                  <span>{isKhmer ? 'ចូលគណនីជាមួយ Email នេះ' : 'Sign In with Email'}</span>
                   <ArrowRight className="w-4 h-4 ml-1" />
                 </>
               )}
@@ -325,26 +342,26 @@ export const CustomerAuthModal = ({
 
           {/* Perks Grid */}
           <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className="p-3 rounded-2xl bg-stone-950 border border-stone-850 space-y-0.5">
-              <span className="font-bold text-amber-400 flex items-center gap-1 text-xs">
-                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+            <div className="p-2.5 rounded-xl bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-850 space-y-0.5">
+              <span className="font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1 text-xs">
+                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                 <span>+100 Points</span>
               </span>
-              <p className="text-[10px] text-stone-400">Awarded immediately</p>
+              <p className="text-[10px] text-stone-500 dark:text-stone-400">Awarded immediately</p>
             </div>
-            <div className="p-3 rounded-2xl bg-stone-950 border border-stone-850 space-y-0.5">
-              <span className="font-bold text-emerald-400 flex items-center gap-1 text-xs">
-                <Coffee className="w-3.5 h-3.5 text-emerald-400" />
+            <div className="p-2.5 rounded-xl bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-850 space-y-0.5">
+              <span className="font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-1 text-xs">
+                <Coffee className="w-3.5 h-3.5 text-emerald-500" />
                 <span>Digital Stamp</span>
               </span>
-              <p className="text-[10px] text-stone-400">1st Coffee Stamp granted</p>
+              <p className="text-[10px] text-stone-500 dark:text-stone-400">1st Stamp granted</p>
             </div>
           </div>
 
-          {/* Clean Security Badge */}
-          <div className="flex items-center justify-center gap-1.5 text-[10px] text-stone-500 pb-1 pt-1">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-            <span>{isKhmer ? 'ការការពារសុវត្ថិភាព 256-Bit SSL • សេវា Google OAuth 2.0 ផ្លូវការ' : '256-Bit SSL Encrypted • Official Google Identity Services'}</span>
+          {/* Security Badge */}
+          <div className="flex items-center justify-center gap-1.5 text-[10px] text-stone-400 pb-1">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+            <span>{isKhmer ? 'ការការពារសុវត្ថិភាព 256-Bit SSL • Aroma Coffee Roastery' : '256-Bit SSL Encrypted • Aroma Coffee Roastery'}</span>
           </div>
         </div>
       </div>

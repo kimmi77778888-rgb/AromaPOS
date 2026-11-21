@@ -377,14 +377,14 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
   };
 
   return (
-    <div className="min-h-screen bg-stone-950 text-stone-100 font-sans selection:bg-amber-500 selection:text-stone-950">
+    <div className="min-h-screen bg-white dark:bg-stone-950 text-stone-900 dark:text-stone-100 font-sans selection:bg-amber-400 selection:text-stone-950 transition-colors duration-300">
       {/* ─────────────────────────────────────────────────────────────
           1. TOP ANNOUNCEMENT & DELIVERY BANNER (CLEAN & MODERN)
       ────────────────────────────────────────────────────────────── */}
-      <div className="bg-stone-950/95 border-b border-stone-850/80 py-2 px-4 sm:px-8 text-xs font-medium text-stone-400 select-none">
+      <div className="bg-amber-500/10 dark:bg-stone-950/95 border-b border-amber-500/20 dark:border-stone-850/80 py-2 px-3 sm:px-8 text-xs font-medium text-stone-700 dark:text-stone-400 select-none">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-stone-300 font-medium">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
+          <div className="flex items-center gap-2 text-stone-800 dark:text-stone-300 font-medium text-[11px] sm:text-xs">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
             <span className="truncate">
               {isKhmer 
                 ? `🛵 ដឹកជញ្ជូនរហ័សទូទាំងភ្នំពេញ (២០-៣០ នាទី) • ដឹកឥតគិតថ្លៃសម្រាប់ការកុម្ម៉ង់ចាប់ពី $១០+` 
@@ -392,12 +392,12 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
             </span>
           </div>
 
-          <div className="hidden md:flex items-center gap-4 text-stone-400 font-mono text-[11px] shrink-0">
-            <span>Rate: <strong className="text-stone-300 font-semibold">$1 = {currencyRate} ៛</strong></span>
+          <div className="hidden md:flex items-center gap-4 text-stone-500 dark:text-stone-400 font-mono text-[11px] shrink-0">
+            <span>Rate: <strong className="text-stone-800 dark:text-stone-300 font-semibold">$1 = {currencyRate} ៛</strong></span>
             <span>•</span>
-            <span>Hotline: <a href="tel:+85523999881" className="text-amber-400 hover:underline font-bold">023 999 881</a></span>
+            <span>Hotline: <a href="tel:+85523999881" className="text-amber-600 dark:text-amber-400 hover:underline font-bold">023 999 881</a></span>
             <span>•</span>
-            <span className="text-stone-400 font-sans">📍 BKK1 Roastery HQ</span>
+            <span className="text-stone-500 dark:text-stone-400 font-sans">📍 BKK1 Roastery HQ</span>
           </div>
         </div>
       </div>
@@ -405,35 +405,35 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
       {/* ─────────────────────────────────────────────────────────────
           2. STICKY PUBLIC NAVBAR (CLEAN, MODERN, STANDARD)
       ────────────────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-40 bg-stone-950/85 backdrop-blur-xl border-b border-stone-850/80 shadow-lg shadow-black/15 transition-all">
+      <header className="sticky top-0 z-40 bg-white/95 dark:bg-stone-950/85 backdrop-blur-xl border-b border-stone-200/80 dark:border-stone-850/80 shadow-xs dark:shadow-black/15 transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-8 h-18 sm:h-20 flex items-center justify-between gap-4">
           {/* Brand Logo & Title */}
           <a href="#" className="flex items-center gap-3 group cursor-pointer text-left">
-            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 border border-amber-500/40 flex items-center justify-center text-amber-400 shadow-inner group-hover:border-amber-400 transition shrink-0">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-amber-500 flex items-center justify-center text-stone-950 shadow-md group-hover:scale-105 transition shrink-0">
               <Coffee className="w-5 h-5 sm:w-6 sm:h-6 stroke-[2.2]" />
             </div>
             <div>
-              <h1 className="font-black text-lg sm:text-xl tracking-tight leading-none text-white flex items-center gap-1">
+              <h1 className="font-black text-lg sm:text-xl tracking-tight leading-none text-stone-900 dark:text-white flex items-center gap-1">
                 <span>{storeName}</span>
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
               </h1>
-              <p className="text-[10px] text-stone-400 font-medium tracking-widest uppercase mt-0.5">
+              <p className="text-[10px] text-amber-700 dark:text-stone-400 font-bold tracking-widest uppercase mt-0.5">
                 {isKhmer ? 'រោងកាហ្វេ & ហាងកាហ្វេពិសេស' : 'Artisan Roastery & Café'}
               </p>
             </div>
           </a>
 
           {/* Desktop Center Navigation Capsule */}
-          <nav className="hidden lg:flex items-center gap-1 p-1 rounded-2xl bg-stone-900/60 border border-stone-800/60 backdrop-blur-md">
+          <nav className="hidden lg:flex items-center gap-1 p-1 rounded-2xl bg-stone-100/90 dark:bg-stone-900/60 border border-stone-200/80 dark:border-stone-800/60 backdrop-blur-md">
             <a 
               href="#menu" 
-              className="px-3.5 py-1.5 rounded-xl font-bold text-xs text-stone-300 hover:text-white hover:bg-stone-800/80 transition-all cursor-pointer"
+              className="px-3.5 py-1.5 rounded-xl font-bold text-xs text-stone-700 dark:text-stone-300 hover:text-stone-950 dark:hover:text-white hover:bg-white dark:hover:bg-stone-800/80 transition-all cursor-pointer shadow-xs"
             >
               {isKhmer ? 'ម៉ឺនុយកាហ្វេ' : 'Menu'}
             </a>
             <a 
               href="#promos" 
-              className="px-3.5 py-1.5 rounded-xl font-bold text-xs text-stone-300 hover:text-white hover:bg-stone-800/80 transition-all cursor-pointer"
+              className="px-3.5 py-1.5 rounded-xl font-bold text-xs text-stone-700 dark:text-stone-300 hover:text-stone-950 dark:hover:text-white hover:bg-white dark:hover:bg-stone-800/80 transition-all cursor-pointer shadow-xs"
             >
               {isKhmer ? 'ប្រូម៉ូសិន' : 'Offers'}
             </a>
@@ -642,34 +642,34 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
       {/* ─────────────────────────────────────────────────────────────
           3. HERO SECTION: ARTISAN COFFEE ROASTERS
       ────────────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden py-16 sm:py-24 px-4 sm:px-8 bg-gradient-to-b from-stone-950 via-stone-900 to-stone-950">
+      <section className="relative overflow-hidden py-12 sm:py-20 px-4 sm:px-8 bg-gradient-to-b from-amber-50/60 via-white to-amber-50/30 dark:from-stone-950 dark:via-stone-900 dark:to-stone-950 border-b border-amber-100/80 dark:border-stone-800">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           {/* Left Text & Call to Actions */}
           <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-800 dark:text-amber-400 text-xs font-bold">
               <Sparkles className="w-3.5 h-3.5" />
               <span>{isKhmer ? 'កាហ្វេរសជាតិពិសេសកម្រិតខ្ពស់នៅភ្នំពេញ' : 'Specialty Coffee Roastery in Phnom Penh'}</span>
             </div>
 
-            <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight">
+            <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black text-stone-900 dark:text-white tracking-tight leading-tight">
               {isKhmer ? (
                 <>
                   កាហ្វេលីងថ្មីៗ <br />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600">
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700">
                     ដឹកជញ្ជូនដល់ផ្ទះអ្នក
                   </span>
                 </>
               ) : (
                 <>
                   Freshly Roasted Coffee, <br />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600">
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700">
                     Delivered to Your Door.
                   </span>
                 </>
               )}
             </h2>
 
-            <p className="text-sm sm:text-base text-stone-400 max-w-xl mx-auto lg:mx-0 leading-relaxed">
+            <p className="text-sm sm:text-base text-stone-600 dark:text-stone-400 max-w-xl mx-auto lg:mx-0 leading-relaxed font-normal">
               {isKhmer 
                 ? 'រសជាតិកាហ្វេពិតៗ ចម្រាញ់ចេញពីគ្រាប់កាហ្វេ Ethiopia Guji និង Mondulkiri លីងផ្ទាល់ក្នុងបរិមាណតិចៗ ដើម្បីរក្សាគុណភាពខ្ពស់បំផុត និងដឹកជញ្ជូនរហ័សទូទាំងភ្នំពេញ។' 
                 : 'Single-origin beans ethically sourced from Ethiopian highlands and Mondulkiri, batch-roasted daily in Phnom Penh and handcrafted by artisan baristas.'}
@@ -679,7 +679,7 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 pt-2">
               <a
                 href="#menu"
-                className="py-3.5 px-6 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-black text-sm flex items-center gap-2 transition shadow-xl shadow-amber-950/40"
+                className="py-3.5 px-6 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-stone-950 font-black text-sm flex items-center gap-2 transition shadow-lg shadow-amber-950/20 active:scale-95"
               >
                 <Bike className="w-4 h-4" />
                 <span>{isKhmer ? 'កុម្ម៉ង់ដឹកជញ្ជូនឥឡូវនេះ' : 'Order Delivery'}</span>
@@ -687,26 +687,26 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
 
               <a
                 href="#menu"
-                className="py-3.5 px-6 rounded-2xl bg-stone-900 hover:bg-stone-850 border border-stone-800 text-stone-200 font-bold text-sm flex items-center gap-2 transition"
+                className="py-3.5 px-6 rounded-2xl bg-white dark:bg-stone-900 hover:bg-stone-100 dark:hover:bg-stone-850 border border-stone-200 dark:border-stone-800 text-stone-800 dark:text-stone-200 font-bold text-sm flex items-center gap-2 transition shadow-xs"
               >
-                <Store className="w-4 h-4 text-amber-400" />
+                <Store className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                 <span>{isKhmer ? 'មកយកនៅហាង' : 'Store Pickup'}</span>
               </a>
             </div>
 
             {/* Feature Pills */}
-            <div className="pt-6 grid grid-cols-3 gap-3 border-t border-stone-850/80 text-left">
+            <div className="pt-6 grid grid-cols-3 gap-3 border-t border-amber-200/60 dark:border-stone-850/80 text-left">
               <div>
-                <p className="font-mono font-black text-lg sm:text-xl text-amber-400">30 Min</p>
-                <p className="text-[11px] text-stone-400 font-medium">Fast City Delivery</p>
+                <p className="font-mono font-black text-lg sm:text-xl text-amber-600 dark:text-amber-400">30 Min</p>
+                <p className="text-[11px] text-stone-600 dark:text-stone-400 font-medium">Fast City Delivery</p>
               </div>
               <div>
-                <p className="font-mono font-black text-lg sm:text-xl text-emerald-400">KHQR</p>
-                <p className="text-[11px] text-stone-400 font-medium">Bakong / ABA Pay</p>
+                <p className="font-mono font-black text-lg sm:text-xl text-emerald-600 dark:text-emerald-400">KHQR</p>
+                <p className="text-[11px] text-stone-600 dark:text-stone-400 font-medium">Bakong / ABA Pay</p>
               </div>
               <div>
-                <p className="font-mono font-black text-lg sm:text-xl text-cyan-400">100%</p>
-                <p className="text-[11px] text-stone-400 font-medium">Arabica Specialty</p>
+                <p className="font-mono font-black text-lg sm:text-xl text-cyan-600 dark:text-cyan-400">100%</p>
+                <p className="text-[11px] text-stone-600 dark:text-stone-400 font-medium">Arabica Specialty</p>
               </div>
             </div>
           </div>
@@ -982,7 +982,7 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
             {filteredProducts.map((product) => {
               const riel = Math.round((product.price || 0) * currencyRate).toLocaleString();
               const isOutOfStock = (product.stock !== undefined && product.stock <= 0) || product.isAutoDisabled;
@@ -991,59 +991,59 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
               return (
                 <div
                   key={product.id}
-                  className={`rounded-3xl bg-stone-900/90 border border-stone-850 overflow-hidden flex flex-col group hover:border-stone-700 transition duration-300 shadow-lg hover:shadow-2xl hover:shadow-black/60 ${
+                  className={`rounded-2xl sm:rounded-3xl bg-white dark:bg-stone-900/90 border border-stone-200/90 dark:border-stone-850 overflow-hidden flex flex-col group hover:border-amber-300 dark:hover:border-stone-700 transition duration-300 shadow-xs hover:shadow-md ${
                     isOutOfStock ? 'opacity-70 grayscale-20' : ''
                   }`}
                 >
                   {/* Image Container */}
-                  <div className="relative h-48 w-full overflow-hidden bg-stone-950">
+                  <div className="relative h-36 sm:h-48 w-full overflow-hidden bg-stone-100 dark:bg-stone-950">
                     <img
                       src={product.imageUrl || 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=500&q=80'}
                       alt={product.name}
                       className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-stone-900 via-transparent to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-stone-900/30 dark:from-stone-900 via-transparent to-transparent" />
 
                     {/* Category Tag */}
-                    <span className="absolute top-3 left-3 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-stone-950/80 backdrop-blur-md text-amber-300 border border-stone-800">
+                    <span className="absolute top-2 sm:top-3 left-2 sm:left-3 px-2 sm:px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-wider bg-white/90 dark:bg-stone-950/80 backdrop-blur-md text-amber-800 dark:text-amber-300 border border-stone-200 dark:border-stone-800 shadow-xs">
                       {isKhmer ? (product.categoryKm || product.category) : product.category}
                     </span>
 
                     {/* Stock status badges */}
                     {isOutOfStock ? (
-                      <span className="absolute top-3 right-3 px-2 py-0.5 rounded-full text-[10px] font-black bg-stone-900/90 text-stone-400 border border-stone-700 backdrop-blur-md">
+                      <span className="absolute top-2 sm:top-3 right-2 sm:right-3 px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black bg-stone-100 dark:bg-stone-900/90 text-stone-500 dark:text-stone-400 border border-stone-300 dark:border-stone-700 backdrop-blur-md">
                         {isKhmer ? 'អស់ពីស្តុក' : 'Sold Out'}
                       </span>
                     ) : isLowStock ? (
-                      <span className="absolute top-3 right-3 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-950/80 text-rose-300 border border-rose-800 backdrop-blur-md">
-                        {isKhmer ? `សល់តែ ${product.stock}` : `Only ${product.stock} left`}
+                      <span className="absolute top-2 sm:top-3 right-2 sm:right-3 px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-800 backdrop-blur-md">
+                        {isKhmer ? `សល់ ${product.stock}` : `${product.stock} left`}
                       </span>
                     ) : null}
                   </div>
 
                   {/* Body Content */}
-                  <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
+                  <div className="p-3 sm:p-5 flex-1 flex flex-col justify-between space-y-2 sm:space-y-4">
                     <div>
-                      <h4 className="font-black text-base text-stone-100 group-hover:text-amber-400 transition leading-snug">
+                      <h4 className="font-bold text-xs sm:text-base text-stone-900 dark:text-stone-100 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition leading-snug line-clamp-1 sm:line-clamp-none">
                         {isKhmer ? (product.nameKm || product.name) : product.name}
                       </h4>
                       {isKhmer && product.nameKm && product.nameKm !== product.name && (
-                        <p className="text-[11px] text-stone-400 font-medium">{product.name}</p>
+                        <p className="text-[10px] sm:text-[11px] text-stone-500 dark:text-stone-400 font-medium truncate">{product.name}</p>
                       )}
                       {product.description && (
-                        <p className="text-xs text-stone-400 mt-2 line-clamp-2 leading-relaxed">
+                        <p className="hidden sm:block text-xs text-stone-600 dark:text-stone-400 mt-2 line-clamp-2 leading-relaxed font-normal">
                           {product.description}
                         </p>
                       )}
                     </div>
 
                     {/* Price & Action Button */}
-                    <div className="pt-3 border-t border-stone-800/80 flex items-center justify-between gap-2">
+                    <div className="pt-2 sm:pt-3 border-t border-stone-100 dark:border-stone-800/80 flex items-center justify-between gap-1 sm:gap-2">
                       <div>
-                        <span className="font-mono text-lg font-black text-amber-400">
+                        <span className="font-mono text-sm sm:text-lg font-black text-amber-700 dark:text-amber-400">
                           ${(product.price || 0).toFixed(2)}
                         </span>
-                        <span className="text-[10px] text-stone-500 block font-normal">
+                        <span className="text-[9px] sm:text-[10px] text-stone-500 block font-normal leading-none mt-0.5">
                           ≈ {riel} ៛
                         </span>
                       </div>
@@ -1052,17 +1052,17 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
                         <button
                           type="button"
                           disabled
-                          className="py-2 px-3.5 rounded-xl bg-stone-800 text-stone-500 font-bold text-xs cursor-not-allowed"
+                          className="py-1.5 sm:py-2 px-2.5 sm:px-3.5 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-400 dark:text-stone-500 font-bold text-[11px] sm:text-xs cursor-not-allowed"
                         >
-                          {isKhmer ? 'អស់ពីស្តុក' : 'Unavailable'}
+                          {isKhmer ? 'អស់' : 'Sold'}
                         </button>
                       ) : (
                         <button
                           type="button"
                           onClick={() => setSelectedProductForModal(product)}
-                          className="py-2 px-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs flex items-center gap-1.5 transition cursor-pointer shadow-md shadow-amber-950/20 active:scale-95"
+                          className="py-1.5 sm:py-2 px-2.5 sm:px-3.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-stone-950 font-black text-[11px] sm:text-xs flex items-center gap-1 sm:gap-1.5 transition cursor-pointer shadow-sm active:scale-95"
                         >
-                          <ShoppingBag className="w-3.5 h-3.5" />
+                          <ShoppingBag className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
                           <span>{isKhmer ? 'កុម្ម៉ង់' : 'Order'}</span>
                         </button>
                       )}
@@ -1955,6 +1955,27 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
               </button>
             </div>
           </div>
+        </div>
+      )}
+      {/* Floating Sticky Bottom Cart Pill for Mobile Phones */}
+      {totalCartCount > 0 && (
+        <div className="sm:hidden fixed bottom-4 left-4 right-4 z-40 animate-bounce-subtle">
+          <button
+            type="button"
+            onClick={() => setIsCartOpen(true)}
+            className="w-full py-3.5 px-5 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-500 to-amber-600 text-stone-950 font-black text-sm flex items-center justify-between shadow-2xl shadow-amber-950/40 active:scale-98 transition border border-amber-300"
+          >
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-full bg-stone-950 text-amber-400 flex items-center justify-center">
+                <ShoppingBag className="w-4 h-4" />
+              </div>
+              <span className="font-bold">{isKhmer ? 'កន្ត្រកកាហ្វេ' : 'View Bag'}</span>
+              <span className="px-2 py-0.5 rounded-full bg-stone-950 text-amber-400 font-mono text-xs font-black">
+                {totalCartCount}
+              </span>
+            </div>
+            <span className="font-mono font-black text-base">${subtotal.toFixed(2)}</span>
+          </button>
         </div>
       )}
     </div>
