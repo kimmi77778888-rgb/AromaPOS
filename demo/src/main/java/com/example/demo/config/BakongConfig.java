@@ -12,7 +12,7 @@ public class BakongConfig {
     @Value("${bakong.token}")
     private String token;
 
-    @Value("${bakong.merchant.id:sophara_len@bkrt}")
+    @Value("${bakong.merchant.id:sophara_len1@bkrt}")
     private String merchantId;
 
     @Value("${bakong.merchant.name:COFFEE POS}")

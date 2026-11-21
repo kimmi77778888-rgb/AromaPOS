@@ -523,7 +523,7 @@ export const CheckoutModal = ({ isOpen, onClose }) => {
                 </span>
                 <span className="text-[10px] bg-rose-950/80 text-rose-300 px-2.5 py-0.5 rounded-full border border-rose-800/80 font-mono flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                  <span>{khqrData?.merchantId || 'sophara_len@bkrt'}</span>
+                  <span>{khqrData?.merchantId || 'sophara_len1@bkrt'}</span>
                 </span>
               </div>
 

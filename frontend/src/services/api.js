@@ -2493,7 +2493,7 @@ export const api = {
       console.warn('Failed to load Bakong config from backend', e);
     }
     return {
-      merchantId: 'sophara_len@bkrt',
+      merchantId: 'sophara_len1@bkrt',
       merchantName: 'COFFEE POS',
       merchantCity: 'Phnom Penh',
       acquiringBank: 'Bakong',

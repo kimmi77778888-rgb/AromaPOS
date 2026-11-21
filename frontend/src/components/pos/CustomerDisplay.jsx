@@ -330,7 +330,7 @@ export const CustomerDisplay = ({ standalone = false, onClose = null }) => {
                       <div className="animate-laser"></div>
 
                       <img
-                        src={checkoutState?.khqrData?.qrImageUrl || `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=00020101021229440010bakong@nbc0116sophara_len@bkrt0206Bakong5204581453038405404${cartTotals.total.toFixed(2)}5802KH5910COFFEE POS6010Phnom Penh6304`}
+                        src={checkoutState?.khqrData?.qrImageUrl || `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=00020101021229440010bakong@nbc0117sophara_len1@bkrt0206Bakong5204581453038405404${cartTotals.total.toFixed(2)}5802KH5910COFFEE POS6010Phnom Penh6304`}
                         alt="Bakong KHQR"
                         className="w-48 h-48 object-contain rounded-xl select-none"
                       />
@@ -340,7 +340,7 @@ export const CustomerDisplay = ({ standalone = false, onClose = null }) => {
                         KHQR • NATIONAL BANK OF CAMBODIA
                       </span>
                       <span className="text-[10px] font-mono text-stone-600 block font-semibold">
-                        {checkoutState?.khqrData?.merchantId || 'sophara_len@bkrt'}
+                        {checkoutState?.khqrData?.merchantId || 'sophara_len1@bkrt'}
                       </span>
                     </div>
                   </div>

@@ -106,10 +106,10 @@ public class KhqrGenerator {
         sb.append(formatTlv("01", "12"));
 
         // 29: Merchant Account Information (Individual/Solo Merchant)
-        // Sub-tag 00: Bakong Account ID (e.g. sophara_len@bkrt)
+        // Sub-tag 00: Bakong Account ID (e.g. sophara_len1@bkrt)
         // Sub-tag 02: Acquiring Bank (e.g. Bakong)
         StringBuilder merchantInfo = new StringBuilder();
-        merchantInfo.append(formatTlv("00", merchantBakongId != null ? merchantBakongId.trim() : "sophara_len@bkrt"));
+        merchantInfo.append(formatTlv("00", merchantBakongId != null ? merchantBakongId.trim() : "sophara_len1@bkrt"));
         if (acquiringBank != null && !acquiringBank.isBlank()) {
             merchantInfo.append(formatTlv("02", acquiringBank.trim()));
         }

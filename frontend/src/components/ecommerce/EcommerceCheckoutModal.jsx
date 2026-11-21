@@ -77,7 +77,7 @@ export const EcommerceCheckoutModal = ({
       setIsKhqrLoading(!khqrData);
 
       const billNumber = 'ONL-' + Math.floor(1000 + Math.random() * 9000);
-      const merchantId = getStoredMerchantBakongId() || 'sophara_len@bkrt';
+      const merchantId = getStoredMerchantBakongId() || 'sophara_len1@bkrt';
 
       generateOfficialBakongKhqr({
         merchantId,

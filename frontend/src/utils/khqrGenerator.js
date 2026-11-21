@@ -6,7 +6,7 @@
 import { BakongKHQR, IndividualInfo, khqrData } from 'bakong-khqr';
 import QRCode from 'qrcode';
 
-const DEFAULT_BAKONG_ID = 'sophara_len@bkrt';
+const DEFAULT_BAKONG_ID = 'sophara_len1@bkrt';
 const DEFAULT_MERCHANT_NAME = 'AROMA COFFEE ROASTERY';
 const DEFAULT_CITY = 'Phnom Penh';
 
