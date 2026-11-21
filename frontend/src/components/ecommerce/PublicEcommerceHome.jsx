@@ -46,7 +46,7 @@ import { EcommerceCustomizationModal } from './EcommerceCustomizationModal';
 import { EcommerceCartDrawer } from './EcommerceCartDrawer';
 import { EcommerceCheckoutModal } from './EcommerceCheckoutModal';
 import { CustomerOrderTracker } from './CustomerOrderTracker';
-import { CustomerAuthModal } from './CustomerAuthModal';
+import { CustomerAuthModal, GoogleLogoSvg, GmailLogoSvg } from './CustomerAuthModal';
 import { CustomerAccountModal } from './CustomerAccountModal';
 import { LiveDeliveryMapModal } from './LiveDeliveryMapModal';
 import { CustomerInvoiceModal } from './CustomerInvoiceModal';
@@ -469,25 +469,32 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
               <LanguageSwitcher />
             </div>
 
-            {/* Customer Account Profile / Sign In Pill */}
+            {/* Customer Account Profile / Google & Real Email Sign In Pill */}
             {customerUser ? (
               <button
                 type="button"
                 onClick={() => setIsAccountModalOpen(true)}
-                className="py-1.5 px-3 rounded-2xl bg-stone-900/90 hover:bg-stone-850 border border-amber-600/40 text-stone-200 font-bold text-xs flex items-center gap-2 transition cursor-pointer shadow-sm hover:border-amber-500"
+                className="py-1.5 px-3 rounded-2xl bg-stone-900/90 hover:bg-stone-850 border border-amber-600/40 text-stone-200 font-bold text-xs flex items-center gap-2 transition cursor-pointer shadow-sm hover:border-amber-500 group"
                 title="My Account & Purchase History"
               >
-                {customerUser.avatar && !customerUser.avatar.includes('images.unsplash.com') ? (
-                  <img
-                    src={customerUser.avatar}
-                    alt={customerUser.name}
-                    className="w-5 h-5 rounded-full object-cover border border-amber-400"
-                  />
-                ) : (
-                  <div className="w-5 h-5 rounded-full bg-amber-500 text-stone-950 font-black text-[10px] flex items-center justify-center">
-                    {(customerUser.name || 'U').charAt(0).toUpperCase()}
-                  </div>
-                )}
+                <div className="relative shrink-0">
+                  {customerUser.avatar && !customerUser.avatar.includes('images.unsplash.com') ? (
+                    <img
+                      src={customerUser.avatar}
+                      alt={customerUser.name}
+                      className="w-5 h-5 rounded-full object-cover border border-amber-400"
+                    />
+                  ) : (
+                    <div className="w-5 h-5 rounded-full bg-amber-500 text-stone-950 font-black text-[10px] flex items-center justify-center">
+                      {(customerUser.name || 'U').charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  {(customerUser.isGoogleAccount || (customerUser.email && customerUser.email.toLowerCase().includes('@gmail.com'))) && (
+                    <div className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-white dark:bg-stone-900 flex items-center justify-center p-[0.5px] shadow">
+                      <GoogleLogoSvg className="w-full h-full" />
+                    </div>
+                  )}
+                </div>
                 <span className="hidden md:inline truncate max-w-[90px]">{customerUser.name}</span>
                 <span className="text-[10px] font-mono text-amber-400 font-black">⭐ {customerUser.points || 0}</span>
               </button>
@@ -495,15 +502,25 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
               <button
                 type="button"
                 onClick={() => {
-                  setAuthModalPrompt(isKhmer ? 'ចុះឈ្មោះ ឬចូលគណនីជាមួយ Real Email ដើម្បីទទួលបាន ១០០ ពិន្ទុ & ត្រាកាហ្វេ!' : 'Register or sign in with your real email to earn 100 points!');
+                  setAuthModalPrompt(isKhmer ? 'ចូលគណនីជាមួយ Google / Gmail ដើម្បីទទួលបាន ១០០ ពិន្ទុ & ត្រាកាហ្វេ!' : 'Sign in with Google / Gmail to earn 100 points & rewards!');
                   setIsAuthModalOpen(true);
                 }}
-                className="py-2 px-3.5 rounded-2xl bg-white hover:bg-stone-100 text-stone-900 border border-stone-200 font-bold text-xs flex items-center gap-2 transition cursor-pointer shadow-sm hover:shadow active:scale-95"
-                title="Real Email Account: Register / Login"
+                className="group relative overflow-hidden py-1.5 px-3 sm:px-3.5 rounded-2xl bg-white dark:bg-stone-900 hover:bg-stone-100 dark:hover:bg-stone-850 text-stone-900 dark:text-stone-100 border border-stone-200 dark:border-stone-800 hover:border-blue-500/50 font-bold text-xs flex items-center gap-2 transition-all cursor-pointer shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-95"
+                title="Google & Gmail Fast Sign-In / Register"
               >
-                <Mail className="w-4 h-4 text-amber-600 shrink-0" />
-                <span className="hidden sm:inline font-sans font-bold">{isKhmer ? 'ចុះឈ្មោះ / ចូល' : 'Sign In'}</span>
-                <span className="sm:hidden font-sans font-bold">{isKhmer ? 'គណនី' : 'Account'}</span>
+                {/* Subtle shine sweep on hover */}
+                <div className="pointer-events-none absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-blue-500/10 to-transparent" />
+                <div className="flex items-center -space-x-1 shrink-0">
+                  <GoogleLogoSvg className="w-4 h-4 shrink-0 group-hover:scale-110 transition-transform" />
+                  <GmailLogoSvg className="w-3.5 h-3.5 shrink-0 group-hover:scale-110 transition-transform" />
+                </div>
+                <span className="hidden sm:inline font-sans font-bold">
+                  {isKhmer ? 'Google / ចូល' : 'Google Sign In'}
+                </span>
+                <span className="sm:hidden font-sans font-bold">Google</span>
+                <span className="text-[10px] font-mono font-black text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.2 rounded-full border border-amber-500/25">
+                  +100
+                </span>
               </button>
             )}
 
@@ -611,6 +628,52 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
               <span>{isKhmer ? 'សាខាហាង' : 'Locations'}</span>
             </a>
           </div>
+
+          {/* Mobile User Sign In / Profile Fast Action */}
+          {!customerUser ? (
+            <button
+              type="button"
+              onClick={() => {
+                setIsMobileNavOpen(false);
+                setAuthModalPrompt(isKhmer ? 'ចូលគណនីជាមួយ Google / Gmail ដើម្បីទទួលបាន ១០០ ពិន្ទុ & ត្រាកាហ្វេ!' : 'Sign in with Google / Gmail to earn 100 points & rewards!');
+                setIsAuthModalOpen(true);
+              }}
+              className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-stone-900 via-stone-850 to-stone-900 border border-stone-800 hover:border-blue-500/50 text-white flex items-center justify-between font-bold text-xs shadow-md transition cursor-pointer"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="flex items-center -space-x-1">
+                  <GoogleLogoSvg className="w-4 h-4" />
+                  <GmailLogoSvg className="w-3.5 h-3.5" />
+                </div>
+                <span>{isKhmer ? 'ចូលជាមួយ Google / Gmail' : 'Sign In with Google / Gmail'}</span>
+              </div>
+              <span className="text-[10px] font-mono font-bold text-amber-400 bg-amber-500/15 px-2 py-0.5 rounded-full border border-amber-500/30">
+                +100 Pts
+              </span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setIsMobileNavOpen(false);
+                setIsAccountModalOpen(true);
+              }}
+              className="w-full py-3 px-4 rounded-2xl bg-stone-900 border border-amber-500/30 text-white flex items-center justify-between font-bold text-xs shadow-md transition cursor-pointer"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="w-6 h-6 rounded-full bg-amber-500 text-stone-950 font-black text-xs flex items-center justify-center">
+                  {(customerUser.name || 'U').charAt(0).toUpperCase()}
+                </div>
+                <div className="text-left">
+                  <p className="font-bold text-white leading-tight">{customerUser.name}</p>
+                  <p className="text-[10px] text-stone-400 font-mono">{customerUser.email || customerUser.phone}</p>
+                </div>
+              </div>
+              <span className="text-[10px] font-mono font-bold text-amber-400 bg-amber-500/15 px-2 py-0.5 rounded-full border border-amber-500/30">
+                ⭐ {customerUser.points || 0} Pts
+              </span>
+            </button>
+          )}
 
           <button
             type="button"
