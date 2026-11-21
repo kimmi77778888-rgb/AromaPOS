@@ -46,7 +46,7 @@ import { EcommerceCustomizationModal } from './EcommerceCustomizationModal';
 import { EcommerceCartDrawer } from './EcommerceCartDrawer';
 import { EcommerceCheckoutModal } from './EcommerceCheckoutModal';
 import { CustomerOrderTracker } from './CustomerOrderTracker';
-import { CustomerAuthModal, GoogleLogoSvg } from './CustomerAuthModal';
+import { CustomerAuthModal } from './CustomerAuthModal';
 import { CustomerAccountModal } from './CustomerAccountModal';
 import { LiveDeliveryMapModal } from './LiveDeliveryMapModal';
 import { CustomerInvoiceModal } from './CustomerInvoiceModal';
@@ -495,15 +495,15 @@ export const PublicEcommerceHome = ({ onSwitchToPos }) => {
               <button
                 type="button"
                 onClick={() => {
-                  setAuthModalPrompt(isKhmer ? 'ចូលគណនីជាមួយ Gmail ដើម្បីទទួលបាន ១០០ ពិន្ទុ & ត្រាកាហ្វេ!' : 'Sign in with your Gmail to earn 100 welcome points & rewards!');
+                  setAuthModalPrompt(isKhmer ? 'ចុះឈ្មោះ ឬចូលគណនីជាមួយ Real Email ដើម្បីទទួលបាន ១០០ ពិន្ទុ & ត្រាកាហ្វេ!' : 'Register or sign in with your real email to earn 100 points!');
                   setIsAuthModalOpen(true);
                 }}
                 className="py-2 px-3.5 rounded-2xl bg-white hover:bg-stone-100 text-stone-900 border border-stone-200 font-bold text-xs flex items-center gap-2 transition cursor-pointer shadow-sm hover:shadow active:scale-95"
-                title="Sign in with Gmail / Google"
+                title="Real Email Account: Register / Login"
               >
-                <GoogleLogoSvg className="w-4 h-4 shrink-0" />
-                <span className="hidden sm:inline font-sans font-bold">{isKhmer ? 'ចូលគណនី' : 'Sign In'}</span>
-                <span className="sm:hidden font-sans font-bold">Gmail</span>
+                <Mail className="w-4 h-4 text-amber-600 shrink-0" />
+                <span className="hidden sm:inline font-sans font-bold">{isKhmer ? 'ចុះឈ្មោះ / ចូល' : 'Sign In'}</span>
+                <span className="sm:hidden font-sans font-bold">{isKhmer ? 'គណនី' : 'Account'}</span>
               </button>
             )}
 

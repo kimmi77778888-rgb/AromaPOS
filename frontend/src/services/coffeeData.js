@@ -518,6 +518,21 @@ export const MODIFIER_GROUPS = [
 
 export const DEMO_CUSTOMERS = [
   {
+    id: "cust-sophara",
+    name: "Sophara Len",
+    phone: "0969276538",
+    email: "lensophara@gmail.com",
+    password: "password123",
+    district: "Boeng Keng Kang",
+    address: "#45, Street 288, Sangkat Boeng Keng Kang 1, Phnom Penh",
+    tier: "Diamond VIP Member",
+    points: 350,
+    stamps: 8,
+    avatar: "",
+    visits: 19,
+    favoriteDrink: "Iced Thnol Coffee (Tube Signature)"
+  },
+  {
     id: "cust-0",
     name: "Phara",
     phone: "0969276538",

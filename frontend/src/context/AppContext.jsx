@@ -1230,32 +1230,54 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  // E-Commerce Customer Auth & Account Methods
+  // E-Commerce Customer Auth & Account Methods (Real Email Only - Step 1: Register, Step 2: Login)
   const registerCustomer = useCallback((accountData) => {
+    const cleanEmail = accountData.email ? accountData.email.trim().toLowerCase() : '';
     const cleanPhone = accountData.phone ? accountData.phone.trim() : '';
+
+    // Check if user already exists
+    const existing = customers.find((c) => 
+      (cleanEmail && c.email && c.email.toLowerCase() === cleanEmail) ||
+      (cleanPhone && c.phone && c.phone.replace(/[^0-9]/g, '') === cleanPhone.replace(/[^0-9]/g, ''))
+    );
+
+    if (existing) {
+      setCustomerUser(existing);
+      try {
+        storage.setItem('aromapos_customer_user', JSON.stringify(existing));
+      } catch (e) {}
+      showToast(`គណនីមានរួចហើយ! ស្វាគមន៍ការត្រឡប់មកវិញ ${existing.name}`, 'info');
+      return existing;
+    }
+
     const newCust = {
       id: `cust-${Date.now()}`,
-      name: accountData.name ? accountData.name.trim() : 'Coffee Lover',
+      name: accountData.name ? accountData.name.trim() : 'Coffee Member',
       phone: cleanPhone,
-      email: accountData.email ? accountData.email.trim() : '',
-      address: accountData.address ? accountData.address.trim() : '',
+      email: cleanEmail,
+      password: accountData.password || '',
+      address: accountData.address ? accountData.address.trim() : '#45, Street 288, Sangkat Boeng Keng Kang 1, Phnom Penh',
       district: accountData.district || 'Khan Boeng Keng Kang',
       tier: 'Aroma Coffee Club VIP',
       points: 100, // 100 Welcome Points
       stamps: 1, // 1st digital coffee stamp
-      avatar: accountData.avatar || '',
+      avatar: accountData.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(accountData.name || 'Member')}&background=D97706&color=ffffff&bold=true&size=256`,
       visits: 1,
       createdAt: new Date().toISOString()
     };
 
     setCustomers((prev) => [newCust, ...prev]);
     setCustomerUser(newCust);
+    try {
+      storage.setItem('aromapos_customers', JSON.stringify([newCust, ...customers]));
+      storage.setItem('aromapos_customer_user', JSON.stringify(newCust));
+    } catch (e) {}
     showToast(`🎉 ស្វាគមន៍ ${newCust.name}! ទទួលបាន ១០០ ពិន្ទុ & ត្រាកាហ្វេទី១`, 'success');
     return newCust;
-  }, [showToast]);
+  }, [customers, showToast]);
 
-  const loginCustomer = useCallback((phoneOrEmail, password = '', defaultName = '') => {
-    const raw = (phoneOrEmail || '').trim();
+  const loginCustomer = useCallback((emailOrPhone, password = '', defaultName = '') => {
+    const raw = (emailOrPhone || '').trim().toLowerCase();
     const cleanDigits = raw.replace(/[^0-9]/g, '');
 
     const found = customers.find((c) => {
@@ -1265,46 +1287,23 @@ export const AppProvider = ({ children }) => {
         cleanDigits.includes(cPhone) ||
         (cleanDigits.length >= 8 && cPhone.slice(-8) === cleanDigits.slice(-8))
       );
-      const matchEmail = c.email && c.email.toLowerCase() === raw.toLowerCase();
-      const matchName = c.name && c.name.toLowerCase() === raw.toLowerCase();
-      return matchPhone || matchEmail || matchName;
+      const matchEmail = c.email && c.email.toLowerCase() === raw;
+      return matchEmail || matchPhone;
     });
 
     if (found) {
+      if (password && found.password && found.password !== password) {
+        throw new Error('លេខសម្ងាត់មិនត្រឹមត្រូវទេ / Incorrect password');
+      }
       setCustomerUser(found);
-      showToast(`ស្វាគមន៍ការត្រឡប់មកវិញ ${found.name}!`, 'success');
+      try {
+        storage.setItem('aromapos_customer_user', JSON.stringify(found));
+      } catch (e) {}
+      showToast(`ស្វាគមន៍ការត្រឡប់មកវិញ ${found.name}! ☕`, 'success');
       return found;
     }
 
-    // Auto-create registered member for effortless checkout
-    let cleanName = defaultName ? defaultName.trim() : '';
-    if (!cleanName) {
-      if (cleanDigits.includes('0969276538') || cleanDigits.slice(-8) === '969276538') {
-        cleanName = 'Phara';
-      } else if (raw.includes('@')) {
-        cleanName = raw.split('@')[0];
-      } else {
-        cleanName = `Coffee VIP (${raw.slice(-4)})`;
-      }
-    }
-    const newMember = {
-      id: `cust-${Date.now()}`,
-      name: cleanName,
-      phone: raw,
-      email: raw.includes('@') ? raw : '',
-      district: 'Boeng Keng Kang',
-      address: '#45, Street 288, Sangkat Boeng Keng Kang 1, Phnom Penh',
-      tier: 'Gold VIP Member',
-      points: 150,
-      stamps: 3,
-      avatar: '',
-      visits: 3,
-      createdAt: new Date().toISOString()
-    };
-    setCustomers((prev) => [newMember, ...prev]);
-    setCustomerUser(newMember);
-    showToast(`ស្វាគមន៍ ${newMember.name}! ទទួលបាន ១៥០ ពិន្ទុ & ត្រាកាហ្វេ`, 'success');
-    return newMember;
+    throw new Error('រកមិនឃើញគណនីជាមួយ Email នេះទេ។ សូមចុះឈ្មោះនៅជំហានទី១! / Account not found. Please register in Step 1!');
   }, [customers, showToast]);
 
   const loginCustomerWithGoogle = useCallback((googleProfile) => {
