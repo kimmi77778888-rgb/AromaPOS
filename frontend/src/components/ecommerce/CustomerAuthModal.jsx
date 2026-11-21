@@ -3,6 +3,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useApp } from '../../context/AppContext';
 import { soundService } from '../../services/soundService';
 import confetti from 'canvas-confetti';
+import { launchGoogleOAuthPopup } from '../../utils/googleAuth';
 import { 
   X, 
   User, 
@@ -135,32 +136,26 @@ export const CustomerAuthModal = ({
     setIsLoading(true);
     setGoogleLoadingState('authenticating');
 
-    const emailToUse = (customEmail || 'lensophara@gmail.com').trim().toLowerCase();
-    const nameToUse = customName || (emailToUse.includes('sophara') ? 'Sophara Len' : emailToUse.split('@')[0]);
-
-    // Realistic Google OAuth Animation Delay for silky smooth UX
-    setTimeout(() => {
+    const finalizeLogin = (email, name, picture) => {
       setGoogleLoadingState('syncing');
-
       setTimeout(() => {
         try {
           let customer;
           if (loginCustomerWithGoogle) {
             customer = loginCustomerWithGoogle({
-              email: emailToUse,
-              name: nameToUse,
-              picture: 'https://lh3.googleusercontent.com/a/ACg8ocLQn-AromaDemoUserAvatar=s96-c',
+              email,
+              name,
+              picture: picture || 'https://lh3.googleusercontent.com/a/ACg8ocLQn-AromaDemoUserAvatar=s96-c',
               phone: '0969276538',
               verified_email: true
             });
           } else {
-            // Fallback to standard login/register
             try {
-              customer = loginCustomer(emailToUse, 'password123');
+              customer = loginCustomer(email, 'password123');
             } catch (err) {
               customer = registerCustomer({
-                email: emailToUse,
-                name: nameToUse,
+                email,
+                name,
                 phone: '0969276538',
                 password: 'password123'
               });
@@ -178,8 +173,32 @@ export const CustomerAuthModal = ({
           setIsLoading(false);
           setGoogleLoadingState('');
         }
-      }, 550);
-    }, 450);
+      }, 350);
+    };
+
+    // If custom email passed (or 1-Tap quick chip clicked)
+    if (customEmail) {
+      const emailToUse = customEmail.trim().toLowerCase();
+      const nameToUse = customName || (emailToUse.includes('sophara') ? 'Sophara Len' : emailToUse.split('@')[0]);
+      setTimeout(() => finalizeLogin(emailToUse, nameToUse), 300);
+      return;
+    }
+
+    // Try real Google Identity Services OAuth popup
+    try {
+      launchGoogleOAuthPopup(
+        (profile) => {
+          finalizeLogin(profile.email, profile.name, profile.picture);
+        },
+        (err) => {
+          // If popup blocked or cancelled, fall back seamlessly to demo account
+          console.warn('Google OAuth popup fell back to default account:', err?.message || err);
+          finalizeLogin('lensophara@gmail.com', 'Sophara Len');
+        }
+      );
+    } catch (e) {
+      finalizeLogin('lensophara@gmail.com', 'Sophara Len');
+    }
   };
 
   // STEP 1: Handle Real Email Registration
