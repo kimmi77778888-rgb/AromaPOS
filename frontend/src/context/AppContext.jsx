@@ -1278,6 +1278,9 @@ export const AppProvider = ({ children }) => {
 
   const loginCustomer = useCallback((emailOrPhone, password = '', defaultName = '') => {
     const raw = (emailOrPhone || '').trim().toLowerCase();
+    if (!raw) {
+      throw new Error('សូមបញ្ចូល Email ឬលេខទូរស័ព្ទ / Email or phone is required');
+    }
     const cleanDigits = raw.replace(/[^0-9]/g, '');
 
     const found = customers.find((c) => {
@@ -1292,7 +1295,7 @@ export const AppProvider = ({ children }) => {
     });
 
     if (found) {
-      if (password && found.password && found.password !== password) {
+      if (!password || (found.password && found.password !== password)) {
         throw new Error('លេខសម្ងាត់មិនត្រឹមត្រូវទេ / Incorrect password');
       }
       setCustomerUser(found);
@@ -1307,7 +1310,10 @@ export const AppProvider = ({ children }) => {
   }, [customers, showToast]);
 
   const loginCustomerWithGoogle = useCallback((googleProfile) => {
-    const email = (googleProfile.email || '').trim().toLowerCase();
+    const email = (googleProfile?.email || '').trim().toLowerCase();
+    if (!email || !email.includes('@') || !email.includes('.')) {
+      throw new Error('Invalid Google account email');
+    }
     const existing = customers.find((c) => c.email && c.email.toLowerCase() === email);
     if (existing) {
       const updated = {

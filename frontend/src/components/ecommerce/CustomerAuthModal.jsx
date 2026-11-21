@@ -22,7 +22,7 @@ import {
   Eye,
   EyeOff,
   Zap,
-  Check
+  ShieldAlert
 } from 'lucide-react';
 
 /**
@@ -60,6 +60,14 @@ export const GmailLogoSvg = ({ className = "w-5 h-5", ...props }) => (
   </svg>
 );
 
+// Known fake / temporary / burner email domains to block
+const BLOCKED_DISPOSABLE_DOMAINS = [
+  'fake.com', 'test.com', 'example.com', 'tempmail.com', 'mailinator.com', 
+  '10minutemail.com', 'throwawaymail.com', 'guerrillamail.com', 'yopmail.com', 
+  'asdf.com', 'abc.com', '123.com', 'dummy.com', 'sample.com', 'fakeemail.com',
+  'trashmail.com', 'sharklasers.com', 'dispostable.com', 'getairmail.com'
+];
+
 export const CustomerAuthModal = ({
   isOpen,
   onClose,
@@ -78,21 +86,17 @@ export const CustomerAuthModal = ({
   // Active Tab: 'register' (Step 1) vs 'login' (Step 2)
   const [activeTab, setActiveTab] = useState(initialTab || 'register');
 
-  // Step 1: Register State
+  // Step 1: Register State (Strictly empty, no dummy values)
   const [regEmail, setRegEmail] = useState('');
   const [regName, setRegName] = useState('');
   const [regPhone, setRegPhone] = useState('');
   const [regPassword, setRegPassword] = useState('');
   const [showRegPassword, setShowRegPassword] = useState(false);
 
-  // Step 2: Login State
-  const [loginEmail, setLoginEmail] = useState('lensophara@gmail.com');
-  const [loginPassword, setLoginPassword] = useState('password123');
+  // Step 2: Login State (Strictly empty, no dummy values)
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
   const [showLoginPassword, setShowLoginPassword] = useState(false);
-
-  // Custom Google/Gmail input state
-  const [customGmail, setCustomGmail] = useState('');
-  const [showCustomGmailInput, setShowCustomGmailInput] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
   const [googleLoadingState, setGoogleLoadingState] = useState(''); // 'authenticating' | 'syncing' | ''
@@ -113,6 +117,23 @@ export const CustomerAuthModal = ({
     } catch (e) {}
   };
 
+  // Helper to validate genuine email syntax
+  const validateRealEmail = (email) => {
+    const clean = (email || '').trim().toLowerCase();
+    const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+    
+    if (!clean || !emailRegex.test(clean)) {
+      return { valid: false, error: isKhmer ? 'សូមបញ្ចូលអាសយដ្ឋាន Email ត្រឹមត្រូវ (ឧ. name@gmail.com)' : 'Please enter a valid real email format (e.g. name@gmail.com)' };
+    }
+
+    const domain = clean.split('@')[1];
+    if (BLOCKED_DISPOSABLE_DOMAINS.includes(domain)) {
+      return { valid: false, error: isKhmer ? 'មិនអនុញ្ញាត Email បន្លំ ឬបណ្តោះអាសន្នទេ។ សូមប្រើ Email ពិតប្រាកដរបស់អ្នក (Gmail, Yahoo, Outlook)' : 'Disposable or fake emails are strictly blocked. Please use your real email (e.g. Gmail, Yahoo, Outlook).' };
+    }
+
+    return { valid: true, clean };
+  };
+
   // Helper to detect Cambodian Mobile Carrier
   const detectCarrier = (phone) => {
     const p = (phone || '').replace(/[^0-9]/g, '');
@@ -122,44 +143,41 @@ export const CustomerAuthModal = ({
     return null;
   };
 
-  // Check if an email is Gmail
   const isGmailAddress = (email) => {
     return (email || '').trim().toLowerCase().endsWith('@gmail.com');
   };
 
   // ══════════════════════════════════════════════════════════════
-  // GOOGLE & GMAIL AUTHENTICATION HANDLERS
+  // STRICT REAL GOOGLE OAUTH AUTHENTICATION (NO FAKE / NO BYPASS)
   // ══════════════════════════════════════════════════════════════
-  const handleGoogleSignIn = (customEmail = null, customName = null) => {
+  const handleGoogleSignIn = () => {
     setErrorMsg('');
     setSuccessNotice('');
     setIsLoading(true);
     setGoogleLoadingState('authenticating');
 
-    const finalizeLogin = (email, name, picture) => {
-      setGoogleLoadingState('syncing');
-      setTimeout(() => {
+    launchGoogleOAuthPopup(
+      (googleProfile) => {
+        // STRICT CHECK: Verify that Google returned a real, verified email
+        if (!googleProfile || !googleProfile.email || !googleProfile.email.includes('@')) {
+          setErrorMsg(isKhmer ? 'មិនអាចផ្ទៀងផ្ទាត់គណនី Google បានទេ' : 'Could not verify Google account credentials.');
+          setIsLoading(false);
+          setGoogleLoadingState('');
+          return;
+        }
+
+        setGoogleLoadingState('syncing');
+
         try {
           let customer;
           if (loginCustomerWithGoogle) {
             customer = loginCustomerWithGoogle({
-              email,
-              name,
-              picture: picture || 'https://lh3.googleusercontent.com/a/ACg8ocLQn-AromaDemoUserAvatar=s96-c',
-              phone: '0969276538',
-              verified_email: true
+              email: googleProfile.email.trim().toLowerCase(),
+              name: googleProfile.name || googleProfile.email.split('@')[0],
+              picture: googleProfile.picture || '',
+              phone: '',
+              verified_email: Boolean(googleProfile.email_verified)
             });
-          } else {
-            try {
-              customer = loginCustomer(email, 'password123');
-            } catch (err) {
-              customer = registerCustomer({
-                email,
-                name,
-                phone: '0969276538',
-                password: 'password123'
-              });
-            }
           }
 
           triggerCelebration();
@@ -173,74 +191,63 @@ export const CustomerAuthModal = ({
           setIsLoading(false);
           setGoogleLoadingState('');
         }
-      }, 350);
-    };
-
-    // If custom email passed (or 1-Tap quick chip clicked)
-    if (customEmail) {
-      const emailToUse = customEmail.trim().toLowerCase();
-      const nameToUse = customName || (emailToUse.includes('sophara') ? 'Sophara Len' : emailToUse.split('@')[0]);
-      setTimeout(() => finalizeLogin(emailToUse, nameToUse), 300);
-      return;
-    }
-
-    // Try real Google Identity Services OAuth popup
-    try {
-      launchGoogleOAuthPopup(
-        (profile) => {
-          finalizeLogin(profile.email, profile.name, profile.picture);
-        },
-        (err) => {
-          // If popup blocked or cancelled, fall back seamlessly to demo account
-          console.warn('Google OAuth popup fell back to default account:', err?.message || err);
-          finalizeLogin('lensophara@gmail.com', 'Sophara Len');
+      },
+      (err) => {
+        // STRICT: If user closes popup or cancels or Google fails, DO NOT LOG IN
+        setIsLoading(false);
+        setGoogleLoadingState('');
+        const msg = err?.message || '';
+        if (msg.includes('closed') || msg.includes('cancel') || msg.includes('popup_closed_by_user')) {
+          setErrorMsg(isKhmer ? 'អ្នកបានបិទផ្ទាំង Google Sign-In។ សូមព្យាយាមម្តងទៀត។' : 'Google sign-in popup was closed. Please try again.');
+        } else {
+          setErrorMsg(isKhmer ? `ការផ្ទៀងផ្ទាត់ Google បរាជ័យ: ${msg}` : `Google authentication failed: ${msg || 'Please check your Google connection'}`);
         }
-      );
-    } catch (e) {
-      finalizeLogin('lensophara@gmail.com', 'Sophara Len');
-    }
+      }
+    );
   };
 
-  // STEP 1: Handle Real Email Registration
+  // ══════════════════════════════════════════════════════════════
+  // STEP 1: STRICT REAL REGISTRATION (VALIDATE REAL DETAILS)
+  // ══════════════════════════════════════════════════════════════
   const handleRegisterSubmit = (e) => {
     e.preventDefault();
     setErrorMsg('');
     setSuccessNotice('');
 
-    const email = (regEmail || '').trim().toLowerCase();
+    const emailCheck = validateRealEmail(regEmail);
+    if (!emailCheck.valid) {
+      setErrorMsg(emailCheck.error);
+      return;
+    }
+    const cleanEmail = emailCheck.clean;
+
     const name = (regName || '').trim();
-    const phone = (regPhone || '').trim();
+    if (!name || name.length < 2) {
+      setErrorMsg(isKhmer ? 'សូមបញ្ចូលឈ្មោះពេញពិតប្រាកដរបស់អ្នក' : 'Please enter your real full name');
+      return;
+    }
+
+    const cleanPhoneDigits = (regPhone || '').replace(/[^0-9]/g, '');
+    if (!cleanPhoneDigits || cleanPhoneDigits.length < 8 || cleanPhoneDigits.length > 12 || !cleanPhoneDigits.startsWith('0')) {
+      setErrorMsg(isKhmer ? 'សូមបញ្ចូលលេខទូរស័ព្ទត្រឹមត្រូវ (ឧ. 012 xxx xxx ឬ 096 xxx xxx)' : 'Please enter a valid phone number starting with 0 (8-10 digits)');
+      return;
+    }
+
     const password = (regPassword || '').trim();
-
-    if (!email || !email.includes('@') || !email.includes('.')) {
-      setErrorMsg(isKhmer ? 'សូមបញ្ចូលអាសយដ្ឋាន Email ពិតប្រាកដរបស់អ្នក' : 'Please enter a valid real email address');
+    if (!password || password.length < 6) {
+      setErrorMsg(isKhmer ? 'សូមបញ្ចូលលេខសម្ងាត់យ៉ាងតិច ៦ ខ្ទង់ដើម្បីសុវត្ថិភាព' : 'Password must be at least 6 characters for account security');
       return;
     }
 
-    if (!name) {
-      setErrorMsg(isKhmer ? 'សូមបញ្ចូលឈ្មោះពេញរបស់អ្នក' : 'Please enter your full name');
-      return;
-    }
-
-    if (!phone || phone.length < 8) {
-      setErrorMsg(isKhmer ? 'សូមបញ្ចូលលេខទូរស័ព្ទត្រឹមត្រូវ' : 'Please enter a valid phone number');
-      return;
-    }
-
-    if (!password || password.length < 4) {
-      setErrorMsg(isKhmer ? 'សូមបញ្ចូលលេខសម្ងាត់យ៉ាងតិច ៤ ខ្ទង់' : 'Password must be at least 4 characters');
-      return;
-    }
-
-    // Check if email already registered
-    const existing = customers.find((c) => c.email && c.email.toLowerCase() === email);
+    // Check if email already registered in system
+    const existing = customers.find((c) => c.email && c.email.toLowerCase() === cleanEmail);
     if (existing) {
       setSuccessNotice(
         isKhmer 
           ? 'Email នេះមានគណនីរួចហើយ! បានប្តូរទៅជំហានទី២ ដើម្បីចូលគណនី។' 
-          : 'Email already registered! Switched to Step 2: Login.'
+          : 'This email is already registered! Switched to Step 2: Login.'
       );
-      setLoginEmail(email);
+      setLoginEmail(cleanEmail);
       setActiveTab('login');
       return;
     }
@@ -249,9 +256,9 @@ export const CustomerAuthModal = ({
 
     try {
       const newCustomer = registerCustomer({
-        email,
+        email: cleanEmail,
         name,
-        phone,
+        phone: regPhone.trim(),
         password
       });
 
@@ -267,24 +274,31 @@ export const CustomerAuthModal = ({
     }
   };
 
-  // STEP 2: Handle Real Email Login
+  // ══════════════════════════════════════════════════════════════
+  // STEP 2: STRICT REAL LOGIN (REQUIRES VALID REGISTERED ACCOUNT)
+  // ══════════════════════════════════════════════════════════════
   const handleLoginSubmit = (e) => {
     if (e) e.preventDefault();
     setErrorMsg('');
     setSuccessNotice('');
 
-    const email = (loginEmail || '').trim().toLowerCase();
-    const password = (loginPassword || '').trim();
+    const emailCheck = validateRealEmail(loginEmail);
+    if (!emailCheck.valid) {
+      setErrorMsg(emailCheck.error);
+      return;
+    }
+    const cleanEmail = emailCheck.clean;
 
-    if (!email || !email.includes('@') || !email.includes('.')) {
-      setErrorMsg(isKhmer ? 'សូមបញ្ចូល Email របស់អ្នក' : 'Please enter your registered email');
+    const password = (loginPassword || '').trim();
+    if (!password) {
+      setErrorMsg(isKhmer ? 'សូមបញ្ចូលលេខសម្ងាត់របស់អ្នក' : 'Please enter your password');
       return;
     }
 
     setIsLoading(true);
 
     try {
-      const customer = loginCustomer(email, password);
+      const customer = loginCustomer(cleanEmail, password);
       triggerCelebration();
       if (onAuthSuccess) {
         onAuthSuccess(customer);
@@ -321,12 +335,12 @@ export const CustomerAuthModal = ({
                   {isKhmer ? 'គណនីអតិថិជន Aroma' : 'Aroma Coffee Club'}
                 </h3>
                 <span className="text-[10px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/30">
-                  VIP
+                  Real Auth
                 </span>
               </div>
               <p className="text-[11px] text-stone-500 dark:text-stone-400 flex items-center gap-1 mt-0.5">
-                <span>Google & Gmail Sign-In Enabled</span>
-                <span className="w-1 h-1 rounded-full bg-emerald-500 animate-ping inline-block" />
+                <span>Google & Verified Real Email Only</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
               </p>
             </div>
           </div>
@@ -352,8 +366,8 @@ export const CustomerAuthModal = ({
             <div className="flex-1 min-w-0">
               <p className="text-[11px] font-bold leading-tight truncate">
                 {messagePrompt || (isKhmer 
-                  ? '🎁 ចូលជាមួយ Gmail ទទួលបាន ១០០ ពិន្ទុ & ត្រាកាហ្វេភ្លាមៗ!' 
-                  : '🎁 Sign in with Google / Gmail to earn 100 welcome points & rewards!')}
+                  ? '🎁 ផ្ទៀងផ្ទាត់ជាមួយ Google / Gmail ទទួលបាន ១០០ ពិន្ទុ & ត្រាកាហ្វេ!' 
+                  : '🎁 Sign in with verified Google / Gmail to earn 100 points & rewards!')}
               </p>
               <p className="text-[10px] text-amber-700/80 dark:text-amber-400/80">
                 100 Points = $1 Discount on any Espresso or Frappe
@@ -362,25 +376,25 @@ export const CustomerAuthModal = ({
           </div>
 
           {/* ══════════════════════════════════════════════════════════════
-              GOOGLE & GMAIL ONE-CLICK SIGN IN SECTION (MODERN ANIMATION)
+              OFFICIAL GOOGLE OAUTH POPUP BUTTON (REAL AUTHENTICATION)
           ══════════════════════════════════════════════════════════════ */}
           <div className="space-y-2 p-3 rounded-2xl bg-stone-50/80 dark:bg-stone-950/70 border border-stone-200 dark:border-stone-850 animate-border-glow">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold tracking-wider uppercase text-stone-600 dark:text-stone-300 flex items-center gap-1.5">
                 <GoogleLogoSvg className="w-3.5 h-3.5" />
-                <span>{isKhmer ? 'ចូលរហ័សជាមួយ Google / Gmail' : 'Fast Google & Gmail Sign In'}</span>
+                <span>{isKhmer ? 'ផ្ទៀងផ្ទាត់ជាមួយ Google OAuth ផ្ទាល់' : 'Official Google Sign In'}</span>
               </span>
-              <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/30">
-                ⚡ 1-Tap Instant
+              <span className="text-[10px] font-mono text-blue-600 dark:text-blue-400 font-bold bg-blue-500/10 px-2 py-0.5 rounded-full border border-blue-500/30">
+                Verified OAuth 2.0
               </span>
             </div>
 
-            {/* Prominent Google Sign-In Button */}
+            {/* Official Google OAuth Popup Trigger */}
             <button
               type="button"
               disabled={isLoading}
-              onClick={() => handleGoogleSignIn('lensophara@gmail.com', 'Sophara Len')}
-              className="relative w-full overflow-hidden py-3 px-4 rounded-xl bg-white dark:bg-stone-900 hover:bg-stone-50 dark:hover:bg-stone-850 border border-stone-300 dark:border-stone-700 hover:border-blue-500/50 text-stone-900 dark:text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-3 transition-all cursor-pointer shadow-md hover:shadow-lg active:scale-[0.99] group"
+              onClick={handleGoogleSignIn}
+              className="relative w-full overflow-hidden py-3 px-4 rounded-xl bg-white dark:bg-stone-900 hover:bg-stone-50 dark:hover:bg-stone-850 border border-stone-300 dark:border-stone-700 hover:border-blue-500 text-stone-900 dark:text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-3 transition-all cursor-pointer shadow-md hover:shadow-lg active:scale-[0.99] group"
             >
               {/* Shimmer Light Reflection Sweep */}
               <div className="pointer-events-none absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-blue-500/10 to-transparent" />
@@ -389,7 +403,7 @@ export const CustomerAuthModal = ({
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
                   <span className="text-xs text-blue-600 dark:text-blue-400 font-mono">
-                    {googleLoadingState === 'authenticating' ? 'Connecting Google OAuth...' : 'Syncing Profile & +100 Points...'}
+                    {googleLoadingState === 'authenticating' ? 'Opening Google Account Picker...' : 'Verifying Google Account...'}
                   </span>
                 </div>
               ) : (
@@ -397,89 +411,17 @@ export const CustomerAuthModal = ({
                   <GoogleLogoSvg className="w-5 h-5 shrink-0 group-hover:scale-110 transition-transform" />
                   <GmailLogoSvg className="w-4 h-4 shrink-0 -ml-1 group-hover:scale-110 transition-transform" />
                   <span className="font-sans font-bold">
-                    {isKhmer ? 'បន្តជាមួយ Google (lensophara@gmail.com)' : 'Continue with Google (lensophara@gmail.com)'}
+                    {isKhmer ? 'បន្តជាមួយគណនី Google ពិតប្រាកដ' : 'Continue with Real Google Account'}
                   </span>
                   <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500 shrink-0 ml-auto group-hover:rotate-12 transition-transform" />
                 </>
               )}
             </button>
 
-            {/* Google Profile Quick-Card */}
-            <div className="p-2.5 rounded-xl bg-white/70 dark:bg-stone-900/70 border border-stone-200/70 dark:border-stone-800 flex items-center justify-between gap-2 text-xs">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="relative shrink-0">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-500 via-amber-500 to-emerald-500 p-[1.5px]">
-                    <div className="w-full h-full rounded-full bg-stone-900 flex items-center justify-center text-white font-black text-xs">
-                      SL
-                    </div>
-                  </div>
-                  <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-white dark:bg-stone-950 p-[1px] shadow">
-                    <GoogleLogoSvg className="w-full h-full" />
-                  </div>
-                </div>
-                <div className="min-w-0 text-left">
-                  <div className="flex items-center gap-1.5">
-                    <p className="font-bold text-xs text-stone-900 dark:text-white leading-tight truncate">Sophara Len</p>
-                    <CheckCircle2 className="w-3 h-3 text-blue-500 shrink-0" />
-                  </div>
-                  <p className="text-[10px] text-stone-500 dark:text-stone-400 font-mono truncate">lensophara@gmail.com</p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                disabled={isLoading}
-                onClick={() => handleGoogleSignIn('lensophara@gmail.com', 'Sophara Len')}
-                className="shrink-0 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-[11px] flex items-center gap-1 transition cursor-pointer shadow-xs active:scale-95"
-              >
-                <span>{isKhmer ? 'ចូលភ្លាមៗ' : '1-Tap'}</span>
-                <ArrowRight className="w-3 h-3" />
-              </button>
-            </div>
-
-            {/* Custom Gmail Input Toggle */}
-            <div className="pt-0.5">
-              {!showCustomGmailInput ? (
-                <button
-                  type="button"
-                  onClick={() => setShowCustomGmailInput(true)}
-                  className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 mx-auto cursor-pointer"
-                >
-                  <GmailLogoSvg className="w-3 h-3" />
-                  <span>{isKhmer ? 'ប្រើ Gmail ផ្សេងទៀត?' : 'Use another Google / Gmail account?'}</span>
-                </button>
-              ) : (
-                <div className="space-y-1.5 animate-badge-bounce">
-                  <div className="relative flex items-center rounded-xl bg-white dark:bg-stone-900 border border-blue-400 dark:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/30 transition">
-                    <GmailLogoSvg className="w-4 h-4 ml-3 shrink-0" />
-                    <input
-                      type="email"
-                      value={customGmail}
-                      onChange={(e) => setCustomGmail(e.target.value)}
-                      placeholder="your.email@gmail.com"
-                      className="w-full bg-transparent px-2.5 py-2 text-xs text-stone-900 dark:text-white placeholder-stone-400 focus:outline-none font-mono"
-                    />
-                    <button
-                      type="button"
-                      disabled={isLoading || !customGmail.includes('@')}
-                      onClick={() => handleGoogleSignIn(customGmail, customGmail.split('@')[0])}
-                      className="mr-1.5 px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold text-[11px] transition cursor-pointer"
-                    >
-                      {isKhmer ? 'ចូល' : 'Sign In'}
-                    </button>
-                  </div>
-                  <div className="text-right">
-                    <button
-                      type="button"
-                      onClick={() => setShowCustomGmailInput(false)}
-                      className="text-[10px] text-stone-400 hover:text-stone-600 dark:hover:text-stone-200"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+            <p className="text-[10px] text-stone-400 text-center flex items-center justify-center gap-1 pt-0.5">
+              <ShieldCheck className="w-3 h-3 text-emerald-500" />
+              <span>Directly opens Google OAuth popup to verify your real identity</span>
+            </p>
           </div>
 
           {/* Divider with Text */}
@@ -488,7 +430,7 @@ export const CustomerAuthModal = ({
               <div className="w-full border-t border-stone-200 dark:border-stone-800" />
             </div>
             <div className="relative px-3 bg-white dark:bg-stone-900 text-[10px] font-bold uppercase tracking-wider text-stone-400">
-              {isKhmer ? 'ឬ បំពេញទម្រង់បែបបទ' : 'or manual email form'}
+              {isKhmer ? 'ឬ ចុះឈ្មោះដោយប្រើ Email ពិតប្រាកដ' : 'or enter verified email'}
             </div>
           </div>
 
@@ -531,14 +473,14 @@ export const CustomerAuthModal = ({
 
           {/* Feedback Alerts */}
           {errorMsg && (
-            <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2 animate-badge-bounce">
-              <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
-              <span className="font-medium">{errorMsg}</span>
+            <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs flex items-start gap-2 animate-badge-bounce">
+              <ShieldAlert className="w-4 h-4 shrink-0 text-rose-600 mt-0.5" />
+              <span className="font-medium leading-relaxed">{errorMsg}</span>
             </div>
           )}
 
           {successNotice && (
-            <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/80 text-emerald-800 dark:text-emerald-200 text-xs flex items-start gap-2 animate-badge-bounce">
+            <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/80 text-emerald-800 dark:text-emerald-200 text-xs flex items-start gap-2 animate-badge-bounce">
               <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600 mt-0.5" />
               <span className="text-[11px] leading-relaxed font-medium">{successNotice}</span>
             </div>
@@ -568,7 +510,7 @@ export const CustomerAuthModal = ({
                   {isGmailAddress(regEmail) && (
                     <span className="text-[10px] text-blue-600 dark:text-blue-400 font-bold flex items-center gap-1 animate-badge-bounce">
                       <GmailLogoSvg className="w-3 h-3" />
-                      <span>Gmail Recognized (+100 Pts)</span>
+                      <span>Gmail Verified Domain</span>
                     </span>
                   )}
                 </div>
@@ -578,19 +520,10 @@ export const CustomerAuthModal = ({
                     type="email"
                     value={regEmail}
                     onChange={(e) => setRegEmail(e.target.value)}
-                    placeholder="e.g. yourname@gmail.com"
+                    placeholder="yourname@gmail.com"
                     required
                     className="w-full bg-transparent px-2.5 py-2.5 text-xs text-stone-900 dark:text-white placeholder-stone-400 focus:outline-none font-mono"
                   />
-                  {!regEmail && (
-                    <button
-                      type="button"
-                      onClick={() => setRegEmail('lensophara@gmail.com')}
-                      className="mr-2 text-[10px] font-bold font-mono text-amber-600 dark:text-amber-400 hover:underline shrink-0"
-                    >
-                      Use Gmail
-                    </button>
-                  )}
                 </div>
               </div>
 
@@ -607,6 +540,7 @@ export const CustomerAuthModal = ({
                     onChange={(e) => setRegName(e.target.value)}
                     placeholder={isKhmer ? 'ឧ. Sophara Len' : 'e.g. Sophara Len'}
                     required
+                    minLength={2}
                     className="w-full bg-transparent px-2.5 py-2.5 text-xs text-stone-900 dark:text-white placeholder-stone-400 focus:outline-none"
                   />
                 </div>
@@ -630,7 +564,7 @@ export const CustomerAuthModal = ({
                     type="tel"
                     value={regPhone}
                     onChange={(e) => setRegPhone(e.target.value)}
-                    placeholder="096 927 6538"
+                    placeholder="012 345 678"
                     required
                     className="w-full bg-transparent px-2.5 py-2.5 text-xs text-stone-900 dark:text-white placeholder-stone-400 focus:outline-none font-mono"
                   />
@@ -639,9 +573,12 @@ export const CustomerAuthModal = ({
 
               {/* Password with View Toggle */}
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-stone-700 dark:text-stone-300 block">
-                  {isKhmer ? 'បង្កើតលេខសម្ងាត់ *' : 'Create Password *'}
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-bold text-stone-700 dark:text-stone-300 block">
+                    {isKhmer ? 'បង្កើតលេខសម្ងាត់ *' : 'Create Password *'}
+                  </label>
+                  <span className="text-[10px] text-stone-400">Min 6 characters</span>
+                </div>
                 <div className="relative flex items-center rounded-xl bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 focus-within:border-amber-500 focus-within:ring-2 focus-within:ring-amber-500/25 transition-all">
                   <Lock className="w-4 h-4 text-stone-400 ml-3 shrink-0" />
                   <input
@@ -650,7 +587,7 @@ export const CustomerAuthModal = ({
                     onChange={(e) => setRegPassword(e.target.value)}
                     placeholder="••••••••"
                     required
-                    minLength={4}
+                    minLength={6}
                     className="w-full bg-transparent px-2.5 py-2.5 text-xs text-stone-900 dark:text-white placeholder-stone-400 focus:outline-none"
                   />
                   <button
@@ -709,7 +646,7 @@ export const CustomerAuthModal = ({
                   <span>{isKhmer ? 'ជំហានទី២: ចូលគណនីអតិថិជន (Login)' : 'Step 2: Sign In with Real Email'}</span>
                 </span>
                 <p className="text-[11px] text-stone-500 dark:text-stone-400">
-                  {isKhmer ? 'បញ្ចូល Email និងលេខសម្ងាត់របស់អ្នកដើម្បីចូលគណនី' : 'Enter your email and password to sign in'}
+                  {isKhmer ? 'បញ្ចូល Email និងលេខសម្ងាត់របស់អ្នកដើម្បីចូលគណនី' : 'Enter your registered email and password to sign in'}
                 </p>
               </div>
 
@@ -722,7 +659,7 @@ export const CustomerAuthModal = ({
                   {isGmailAddress(loginEmail) && (
                     <span className="text-[10px] text-blue-600 dark:text-blue-400 font-bold flex items-center gap-1 animate-badge-bounce">
                       <GmailLogoSvg className="w-3 h-3" />
-                      <span>Gmail Account</span>
+                      <span>Gmail Domain</span>
                     </span>
                   )}
                 </div>
@@ -732,7 +669,7 @@ export const CustomerAuthModal = ({
                     type="email"
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
-                    placeholder="e.g. lensophara@gmail.com"
+                    placeholder="yourname@gmail.com"
                     required
                     className="w-full bg-transparent px-2.5 py-2.5 text-xs text-stone-900 dark:text-white placeholder-stone-400 focus:outline-none font-mono"
                   />
@@ -808,7 +745,7 @@ export const CustomerAuthModal = ({
                 <Sparkles className="w-3 h-3 text-amber-500" />
                 <span>+100 Points ($1.00)</span>
               </span>
-              <p className="text-[10px] text-stone-500 dark:text-stone-400">Awarded on registration</p>
+              <p className="text-[10px] text-stone-500 dark:text-stone-400">Awarded on verified account</p>
             </div>
             <div className="p-2 rounded-xl bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-850 space-y-0.5">
               <span className="font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-1 text-[11px]">
@@ -822,7 +759,7 @@ export const CustomerAuthModal = ({
           {/* Security Notice */}
           <div className="flex items-center justify-center gap-1.5 text-[10px] text-stone-400 pb-1">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-            <span>256-Bit SSL Encrypted • Real Email & Google Authentication</span>
+            <span>256-Bit SSL Encrypted • Real Identity & OAuth 2.0 Protection</span>
           </div>
         </div>
       </div>
